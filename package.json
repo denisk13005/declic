@@ -1,0 +1,46 @@
+{
+  "name": "declic",
+  "version": "1.0.0",
+  "main": "expo-router/entry",
+  "scripts": {
+    "start": "expo start --dev-client",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "web": "expo start --web"
+  },
+  "dependencies": {
+    "@expo/vector-icons": "^15.0.3",
+    "@react-native-async-storage/async-storage": "*",
+    "date-fns": "^3.6.0",
+    "expo": "~55.0.0",
+    "expo-camera": "~55.0.9",
+    "expo-constants": "*",
+    "expo-device": "*",
+    "expo-font": "*",
+    "expo-haptics": "*",
+    "expo-image-picker": "*",
+    "expo-linear-gradient": "*",
+    "expo-linking": "*",
+    "expo-notifications": "*",
+    "expo-router": "*",
+    "expo-secure-store": "*",
+    "expo-splash-screen": "*",
+    "expo-status-bar": "*",
+    "firebase": "^12.9.0",
+    "react": "19.2.0",
+    "react-native": "0.83.2",
+    "react-native-gesture-handler": "~2.30.0",
+    "react-native-gifted-charts": "^1.4.74",
+    "react-native-reanimated": "4.2.1",
+    "react-native-safe-area-context": "~5.6.2",
+    "react-native-screens": "~4.23.0",
+    "react-native-svg": "15.15.3",
+    "react-native-toast-message": "^2.2.0",
+    "zustand": "^4.5.4"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.24.0",
+    "@types/react": "~19.2.10",
+    "typescript": "~5.9.2"
+  }
+}

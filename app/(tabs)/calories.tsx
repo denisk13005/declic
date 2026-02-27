@@ -1,0 +1,426 @@
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
+import { format, addDays, subDays } from 'date-fns';
+import { fr } from 'date-fns/locale';
+import { useCalorieStore } from '@/stores/calorieStore';
+import { FoodEntry, Macros } from '@/types';
+import { PrefillFood } from '@/components/nutrition/AddEntryModal';
+import AddEntryModal from '@/components/nutrition/AddEntryModal';
+import FoodLibraryModal from '@/components/nutrition/FoodLibraryModal';
+import GoalsModal from '@/components/nutrition/GoalsModal';
+import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
+
+function todayISO(): string {
+  return format(new Date(), 'yyyy-MM-dd');
+}
+
+function formatDayLabel(dateStr: string): string {
+  const today = todayISO();
+  if (dateStr === today) return "Aujourd'hui";
+  const yesterday = format(subDays(new Date(), 1), 'yyyy-MM-dd');
+  if (dateStr === yesterday) return 'Hier';
+  return format(new Date(dateStr + 'T12:00:00'), 'd MMM', { locale: fr });
+}
+
+// ─── Anneau SVG ───────────────────────────────────────────────────────────────
+
+const RING_SIZE = 180;
+const STROKE_WIDTH = 16;
+const RADIUS_RING = (RING_SIZE - STROKE_WIDTH) / 2;
+const CIRCUMFERENCE = 2 * Math.PI * RADIUS_RING;
+
+function CalorieRing({ consumed, goal }: { consumed: number; goal: number }) {
+  const pct = goal > 0 ? Math.min(consumed / goal, 1) : 0;
+  const strokeDashoffset = CIRCUMFERENCE * (1 - pct);
+  const exceeded = consumed > goal;
+
+  return (
+    <View style={styles.ringContainer}>
+      <Svg width={RING_SIZE} height={RING_SIZE} style={{ transform: [{ rotate: '-90deg' }] }}>
+        <Defs>
+          <SvgGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+            <Stop offset="0" stopColor={exceeded ? COLORS.error : COLORS.primary} />
+            <Stop offset="1" stopColor={exceeded ? COLORS.accent : COLORS.primaryLight} />
+          </SvgGradient>
+        </Defs>
+        <Circle cx={RING_SIZE / 2} cy={RING_SIZE / 2} r={RADIUS_RING} stroke={COLORS.bgElevated} strokeWidth={STROKE_WIDTH} fill="none" />
+        {pct > 0 && (
+          <Circle
+            cx={RING_SIZE / 2} cy={RING_SIZE / 2} r={RADIUS_RING}
+            stroke="url(#ringGrad)" strokeWidth={STROKE_WIDTH} fill="none"
+            strokeDasharray={CIRCUMFERENCE} strokeDashoffset={strokeDashoffset}
+            strokeLinecap="round"
+          />
+        )}
+      </Svg>
+      <View style={styles.ringCenter}>
+        <Text style={[styles.ringValue, exceeded && { color: COLORS.error }]}>{consumed}</Text>
+        <Text style={styles.ringUnit}>kcal</Text>
+        <Text style={styles.ringGoal}>/ {goal}</Text>
+      </View>
+    </View>
+  );
+}
+
+// ─── Macro bar ────────────────────────────────────────────────────────────────
+
+function MacroBar({
+  label,
+  consumed,
+  goal,
+  color,
+}: {
+  label: string;
+  consumed: number;
+  goal: number | null;
+  color: string;
+}) {
+  const pct = goal ? Math.min(consumed / goal, 1) : 0;
+  const exceeded = goal != null && consumed > goal;
+
+  return (
+    <View style={styles.macroBarRow}>
+      <Text style={styles.macroBarLabel}>{label}</Text>
+      <View style={styles.macroTrack}>
+        <View
+          style={[
+            styles.macroFill,
+            {
+              width: `${pct * 100}%`,
+              backgroundColor: exceeded ? COLORS.error : color,
+            },
+          ]}
+        />
+      </View>
+      <Text style={[styles.macroBarValue, exceeded && { color: COLORS.error }]}>
+        {Math.round(consumed)}g{goal ? ` / ${goal}g` : ''}
+      </Text>
+    </View>
+  );
+}
+
+// ─── Entry row ────────────────────────────────────────────────────────────────
+
+function EntryRow({
+  entry,
+  onDelete,
+}: {
+  entry: FoodEntry;
+  onDelete: () => void;
+}) {
+  const hasMacros = entry.macros != null;
+  return (
+    <View style={styles.entryRow}>
+      <View style={styles.entryDot} />
+      <View style={styles.entryInfo}>
+        <Text style={styles.entryName} numberOfLines={1}>{entry.name}</Text>
+        {hasMacros && (
+          <Text style={styles.entryMacros}>
+            P:{Math.round(entry.macros!.protein)}g · G:{Math.round(entry.macros!.carbs)}g · L:{Math.round(entry.macros!.fat)}g
+          </Text>
+        )}
+      </View>
+      <Text style={styles.entryKcal}>{entry.calories} kcal</Text>
+      <TouchableOpacity onPress={onDelete} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        <Ionicons name="trash-outline" size={18} color={COLORS.textTertiary} />
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+// ─── Screen ───────────────────────────────────────────────────────────────────
+
+export default function CaloriesScreen() {
+  const { getEntriesForDate, getTotalsForDate, removeEntry, goals } = useCalorieStore();
+
+  const [selectedDate, setSelectedDate] = useState(todayISO());
+  const [addModalVisible, setAddModalVisible] = useState(false);
+  const [libraryModalVisible, setLibraryModalVisible] = useState(false);
+  const [goalsModalVisible, setGoalsModalVisible] = useState(false);
+  const [prefillFood, setPrefillFood] = useState<PrefillFood | null>(null);
+
+  const isToday = selectedDate === todayISO();
+
+  const entries = getEntriesForDate(selectedDate);
+  const { calories: total, macros } = getTotalsForDate(selectedDate);
+  const remaining = goals.calories - total;
+
+  const hasMacroGoals = goals.protein != null || goals.carbs != null || goals.fat != null;
+
+  function goBack() {
+    setSelectedDate((d) => format(subDays(new Date(d + 'T12:00:00'), 1), 'yyyy-MM-dd'));
+  }
+
+  function goForward() {
+    if (!isToday) {
+      setSelectedDate((d) => format(addDays(new Date(d + 'T12:00:00'), 1), 'yyyy-MM-dd'));
+    }
+  }
+
+  function confirmDelete(entry: FoodEntry) {
+    Alert.alert('Supprimer', `Supprimer "${entry.name}" ?`, [
+      { text: 'Annuler', style: 'cancel' },
+      { text: 'Supprimer', style: 'destructive', onPress: () => removeEntry(entry.id) },
+    ]);
+  }
+
+  function handleLibrarySelect(prefill: PrefillFood) {
+    setPrefillFood(prefill);
+    setLibraryModalVisible(false);
+    setAddModalVisible(true);
+  }
+
+  function handleAddClose() {
+    setAddModalVisible(false);
+    setPrefillFood(null);
+  }
+
+  return (
+    <SafeAreaView style={styles.safe} edges={['top']}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.title}>Calories</Text>
+        <TouchableOpacity onPress={() => setGoalsModalVisible(true)} style={styles.headerBtn}>
+          <Ionicons name="settings-outline" size={22} color={COLORS.textSecondary} />
+        </TouchableOpacity>
+      </View>
+
+      {/* Day navigation */}
+      <View style={styles.dayNav}>
+        <TouchableOpacity onPress={goBack} style={styles.dayNavArrow} activeOpacity={0.7}>
+          <Ionicons name="chevron-back" size={22} color={COLORS.textSecondary} />
+        </TouchableOpacity>
+        <Text style={styles.dayNavLabel}>{formatDayLabel(selectedDate)}</Text>
+        <TouchableOpacity
+          onPress={goForward}
+          style={[styles.dayNavArrow, isToday && styles.dayNavArrowDisabled]}
+          disabled={isToday}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="chevron-forward" size={22} color={isToday ? COLORS.textTertiary : COLORS.textSecondary} />
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        {/* Ring */}
+        <View style={styles.ringWrapper}>
+          <CalorieRing consumed={total} goal={goals.calories} />
+        </View>
+
+        {/* Summary cards */}
+        <View style={styles.summaryRow}>
+          <View style={styles.summaryCard}>
+            <Text style={styles.summaryValue}>{total}</Text>
+            <Text style={styles.summaryLabel}>Consommées</Text>
+          </View>
+          <View style={[styles.summaryCard, styles.summaryCardMid]}>
+            <Text style={styles.summaryValue}>{goals.calories}</Text>
+            <Text style={styles.summaryLabel}>Objectif</Text>
+          </View>
+          <View style={styles.summaryCard}>
+            <Text style={[styles.summaryValue, remaining < 0 && { color: COLORS.error }]}>
+              {remaining < 0 ? `+${Math.abs(remaining)}` : remaining}
+            </Text>
+            <Text style={styles.summaryLabel}>{remaining < 0 ? 'Dépassé' : 'Restantes'}</Text>
+          </View>
+        </View>
+
+        {/* Macro bars */}
+        {(hasMacroGoals || macros.protein > 0 || macros.carbs > 0 || macros.fat > 0) && (
+          <View style={styles.macroBarsCard}>
+            <MacroBar label="Protéines" consumed={macros.protein} goal={goals.protein} color="#60A5FA" />
+            <MacroBar label="Glucides" consumed={macros.carbs} goal={goals.carbs} color="#FBBF24" />
+            <MacroBar label="Lipides" consumed={macros.fat} goal={goals.fat} color="#F472B6" />
+          </View>
+        )}
+
+        {/* Entries */}
+        <Text style={styles.sectionTitle}>Repas du jour</Text>
+        {entries.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyEmoji}>🥗</Text>
+            <Text style={styles.emptyText}>
+              {isToday ? 'Aucun aliment enregistré pour aujourd\'hui.' : 'Aucun aliment ce jour-là.'}
+            </Text>
+            {isToday && <Text style={styles.emptyHint}>Appuie sur + pour commencer</Text>}
+          </View>
+        ) : (
+          <View style={styles.entriesList}>
+            {entries.map((entry) => (
+              <EntryRow
+                key={entry.id}
+                entry={entry}
+                onDelete={() => confirmDelete(entry)}
+              />
+            ))}
+          </View>
+        )}
+      </ScrollView>
+
+      {/* FABs */}
+      <View style={styles.fabContainer}>
+        <TouchableOpacity
+          style={styles.fabSecondary}
+          onPress={() => setLibraryModalVisible(true)}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="library-outline" size={22} color={COLORS.primary} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.fab}
+          onPress={() => setAddModalVisible(true)}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="add" size={28} color="#fff" />
+        </TouchableOpacity>
+      </View>
+
+      {/* Modals */}
+      <GoalsModal visible={goalsModalVisible} onClose={() => setGoalsModalVisible(false)} />
+
+      <AddEntryModal
+        visible={addModalVisible}
+        onClose={handleAddClose}
+        date={selectedDate}
+        prefillFood={prefillFood}
+      />
+
+      <FoodLibraryModal
+        visible={libraryModalVisible}
+        onClose={() => setLibraryModalVisible(false)}
+        onSelectFoodItem={handleLibrarySelect}
+        onSelectComposedMeal={handleLibrarySelect}
+      />
+    </SafeAreaView>
+  );
+}
+
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
+const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: COLORS.bg },
+  content: { padding: SPACING.lg, paddingBottom: 120 },
+
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.sm,
+    paddingBottom: SPACING.xs,
+  },
+  title: { fontSize: FONT_SIZE.xxl, fontWeight: FONT_WEIGHT.bold, color: COLORS.textPrimary },
+  headerBtn: { padding: SPACING.xs },
+
+  dayNav: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: SPACING.lg,
+    paddingBottom: SPACING.sm,
+    gap: SPACING.md,
+  },
+  dayNavArrow: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: COLORS.bgElevated,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dayNavArrowDisabled: { opacity: 0.4 },
+  dayNavLabel: {
+    fontSize: FONT_SIZE.md,
+    fontWeight: FONT_WEIGHT.semibold,
+    color: COLORS.textPrimary,
+    minWidth: 120,
+    textAlign: 'center',
+  },
+
+  ringWrapper: { alignItems: 'center', marginBottom: SPACING.lg },
+  ringContainer: { width: RING_SIZE, height: RING_SIZE, alignItems: 'center', justifyContent: 'center' },
+  ringCenter: { position: 'absolute', alignItems: 'center' },
+  ringValue: { fontSize: FONT_SIZE.xxl, fontWeight: FONT_WEIGHT.extrabold, color: COLORS.textPrimary },
+  ringUnit: { fontSize: FONT_SIZE.sm, color: COLORS.textSecondary, marginTop: -2 },
+  ringGoal: { fontSize: FONT_SIZE.xs, color: COLORS.textTertiary },
+
+  summaryRow: { flexDirection: 'row', gap: SPACING.sm, marginBottom: SPACING.lg },
+  summaryCard: { flex: 1, backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.border, padding: SPACING.md, alignItems: 'center', gap: 4 },
+  summaryCardMid: { borderColor: COLORS.primaryGlow },
+  summaryValue: { fontSize: FONT_SIZE.lg, fontWeight: FONT_WEIGHT.bold, color: COLORS.textPrimary },
+  summaryLabel: { fontSize: FONT_SIZE.xs, color: COLORS.textSecondary },
+
+  macroBarsCard: {
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: SPACING.md,
+    marginBottom: SPACING.lg,
+    gap: SPACING.sm,
+  },
+  macroBarRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
+  macroBarLabel: { width: 72, fontSize: FONT_SIZE.xs, color: COLORS.textSecondary, fontWeight: FONT_WEIGHT.medium },
+  macroTrack: { flex: 1, height: 6, borderRadius: 3, backgroundColor: COLORS.bgElevated, overflow: 'hidden' },
+  macroFill: { height: '100%', borderRadius: 3 },
+  macroBarValue: { width: 80, fontSize: FONT_SIZE.xs, color: COLORS.textSecondary, textAlign: 'right' },
+
+  sectionTitle: { fontSize: FONT_SIZE.lg, fontWeight: FONT_WEIGHT.semibold, color: COLORS.textPrimary, marginBottom: SPACING.md },
+
+  entriesList: { backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.border, overflow: 'hidden' },
+  entryRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: SPACING.md, paddingHorizontal: SPACING.md, borderBottomWidth: 1, borderBottomColor: COLORS.border, gap: SPACING.sm },
+  entryDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.primary, alignSelf: 'flex-start', marginTop: 4 },
+  entryInfo: { flex: 1 },
+  entryName: { fontSize: FONT_SIZE.sm, color: COLORS.textPrimary },
+  entryMacros: { fontSize: FONT_SIZE.xs, color: COLORS.textTertiary, marginTop: 2 },
+  entryKcal: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.semibold, color: COLORS.textSecondary },
+
+  emptyState: { alignItems: 'center', paddingVertical: SPACING.xxl, gap: SPACING.sm },
+  emptyEmoji: { fontSize: 48 },
+  emptyText: { fontSize: FONT_SIZE.md, color: COLORS.textSecondary, textAlign: 'center' },
+  emptyHint: { fontSize: FONT_SIZE.sm, color: COLORS.textTertiary },
+
+  fabContainer: {
+    position: 'absolute',
+    bottom: SPACING.xl,
+    right: SPACING.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  fab: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: COLORS.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  fabSecondary: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: COLORS.bgCard,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
