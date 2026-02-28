@@ -225,7 +225,7 @@ export default function HomeScreen() {
         )}
 
         {/* Upgrade nudge for free users */}
-        {!isPremium && activeHabits.length >= 3 && (
+        {!isPremium && activeHabits.length >= 1 && (
           <TouchableOpacity onPress={() => router.push('/paywall')} style={styles.upgradeNudge}>
             <LinearGradient colors={COLORS.gradientPremium} style={styles.upgradeGradient}>
               <Ionicons name="star" size={16} color="#fff" />

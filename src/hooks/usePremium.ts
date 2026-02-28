@@ -1,7 +1,9 @@
-// Premium désactivé pendant le dev — tout le monde est premium
+import { useProfileStore } from '@/stores/profileStore';
+
 export function usePremium() {
+  const { profile } = useProfileStore();
   return {
-    isPremium: true,
-    premiumExpiry: null,
+    isPremium: profile.isPremium,
+    premiumExpiry: profile.premiumExpiry,
   };
 }

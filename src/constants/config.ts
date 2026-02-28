@@ -8,7 +8,7 @@ export const CONFIG = {
   RC_OFFERING_ID: 'default',
 
   // App limits (free tier)
-  FREE_HABIT_LIMIT: 3,
+  FREE_HABIT_LIMIT: 1,
 
   // Notification defaults
   DEFAULT_REMINDER_HOUR: 9,
