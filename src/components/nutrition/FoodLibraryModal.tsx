@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Modal,
   View,
@@ -11,11 +11,15 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCalorieStore } from '@/stores/calorieStore';
 import { FoodItem, ComposedMeal, ComposedMealIngredient, Macros, Serving, ServingUnit } from '@/types';
 import { PrefillFood } from './AddEntryModal';
+import { searchCiqual, CiqualResult } from '@/services/ciqualSearch';
+import { searchByName, ProductInfo } from '@/services/openFoodFacts';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
 
 interface Props {
@@ -152,7 +156,7 @@ function CreateFoodForm({ onCreated }: { onCreated: () => void }) {
 // ─── Create composed meal form ────────────────────────────────────────────────
 
 function CreateMealForm({ onCreated }: { onCreated: () => void }) {
-  const { foodLibrary, addComposedMeal, computeCalories, computeMacros } = useCalorieStore();
+  const { foodLibrary, addFoodItem, addComposedMeal, computeCalories, computeMacros } = useCalorieStore();
   const [name, setName] = useState('');
   const [emoji, setEmoji] = useState('');
   const [ingredients, setIngredients] = useState<
@@ -160,18 +164,112 @@ function CreateMealForm({ onCreated }: { onCreated: () => void }) {
   >([]);
   const [pickingFood, setPickingFood] = useState(false);
   const [search, setSearch] = useState('');
+  const [aiSuggestions, setAiSuggestions] = useState<CiqualResult[]>([]);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Création manuelle d'un aliment introuvable
+  const [creatingCustom, setCreatingCustom] = useState(false);
+  const [customName, setCustomName] = useState('');
+  const [customCal, setCustomCal] = useState('');
+
+  // Recherche Open Food Facts (fallback réseau)
+  const [offResults, setOffResults] = useState<ProductInfo[]>([]);
+  const [offLoading, setOffLoading] = useState(false);
+  const offAbortRef = useRef<AbortController | null>(null);
 
   const filtered = foodLibrary.filter((f) =>
     f.name.toLowerCase().includes(search.toLowerCase())
   );
+
+  function handleSearchChange(text: string) {
+    setSearch(text);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (text.trim().length < 2) {
+      setAiSuggestions([]);
+      return;
+    }
+    debounceRef.current = setTimeout(() => {
+      setAiSuggestions(searchCiqual(text.trim()));
+    }, 200);
+  }
+
+  function closePicking() {
+    offAbortRef.current?.abort();
+    setPickingFood(false);
+    setSearch('');
+    setAiSuggestions([]);
+    setCreatingCustom(false);
+    setCustomName('');
+    setCustomCal('');
+    setOffResults([]);
+    setOffLoading(false);
+  }
+
+  async function searchOff() {
+    if (search.trim().length < 2) return;
+    offAbortRef.current?.abort();
+    const ctrl = new AbortController();
+    offAbortRef.current = ctrl;
+    setOffLoading(true);
+    setOffResults([]);
+    try {
+      const results = await searchByName(search.trim(), ctrl.signal);
+      setOffResults(results);
+    } catch {
+      // requête annulée ou erreur réseau → on ne fait rien
+    } finally {
+      setOffLoading(false);
+    }
+  }
+
+  function addOffResult(product: ProductInfo) {
+    const newItem = addFoodItem({
+      name: product.brand ? `${product.name} (${product.brand})` : product.name,
+      caloriesPer100: product.caloriesPer100,
+      macrosPer100: product.macrosPer100,
+      defaultServing: { quantity: 100, unit: 'g' },
+      isCustom: false,
+    });
+    addIngredient(newItem);
+  }
+
+  function openCreateCustom() {
+    setCreatingCustom(true);
+    setCustomName(search.trim());
+    setCustomCal('');
+  }
+
+  function handleCreateCustom() {
+    const cal = parseFloat(customCal);
+    if (!customName.trim()) { Alert.alert('Erreur', 'Entre un nom.'); return; }
+    if (isNaN(cal) || cal < 0) { Alert.alert('Erreur', 'Calories invalides.'); return; }
+    const newItem = addFoodItem({
+      name: customName.trim(),
+      caloriesPer100: cal,
+      macrosPer100: null,
+      defaultServing: { quantity: 100, unit: 'g' },
+      isCustom: true,
+    });
+    addIngredient(newItem);
+  }
 
   function addIngredient(food: FoodItem) {
     setIngredients((prev) => [
       ...prev,
       { foodItem: food, qty: String(food.defaultServing.quantity), unit: food.defaultServing.unit },
     ]);
-    setPickingFood(false);
-    setSearch('');
+    closePicking();
+  }
+
+  function addAiIngredient(suggestion: CiqualResult) {
+    const newItem = addFoodItem({
+      name: suggestion.name,
+      caloriesPer100: suggestion.caloriesPer100,
+      macrosPer100: suggestion.macros,
+      defaultServing: { quantity: 100, unit: 'g' },
+      isCustom: false,
+    });
+    addIngredient(newItem);
   }
 
   function removeIngredient(idx: number) {
@@ -233,31 +331,164 @@ function CreateMealForm({ onCreated }: { onCreated: () => void }) {
   }
 
   if (pickingFood) {
+    // ── Formulaire création manuelle ────────────────────────────────────────
+    if (creatingCustom) {
+      return (
+        <View style={styles.createForm}>
+          <View style={styles.createFormHeader}>
+            <Text style={styles.createTitle}>Créer un aliment</Text>
+            <TouchableOpacity onPress={() => setCreatingCustom(false)}>
+              <Ionicons name="arrow-back" size={20} color={COLORS.textTertiary} />
+            </TouchableOpacity>
+          </View>
+          <TextInput
+            style={styles.input}
+            value={customName}
+            onChangeText={setCustomName}
+            placeholder="Nom de l'aliment"
+            placeholderTextColor={COLORS.textTertiary}
+            autoCapitalize="sentences"
+          />
+          <TextInput
+            style={styles.input}
+            value={customCal}
+            onChangeText={setCustomCal}
+            placeholder="Calories / 100g (ou / 1 unité)"
+            placeholderTextColor={COLORS.textTertiary}
+            keyboardType="numeric"
+          />
+          <TouchableOpacity style={styles.createBtn} onPress={handleCreateCustom} activeOpacity={0.8}>
+            <Text style={styles.createBtnText}>Ajouter comme ingrédient</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    // ── Recherche d'ingrédient ───────────────────────────────────────────────
     return (
       <View style={styles.createForm}>
         <View style={styles.createFormHeader}>
           <Text style={styles.createTitle}>Choisir un ingrédient</Text>
-          <TouchableOpacity onPress={() => setPickingFood(false)}>
+          <TouchableOpacity onPress={closePicking}>
             <Ionicons name="close" size={20} color={COLORS.textTertiary} />
           </TouchableOpacity>
         </View>
         <TextInput
           style={styles.searchInput}
           value={search}
-          onChangeText={setSearch}
-          placeholder="Rechercher…"
+          onChangeText={handleSearchChange}
+          placeholder="Rechercher un aliment…"
           placeholderTextColor={COLORS.textTertiary}
           autoFocus
         />
-        {filtered.length === 0 ? (
-          <Text style={styles.empty}>Aucun aliment dans ta bibliothèque</Text>
-        ) : (
-          filtered.map((f) => (
-            <TouchableOpacity key={f.id} style={styles.foodRow} onPress={() => addIngredient(f)}>
-              <Text style={styles.foodName}>{f.name}</Text>
-              <Text style={styles.foodMeta}>{f.caloriesPer100} kcal/100{f.defaultServing.unit === 'ml' ? 'ml' : 'g'}</Text>
+
+        {/* Bibliothèque locale */}
+        {filtered.length > 0 && (
+          <>
+            <Text style={styles.sectionLabel}>Dans ta bibliothèque</Text>
+            {filtered.map((f) => (
+              <TouchableOpacity key={f.id} style={styles.foodRow} onPress={() => addIngredient(f)}>
+                <View style={styles.foodInfo}>
+                  <Text style={styles.foodName}>{f.name}</Text>
+                  <Text style={styles.foodMeta}>
+                    {f.caloriesPer100} kcal/100g
+                    {f.macrosPer100 ? `  ·  P:${f.macrosPer100.protein}g G:${f.macrosPer100.carbs}g L:${f.macrosPer100.fat}g` : ''}
+                  </Text>
+                </View>
+                <Ionicons name="add-circle-outline" size={20} color={COLORS.primary} />
+              </TouchableOpacity>
+            ))}
+          </>
+        )}
+
+        {/* Suggestions Ciqual */}
+        {aiSuggestions.length > 0 && (
+          <>
+            <Text style={styles.sectionLabel}>Base Ciqual (ANSES)</Text>
+            {aiSuggestions.map((s, i) => (
+              <TouchableOpacity key={i} style={styles.foodRow} onPress={() => addAiIngredient(s)}>
+                <View style={styles.foodInfo}>
+                  <Text style={styles.foodName}>{s.name}</Text>
+                  <Text style={styles.foodMeta}>
+                    {s.caloriesPer100} kcal/100g
+                    {s.macros ? `  ·  P:${s.macros.protein}g G:${s.macros.carbs}g L:${s.macros.fat}g` : ''}
+                  </Text>
+                </View>
+                <Ionicons name="add-circle-outline" size={20} color={COLORS.primary} />
+              </TouchableOpacity>
+            ))}
+          </>
+        )}
+
+        {/* Résultats Open Food Facts */}
+        {offResults.length > 0 && (
+          <>
+            <Text style={styles.sectionLabel}>Open Food Facts</Text>
+            {offResults.map((p, i) => (
+              <TouchableOpacity key={i} style={styles.foodRow} onPress={() => addOffResult(p)}>
+                <View style={styles.foodInfo}>
+                  <Text style={styles.foodName}>
+                    {p.name}{p.brand ? ` · ${p.brand}` : ''}
+                  </Text>
+                  <Text style={styles.foodMeta}>
+                    {p.caloriesPer100} kcal/100g
+                    {p.macrosPer100 ? `  ·  P:${p.macrosPer100.protein}g G:${p.macrosPer100.carbs}g L:${p.macrosPer100.fat}g` : ''}
+                  </Text>
+                </View>
+                <Ionicons name="add-circle-outline" size={20} color={COLORS.primary} />
+              </TouchableOpacity>
+            ))}
+          </>
+        )}
+
+        {/* Carte "introuvable" — aucun résultat local, pas encore cherché sur OFF */}
+        {search.trim().length >= 2 && filtered.length === 0 && aiSuggestions.length === 0 && offResults.length === 0 && !offLoading && (
+          <View style={styles.notFoundCard}>
+            <Ionicons name="search-outline" size={28} color={COLORS.textTertiary} />
+            <Text style={styles.notFoundTitle}>
+              Introuvable dans la base locale
+            </Text>
+            <Text style={styles.notFoundSub}>
+              "{search.trim()}" n'est ni dans ta bibliothèque ni dans la base Ciqual (3 339 aliments français).{'\n'}
+              Tu peux chercher dans la base mondiale Open Food Facts ou créer l'aliment manuellement.
+            </Text>
+            <TouchableOpacity style={styles.offPrimaryBtn} onPress={searchOff} activeOpacity={0.8}>
+              <Ionicons name="globe-outline" size={16} color="#fff" />
+              <Text style={styles.offPrimaryBtnText}>Chercher sur Open Food Facts</Text>
             </TouchableOpacity>
-          ))
+            <TouchableOpacity style={styles.manualSecondaryBtn} onPress={openCreateCustom} activeOpacity={0.7}>
+              <Ionicons name="create-outline" size={14} color={COLORS.textSecondary} />
+              <Text style={styles.manualSecondaryBtnText}>Créer "{search.trim()}" manuellement</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Spinner OFF */}
+        {offLoading && (
+          <View style={styles.offLoadingRow}>
+            <ActivityIndicator size="small" color={COLORS.primary} />
+            <Text style={styles.offLoadingText}>Recherche sur Open Food Facts…</Text>
+          </View>
+        )}
+
+        {/* Aucun résultat OFF après recherche */}
+        {!offLoading && offResults.length === 0 && search.trim().length >= 2 && (filtered.length > 0 || aiSuggestions.length > 0) && (
+          <View style={styles.fallbackRow}>
+            <Text style={styles.fallbackHint}>Pas ce que tu cherches ?</Text>
+            <TouchableOpacity style={styles.fallbackBtn} onPress={searchOff} activeOpacity={0.7}>
+              <Ionicons name="globe-outline" size={13} color={COLORS.primary} />
+              <Text style={styles.fallbackBtnText}>Open Food Facts</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.fallbackBtn} onPress={openCreateCustom} activeOpacity={0.7}>
+              <Ionicons name="create-outline" size={13} color={COLORS.textSecondary} />
+              <Text style={[styles.fallbackBtnText, { color: COLORS.textSecondary }]}>Manuel</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* État vide initial */}
+        {search.trim().length < 2 && (
+          <Text style={styles.empty}>Tape un nom pour rechercher…</Text>
         )}
       </View>
     );
@@ -289,17 +520,33 @@ function CreateMealForm({ onCreated }: { onCreated: () => void }) {
       <Text style={styles.sectionLabel}>Ingrédients</Text>
       {ingredients.map((ing, idx) => (
         <View key={idx} style={styles.ingredientRow}>
-          <Text style={styles.ingredientName} numberOfLines={1}>{ing.foodItem.name}</Text>
-          <TextInput
-            style={styles.ingredientQty}
-            value={ing.qty}
-            onChangeText={(v) => setIngredients((prev) => prev.map((x, i) => i === idx ? { ...x, qty: v } : x))}
-            keyboardType="decimal-pad"
-          />
-          <Text style={styles.ingredientUnit}>{ing.unit}</Text>
-          <TouchableOpacity onPress={() => removeIngredient(idx)}>
-            <Ionicons name="trash-outline" size={16} color={COLORS.error} />
-          </TouchableOpacity>
+          {/* Ligne 1 : nom + poubelle */}
+          <View style={styles.ingredientHeader}>
+            <Text style={styles.ingredientName} numberOfLines={1}>{ing.foodItem.name}</Text>
+            <TouchableOpacity onPress={() => removeIngredient(idx)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Ionicons name="trash-outline" size={16} color={COLORS.error} />
+            </TouchableOpacity>
+          </View>
+          {/* Ligne 2 : quantité + sélecteur d'unité */}
+          <View style={styles.ingredientControls}>
+            <TextInput
+              style={styles.ingredientQty}
+              value={ing.qty}
+              onChangeText={(v) => setIngredients((prev) => prev.map((x, i) => i === idx ? { ...x, qty: v } : x))}
+              keyboardType="decimal-pad"
+            />
+            {UNITS.map((u) => (
+              <TouchableOpacity
+                key={u.value}
+                style={[styles.ingUnitBtn, ing.unit === u.value && styles.ingUnitBtnActive]}
+                onPress={() => setIngredients((prev) => prev.map((x, i) => i === idx ? { ...x, unit: u.value } : x))}
+              >
+                <Text style={[styles.ingUnitText, ing.unit === u.value && styles.ingUnitTextActive]}>
+                  {u.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
       ))}
 
@@ -331,6 +578,7 @@ function CreateMealForm({ onCreated }: { onCreated: () => void }) {
 
 export default function FoodLibraryModal({ visible, onClose, onSelectFoodItem, onSelectComposedMeal }: Props) {
   const { foodLibrary, composedMeals, deleteFoodItem, deleteComposedMeal } = useCalorieStore();
+  const insets = useSafeAreaInsets();
   const [tab, setTab] = useState<LibTab>('foods');
   const [search, setSearch] = useState('');
   const [creating, setCreating] = useState<'food' | 'meal' | null>(null);
@@ -381,15 +629,15 @@ export default function FoodLibraryModal({ visible, onClose, onSelectFoodItem, o
     ]);
   }
 
+  const bottomPad = Math.max(insets.bottom, SPACING.lg);
+
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.overlay}
-      >
+      <KeyboardAvoidingView behavior="padding" style={styles.overlay}>
         <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={handleClose} />
-        <View style={styles.sheet}>
+        <View style={[styles.sheet, { paddingBottom: bottomPad }]}>
           <View style={styles.handle} />
+
           <View style={styles.headerRow}>
             <Text style={styles.title}>Bibliothèque</Text>
             <TouchableOpacity onPress={handleClose}>
@@ -413,19 +661,23 @@ export default function FoodLibraryModal({ visible, onClose, onSelectFoodItem, o
             ))}
           </View>
 
+          {/* ── Mode création ─────────────────────────────────────────────── */}
           {creating ? (
-            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+            <>
               <TouchableOpacity style={styles.backBtn} onPress={() => setCreating(null)}>
                 <Ionicons name="arrow-back" size={16} color={COLORS.textSecondary} />
                 <Text style={styles.backBtnText}>Retour</Text>
               </TouchableOpacity>
-              {creating === 'food' ? (
-                <CreateFoodForm onCreated={() => setCreating(null)} />
-              ) : (
-                <CreateMealForm onCreated={() => setCreating(null)} />
-              )}
-            </ScrollView>
+              <ScrollView style={styles.flex} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                {creating === 'food' ? (
+                  <CreateFoodForm onCreated={() => setCreating(null)} />
+                ) : (
+                  <CreateMealForm onCreated={() => setCreating(null)} />
+                )}
+              </ScrollView>
+            </>
           ) : (
+            /* ── Mode liste ─────────────────────────────────────────────── */
             <>
               <TextInput
                 style={styles.searchInput}
@@ -435,7 +687,7 @@ export default function FoodLibraryModal({ visible, onClose, onSelectFoodItem, o
                 placeholderTextColor={COLORS.textTertiary}
               />
 
-              <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+              <ScrollView style={styles.flex} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
                 {tab === 'foods' ? (
                   filteredFoods.length === 0 ? (
                     <View style={styles.emptyState}>
@@ -497,14 +749,15 @@ export default function FoodLibraryModal({ visible, onClose, onSelectFoodItem, o
                 )}
               </ScrollView>
 
+              {/* Bouton Créer — ancré hors de la scroll, toujours visible */}
               <TouchableOpacity
                 style={styles.createTrigger}
                 onPress={() => setCreating(tab === 'foods' ? 'food' : 'meal')}
                 activeOpacity={0.8}
               >
-                <Ionicons name="add" size={18} color={COLORS.primary} />
+                <Ionicons name="add-circle" size={20} color="#fff" />
                 <Text style={styles.createTriggerText}>
-                  {tab === 'foods' ? '+ Créer un aliment' : '+ Créer un repas composé'}
+                  {tab === 'foods' ? 'Créer un aliment' : 'Créer un repas composé'}
                 </Text>
               </TouchableOpacity>
             </>
@@ -518,13 +771,15 @@ export default function FoodLibraryModal({ visible, onClose, onSelectFoodItem, o
 const styles = StyleSheet.create({
   overlay: { flex: 1, justifyContent: 'flex-end' },
   backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' },
+  flex: { flex: 1 },
   sheet: {
     backgroundColor: COLORS.bgCard,
     borderTopLeftRadius: RADIUS.xl,
     borderTopRightRadius: RADIUS.xl,
-    padding: SPACING.lg,
-    paddingBottom: Platform.OS === 'ios' ? 40 : SPACING.lg,
-    maxHeight: '90%',
+    paddingTop: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    // paddingBottom est injecté dynamiquement via insets
+    height: '92%',  // hauteur fixe → les enfants flex: 1 peuvent s'étendre
     gap: SPACING.md,
   },
   handle: {
@@ -582,15 +837,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
-    backgroundColor: COLORS.bgElevated,
+    backgroundColor: COLORS.primary,
     borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    paddingVertical: 14,
+    paddingVertical: 16,
     paddingHorizontal: SPACING.md,
     justifyContent: 'center',
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 6,
   },
-  createTriggerText: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.semibold, color: COLORS.primary },
+  createTriggerText: { fontSize: FONT_SIZE.md, fontWeight: FONT_WEIGHT.bold, color: '#fff' },
 
   // Create form
   backBtn: {
@@ -654,16 +912,24 @@ const styles = StyleSheet.create({
   emojiNameRow: { flexDirection: 'row', gap: SPACING.sm },
 
   ingredientRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
     backgroundColor: COLORS.bgElevated,
     borderRadius: RADIUS.sm,
     padding: SPACING.sm,
     borderWidth: 1,
     borderColor: COLORS.border,
+    gap: 6,
   },
-  ingredientName: { flex: 1, fontSize: FONT_SIZE.sm, color: COLORS.textPrimary },
+  ingredientHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  ingredientName: { flex: 1, fontSize: FONT_SIZE.sm, color: COLORS.textPrimary, marginRight: SPACING.sm },
+  ingredientControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
   ingredientQty: {
     width: 56,
     backgroundColor: COLORS.bg,
@@ -676,7 +942,108 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
     textAlign: 'center',
   },
-  ingredientUnit: { fontSize: FONT_SIZE.xs, color: COLORS.textTertiary, width: 36 },
+  ingUnitBtn: {
+    flex: 1,
+    paddingVertical: 6,
+    borderRadius: RADIUS.sm,
+    backgroundColor: COLORS.bg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: 'center',
+  },
+  ingUnitBtnActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  ingUnitText: { fontSize: 10, color: COLORS.textTertiary, fontWeight: FONT_WEIGHT.semibold },
+  ingUnitTextActive: { color: '#fff' },
+
+  createManualBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    paddingVertical: SPACING.md,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    marginTop: SPACING.sm,
+  },
+  createManualText: { fontSize: FONT_SIZE.sm, color: COLORS.primary, fontWeight: FONT_WEIGHT.medium, flex: 1 },
+
+  // Carte "introuvable localement"
+  notFoundCard: {
+    alignItems: 'center',
+    gap: SPACING.sm,
+    paddingVertical: SPACING.lg,
+    paddingHorizontal: SPACING.md,
+    backgroundColor: COLORS.bgElevated,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    marginTop: SPACING.sm,
+  },
+  notFoundTitle: {
+    fontSize: FONT_SIZE.md,
+    fontWeight: FONT_WEIGHT.bold,
+    color: COLORS.textPrimary,
+    textAlign: 'center',
+  },
+  notFoundSub: {
+    fontSize: FONT_SIZE.xs,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  offPrimaryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.primary,
+    borderRadius: RADIUS.md,
+    paddingVertical: 12,
+    paddingHorizontal: SPACING.lg,
+    width: '100%',
+    justifyContent: 'center',
+    marginTop: SPACING.xs,
+  },
+  offPrimaryBtnText: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.bold, color: '#fff' },
+  manualSecondaryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 8,
+  },
+  manualSecondaryBtnText: { fontSize: FONT_SIZE.xs, color: COLORS.textSecondary },
+
+  // Spinner OFF
+  offLoadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    paddingVertical: SPACING.md,
+    justifyContent: 'center',
+  },
+  offLoadingText: { fontSize: FONT_SIZE.sm, color: COLORS.textSecondary },
+
+  // Fallback discret quand il y a déjà des résultats
+  fallbackRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginTop: SPACING.sm,
+    paddingTop: SPACING.sm,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  },
+  fallbackHint: { fontSize: FONT_SIZE.xs, color: COLORS.textTertiary, flex: 1 },
+  fallbackBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 7,
+    paddingHorizontal: SPACING.sm,
+    borderRadius: RADIUS.sm,
+    backgroundColor: COLORS.bgElevated,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  fallbackBtnText: { fontSize: 11, color: COLORS.primary, fontWeight: FONT_WEIGHT.semibold },
 
   addIngredientBtn: {
     flexDirection: 'row',

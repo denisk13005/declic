@@ -39,6 +39,8 @@ export interface UserProfile {
 
 // ─── Calories ─────────────────────────────────────────────────────────────────
 
+export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
+
 export interface Macros {
   protein: number;
   carbs: number;
@@ -89,6 +91,7 @@ export interface FoodEntry {
   id: string;
   date: string; // yyyy-MM-dd
   createdAt: string; // ISO
+  meal: MealType;
   foodItemId?: string;
   composedMealId?: string;
   name: string;

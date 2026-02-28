@@ -13,7 +13,7 @@ import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop } from 'react-na
 import { format, addDays, subDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useCalorieStore } from '@/stores/calorieStore';
-import { FoodEntry, Macros } from '@/types';
+import { FoodEntry, MealType } from '@/types';
 import { PrefillFood } from '@/components/nutrition/AddEntryModal';
 import AddEntryModal from '@/components/nutrition/AddEntryModal';
 import FoodLibraryModal from '@/components/nutrition/FoodLibraryModal';
@@ -31,6 +31,17 @@ function formatDayLabel(dateStr: string): string {
   if (dateStr === yesterday) return 'Hier';
   return format(new Date(dateStr + 'T12:00:00'), 'd MMM', { locale: fr });
 }
+
+// ─── Meal metadata ─────────────────────────────────────────────────────────────
+
+const MEAL_ORDER: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
+
+const MEAL_META: Record<MealType, { label: string; icon: string; dotColor: string }> = {
+  breakfast: { label: 'Petit-déjeuner', icon: '🌅', dotColor: '#FB923C' },
+  lunch:     { label: 'Déjeuner',       icon: '☀️',  dotColor: '#60A5FA' },
+  dinner:    { label: 'Dîner',          icon: '🌙',  dotColor: '#A78BFA' },
+  snack:     { label: 'Collation',      icon: '🍎',  dotColor: '#34D399' },
+};
 
 // ─── Anneau SVG ───────────────────────────────────────────────────────────────
 
@@ -113,15 +124,17 @@ function MacroBar({
 
 function EntryRow({
   entry,
+  dotColor,
   onDelete,
 }: {
   entry: FoodEntry;
+  dotColor: string;
   onDelete: () => void;
 }) {
   const hasMacros = entry.macros != null;
   return (
     <View style={styles.entryRow}>
-      <View style={styles.entryDot} />
+      <View style={[styles.entryDot, { backgroundColor: dotColor }]} />
       <View style={styles.entryInfo}>
         <Text style={styles.entryName} numberOfLines={1}>{entry.name}</Text>
         {hasMacros && (
@@ -138,6 +151,51 @@ function EntryRow({
   );
 }
 
+// ─── Meal section ─────────────────────────────────────────────────────────────
+
+function MealSection({
+  mealType,
+  entries,
+  onAdd,
+  onDelete,
+}: {
+  mealType: MealType;
+  entries: FoodEntry[];
+  onAdd: () => void;
+  onDelete: (entry: FoodEntry) => void;
+}) {
+  const meta = MEAL_META[mealType];
+  const mealTotal = entries.reduce((sum, e) => sum + e.calories, 0);
+
+  return (
+    <View style={styles.mealSection}>
+      <View style={styles.mealHeader}>
+        <Text style={styles.mealIcon}>{meta.icon}</Text>
+        <Text style={styles.mealLabel}>{meta.label}</Text>
+        <Text style={[styles.mealKcal, mealTotal > 0 && { color: COLORS.textPrimary }]}>
+          {mealTotal > 0 ? `${mealTotal} kcal` : '—'}
+        </Text>
+        <TouchableOpacity onPress={onAdd} style={styles.mealAddBtn} activeOpacity={0.7}>
+          <Ionicons name="add-circle-outline" size={24} color={COLORS.primary} />
+        </TouchableOpacity>
+      </View>
+
+      {entries.length > 0 && (
+        <View style={styles.entriesList}>
+          {entries.map((entry) => (
+            <EntryRow
+              key={entry.id}
+              entry={entry}
+              dotColor={meta.dotColor}
+              onDelete={() => onDelete(entry)}
+            />
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}
+
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function CaloriesScreen() {
@@ -145,6 +203,7 @@ export default function CaloriesScreen() {
 
   const [selectedDate, setSelectedDate] = useState(todayISO());
   const [addModalVisible, setAddModalVisible] = useState(false);
+  const [initialMeal, setInitialMeal] = useState<MealType | undefined>(undefined);
   const [libraryModalVisible, setLibraryModalVisible] = useState(false);
   const [goalsModalVisible, setGoalsModalVisible] = useState(false);
   const [prefillFood, setPrefillFood] = useState<PrefillFood | null>(null);
@@ -156,6 +215,14 @@ export default function CaloriesScreen() {
   const remaining = goals.calories - total;
 
   const hasMacroGoals = goals.protein != null || goals.carbs != null || goals.fat != null;
+
+  const entriesByMeal = MEAL_ORDER.reduce<Record<MealType, FoodEntry[]>>(
+    (acc, m) => {
+      acc[m] = entries.filter((e) => (e.meal ?? 'lunch') === m);
+      return acc;
+    },
+    { breakfast: [], lunch: [], dinner: [], snack: [] }
+  );
 
   function goBack() {
     setSelectedDate((d) => format(subDays(new Date(d + 'T12:00:00'), 1), 'yyyy-MM-dd'));
@@ -174,6 +241,11 @@ export default function CaloriesScreen() {
     ]);
   }
 
+  function openAddModal(meal?: MealType) {
+    setInitialMeal(meal);
+    setAddModalVisible(true);
+  }
+
   function handleLibrarySelect(prefill: PrefillFood) {
     setPrefillFood(prefill);
     setLibraryModalVisible(false);
@@ -183,6 +255,7 @@ export default function CaloriesScreen() {
   function handleAddClose() {
     setAddModalVisible(false);
     setPrefillFood(null);
+    setInitialMeal(undefined);
   }
 
   return (
@@ -244,27 +317,22 @@ export default function CaloriesScreen() {
           </View>
         )}
 
-        {/* Entries */}
+        {/* Meal sections */}
         <Text style={styles.sectionTitle}>Repas du jour</Text>
-        {entries.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyEmoji}>🥗</Text>
-            <Text style={styles.emptyText}>
-              {isToday ? 'Aucun aliment enregistré pour aujourd\'hui.' : 'Aucun aliment ce jour-là.'}
-            </Text>
-            {isToday && <Text style={styles.emptyHint}>Appuie sur + pour commencer</Text>}
-          </View>
-        ) : (
-          <View style={styles.entriesList}>
-            {entries.map((entry) => (
-              <EntryRow
-                key={entry.id}
-                entry={entry}
-                onDelete={() => confirmDelete(entry)}
-              />
-            ))}
-          </View>
+
+        {entries.length === 0 && isToday && (
+          <Text style={styles.emptyHint}>Appuie sur + à côté d'un repas pour commencer</Text>
         )}
+
+        {MEAL_ORDER.map((mealType) => (
+          <MealSection
+            key={mealType}
+            mealType={mealType}
+            entries={entriesByMeal[mealType]}
+            onAdd={() => openAddModal(mealType)}
+            onDelete={confirmDelete}
+          />
+        ))}
       </ScrollView>
 
       {/* FABs */}
@@ -278,7 +346,7 @@ export default function CaloriesScreen() {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.fab}
-          onPress={() => setAddModalVisible(true)}
+          onPress={() => openAddModal()}
           activeOpacity={0.8}
         >
           <Ionicons name="add" size={28} color="#fff" />
@@ -293,6 +361,7 @@ export default function CaloriesScreen() {
         onClose={handleAddClose}
         date={selectedDate}
         prefillFood={prefillFood}
+        initialMeal={initialMeal}
       />
 
       <FoodLibraryModal
@@ -377,20 +446,38 @@ const styles = StyleSheet.create({
   macroFill: { height: '100%', borderRadius: 3 },
   macroBarValue: { width: 80, fontSize: FONT_SIZE.xs, color: COLORS.textSecondary, textAlign: 'right' },
 
-  sectionTitle: { fontSize: FONT_SIZE.lg, fontWeight: FONT_WEIGHT.semibold, color: COLORS.textPrimary, marginBottom: SPACING.md },
+  sectionTitle: { fontSize: FONT_SIZE.lg, fontWeight: FONT_WEIGHT.semibold, color: COLORS.textPrimary, marginBottom: SPACING.sm },
+  emptyHint: { fontSize: FONT_SIZE.sm, color: COLORS.textTertiary, marginBottom: SPACING.md },
 
-  entriesList: { backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.border, overflow: 'hidden' },
+  // Meal section
+  mealSection: {
+    marginBottom: SPACING.md,
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    overflow: 'hidden',
+  },
+  mealHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    gap: SPACING.sm,
+  },
+  mealIcon: { fontSize: 18 },
+  mealLabel: { flex: 1, fontSize: FONT_SIZE.md, fontWeight: FONT_WEIGHT.semibold, color: COLORS.textPrimary },
+  mealKcal: { fontSize: FONT_SIZE.sm, color: COLORS.textTertiary, fontWeight: FONT_WEIGHT.medium },
+  mealAddBtn: { padding: 2 },
+
+  // Entries
+  entriesList: { borderTopWidth: 1, borderTopColor: COLORS.border },
   entryRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: SPACING.md, paddingHorizontal: SPACING.md, borderBottomWidth: 1, borderBottomColor: COLORS.border, gap: SPACING.sm },
-  entryDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.primary, alignSelf: 'flex-start', marginTop: 4 },
+  entryDot: { width: 8, height: 8, borderRadius: 4, alignSelf: 'flex-start', marginTop: 4 },
   entryInfo: { flex: 1 },
   entryName: { fontSize: FONT_SIZE.sm, color: COLORS.textPrimary },
   entryMacros: { fontSize: FONT_SIZE.xs, color: COLORS.textTertiary, marginTop: 2 },
   entryKcal: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.semibold, color: COLORS.textSecondary },
-
-  emptyState: { alignItems: 'center', paddingVertical: SPACING.xxl, gap: SPACING.sm },
-  emptyEmoji: { fontSize: 48 },
-  emptyText: { fontSize: FONT_SIZE.md, color: COLORS.textSecondary, textAlign: 'center' },
-  emptyHint: { fontSize: FONT_SIZE.sm, color: COLORS.textTertiary },
 
   fabContainer: {
     position: 'absolute',

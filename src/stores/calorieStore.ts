@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { format } from 'date-fns';
-import { FoodEntry, FoodItem, ComposedMeal, NutritionGoals, Macros, Serving } from '@/types';
+import { FoodEntry, FoodItem, ComposedMeal, NutritionGoals, Macros, Serving, MealType } from '@/types';
 import { CONFIG } from '@/constants/config';
 
 function uid(): string {
@@ -31,6 +31,7 @@ interface CalorieStore {
   removeEntry: (id: string) => void;
   getEntriesForDate: (date: string) => FoodEntry[];
   getTotalsForDate: (date: string) => { calories: number; macros: Macros };
+  getMealTotals: (date: string) => Record<MealType, { calories: number; count: number }>;
 
   // Backward compat helpers
   getTodayEntries: () => FoodEntry[];
@@ -87,6 +88,22 @@ export const useCalorieStore = create<CalorieStore>()(
           }
         }
         return { calories, macros };
+      },
+
+      getMealTotals: (date) => {
+        const entries = get().getEntriesForDate(date);
+        const result: Record<MealType, { calories: number; count: number }> = {
+          breakfast: { calories: 0, count: 0 },
+          lunch: { calories: 0, count: 0 },
+          dinner: { calories: 0, count: 0 },
+          snack: { calories: 0, count: 0 },
+        };
+        for (const e of entries) {
+          const m = e.meal ?? 'lunch';
+          result[m].calories += e.calories;
+          result[m].count += 1;
+        }
+        return result;
       },
 
       getTodayEntries: () => get().getEntriesForDate(todayISO()),
@@ -160,11 +177,14 @@ export const useCalorieStore = create<CalorieStore>()(
       onRehydrateStorage: () => (state) => {
         if (!state) return;
         // Migrate old FoodEntry without serving field
-        state.entries = state.entries.map((e) =>
-          !(e as any).serving
+        state.entries = state.entries.map((e) => {
+          const withServing = !(e as any).serving
             ? { ...e, serving: { quantity: 1, unit: 'piece' as const }, macros: null }
-            : e
-        );
+            : e;
+          return !(withServing as any).meal
+            ? { ...withServing, meal: 'lunch' as MealType }
+            : withServing;
+        });
         // Migrate dailyGoal → goals
         if (!state.goals) {
           state.goals = {

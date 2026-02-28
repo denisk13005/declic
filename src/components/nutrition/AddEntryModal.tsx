@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Modal,
   View,
@@ -20,8 +20,9 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { useCalorieStore } from '@/stores/calorieStore';
 import { analyzeFoodPhoto } from '@/services/gemini';
-import { lookupBarcode } from '@/services/openFoodFacts';
-import { FoodItem, Macros, Serving, ServingUnit } from '@/types';
+import { searchCiqual, CiqualResult } from '@/services/ciqualSearch';
+import { lookupBarcode, searchByName, ProductInfo } from '@/services/openFoodFacts';
+import { FoodItem, Macros, Serving, ServingUnit, MealType } from '@/types';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
 
 export interface PrefillFood {
@@ -31,10 +32,26 @@ export interface PrefillFood {
   foodItem?: FoodItem;
 }
 
+const MEALS: { key: MealType; label: string; icon: string }[] = [
+  { key: 'breakfast', label: 'Petit-déj', icon: '🌅' },
+  { key: 'lunch',     label: 'Déjeuner',  icon: '☀️' },
+  { key: 'dinner',    label: 'Dîner',     icon: '🌙' },
+  { key: 'snack',     label: 'Collation', icon: '🍎' },
+];
+
+function defaultMeal(): MealType {
+  const h = new Date().getHours();
+  if (h >= 6  && h < 10) return 'breakfast';
+  if (h >= 10 && h < 15) return 'lunch';
+  if (h >= 15 && h < 19) return 'snack';
+  return 'dinner';
+}
+
 interface Props {
   visible: boolean;
   onClose: () => void;
   date: string; // yyyy-MM-dd
+  initialMeal?: MealType;
   prefillFood?: PrefillFood | null;
 }
 
@@ -147,10 +164,11 @@ function BarcodeScanner({
 
 // ─── Main modal ───────────────────────────────────────────────────────────────
 
-export default function AddEntryModal({ visible, onClose, date, prefillFood }: Props) {
+export default function AddEntryModal({ visible, onClose, date, initialMeal, prefillFood }: Props) {
   const { addEntry, addFoodItem } = useCalorieStore();
 
   const [tab, setTab] = useState<Tab>('manuel');
+  const [meal, setMeal] = useState<MealType>(defaultMeal);
 
   // Form fields
   const [name, setName] = useState('');
@@ -164,6 +182,18 @@ export default function AddEntryModal({ visible, onClose, date, prefillFood }: P
   const [saveToLib, setSaveToLib] = useState(false);
   const [perLabel, setPerLabel] = useState<string | null>(null);
 
+  // Base nutritionnelle du produit sélectionné (pour recalcul à la volée)
+  const [basePer100, setBasePer100] = useState<{ calories: number; macros: Macros | null } | null>(null);
+
+  // Search suggestions (Ciqual — synchrone, pas de réseau)
+  const [suggestions, setSuggestions] = useState<CiqualResult[]>([]);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Recherche Open Food Facts (fallback réseau)
+  const [offSuggestions, setOffSuggestions] = useState<ProductInfo[]>([]);
+  const [offLoading, setOffLoading] = useState(false);
+  const offAbortRef = useRef<AbortController | null>(null);
+
   // Photo / barcode state
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
@@ -171,6 +201,7 @@ export default function AddEntryModal({ visible, onClose, date, prefillFood }: P
 
   function reset() {
     setTab('manuel');
+    setMeal(initialMeal ?? defaultMeal());
     setName('');
     setQuantity('100');
     setUnit('g');
@@ -184,12 +215,22 @@ export default function AddEntryModal({ visible, onClose, date, prefillFood }: P
     setPhotoUri(null);
     setAnalyzing(false);
     setScannerVisible(false);
+    setBasePer100(null);
+    setSuggestions([]);
+    offAbortRef.current?.abort();
+    setOffSuggestions([]);
+    setOffLoading(false);
   }
 
   function handleClose() {
     reset();
     onClose();
   }
+
+  // Synchro meal quand la modale s'ouvre depuis une section spécifique
+  useEffect(() => {
+    if (visible) setMeal(initialMeal ?? defaultMeal());
+  }, [visible, initialMeal]);
 
   // Apply prefill when prop changes
   useEffect(() => {
@@ -204,6 +245,98 @@ export default function AddEntryModal({ visible, onClose, date, prefillFood }: P
       }
     }
   }, [visible, prefillFood]);
+
+  function applyBase(
+    base: { calories: number; macros: Macros | null },
+    qty: number,
+    u: ServingUnit,
+  ) {
+    if (u === 'g' || u === 'ml') {
+      setCaloriesInput(String(Math.round(base.calories * qty / 100)));
+      if (base.macros) {
+        setProteinInput(String(Math.round(base.macros.protein * qty / 100 * 10) / 10));
+        setCarbsInput(String(Math.round(base.macros.carbs * qty / 100 * 10) / 10));
+        setFatInput(String(Math.round(base.macros.fat * qty / 100 * 10) / 10));
+        setMacrosOpen(true);
+      }
+    } else {
+      // pièce / portion : on affiche la valeur pour 1 unité (= per100 d'OFF)
+      setCaloriesInput(String(base.calories));
+      if (base.macros) {
+        setProteinInput(String(base.macros.protein));
+        setCarbsInput(String(base.macros.carbs));
+        setFatInput(String(base.macros.fat));
+        setMacrosOpen(true);
+      }
+    }
+  }
+
+  function handleQuantityChange(text: string) {
+    setQuantity(text);
+    if (!basePer100) return;
+    const qty = parseFloat(text);
+    if (!qty || qty <= 0) return;
+    applyBase(basePer100, qty, unit);
+  }
+
+  function handleUnitChange(newUnit: ServingUnit) {
+    setUnit(newUnit);
+    if (!basePer100) return;
+    applyBase(basePer100, parseFloat(quantity) || 100, newUnit);
+  }
+
+  function handleNameChange(text: string) {
+    setName(text);
+    setBasePer100(null);
+    // Reset OFF quand l'utilisateur retape
+    offAbortRef.current?.abort();
+    setOffSuggestions([]);
+    setOffLoading(false);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (text.trim().length < 2) {
+      setSuggestions([]);
+      return;
+    }
+    debounceRef.current = setTimeout(() => {
+      setSuggestions(searchCiqual(text.trim()));
+    }, 200);
+  }
+
+  async function searchOff() {
+    if (name.trim().length < 2) return;
+    offAbortRef.current?.abort();
+    const ctrl = new AbortController();
+    offAbortRef.current = ctrl;
+    setOffLoading(true);
+    setOffSuggestions([]);
+    try {
+      const results = await searchByName(name.trim(), ctrl.signal);
+      setOffSuggestions(results);
+    } catch {
+      // annulé ou erreur réseau
+    } finally {
+      setOffLoading(false);
+    }
+  }
+
+  function selectOffSuggestion(product: ProductInfo) {
+    setOffSuggestions([]);
+    setSuggestions([]);
+    const base = { calories: product.caloriesPer100, macros: product.macrosPer100 };
+    setBasePer100(base);
+    setName(product.brand ? `${product.name} (${product.brand})` : product.name);
+    setPerLabel('pour 100g');
+    applyBase(base, parseFloat(quantity) || 100, unit);
+  }
+
+  function selectSuggestion(item: CiqualResult) {
+    setSuggestions([]);
+    const base = { calories: item.caloriesPer100, macros: item.macros };
+    setBasePer100(base);
+    setName(item.name);
+    setPerLabel('pour 100g');
+    applyBase(base, parseFloat(quantity) || 100, unit);
+  }
 
   function prefillFromAnalysis(n: string, cal: number, macros?: Macros | null, label?: string | null) {
     setName(n);
@@ -315,6 +448,7 @@ export default function AddEntryModal({ visible, onClose, date, prefillFood }: P
 
     addEntry({
       date,
+      meal,
       name: name.trim(),
       serving,
       calories: kcal,
@@ -337,7 +471,7 @@ export default function AddEntryModal({ visible, onClose, date, prefillFood }: P
     <>
       <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior="padding"
           style={styles.overlay}
         >
           <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={handleClose} />
@@ -361,6 +495,23 @@ export default function AddEntryModal({ visible, onClose, date, prefillFood }: P
                   />
                   <Text style={[styles.tabPillText, tab === t.key && styles.tabPillTextActive]}>
                     {t.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Sélecteur de repas */}
+            <View style={styles.mealRow}>
+              {MEALS.map((m) => (
+                <TouchableOpacity
+                  key={m.key}
+                  style={[styles.mealPill, meal === m.key && styles.mealPillActive]}
+                  onPress={() => setMeal(m.key)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.mealPillIcon}>{m.icon}</Text>
+                  <Text style={[styles.mealPillText, meal === m.key && styles.mealPillTextActive]}>
+                    {m.label}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -418,22 +569,109 @@ export default function AddEntryModal({ visible, onClose, date, prefillFood }: P
               {/* ── Manuel tab ────────────────────────────────────────────── */}
               {tab === 'manuel' && (
                 <View style={styles.form}>
-                  <TextInput
-                    style={styles.input}
-                    value={name}
-                    onChangeText={setName}
-                    placeholder="Nom (ex: Yaourt, Poulet…)"
-                    placeholderTextColor={COLORS.textTertiary}
-                    autoCapitalize="sentences"
-                    returnKeyType="next"
-                  />
+                  <View>
+                    <TextInput
+                      style={styles.input}
+                      value={name}
+                      onChangeText={handleNameChange}
+                      placeholder="Nom (ex: Yaourt, Poulet…)"
+                      placeholderTextColor={COLORS.textTertiary}
+                      autoCapitalize="sentences"
+                      returnKeyType="next"
+                    />
+
+                    {/* Suggestions Ciqual */}
+                    {suggestions.length > 0 && (
+                      <View style={styles.suggestionsBox}>
+                        {suggestions.map((item, i) => (
+                          <TouchableOpacity
+                            key={`${item.name}-${i}`}
+                            style={[styles.suggestionRow, i < suggestions.length - 1 && styles.suggestionBorder]}
+                            onPress={() => selectSuggestion(item)}
+                            activeOpacity={0.7}
+                          >
+                            <View style={styles.suggestionInfo}>
+                              <Text style={styles.suggestionName} numberOfLines={1}>{item.name}</Text>
+                              <Text style={styles.suggestionBrand}>
+                                {item.macros
+                                  ? `P:${item.macros.protein}g · G:${item.macros.carbs}g · L:${item.macros.fat}g`
+                                  : 'pour 100g'}
+                              </Text>
+                            </View>
+                            <Text style={styles.suggestionKcal}>{item.caloriesPer100} kcal</Text>
+                          </TouchableOpacity>
+                        ))}
+                        {/* Lien OFF discret en bas de la dropdown Ciqual */}
+                        <TouchableOpacity style={styles.offLinkRow} onPress={searchOff} activeOpacity={0.7}>
+                          <Ionicons name="globe-outline" size={12} color={COLORS.textTertiary} />
+                          <Text style={styles.offLinkText}>Pas ce que tu cherches ? → Open Food Facts</Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
+
+                    {/* Carte "introuvable" — aucun résultat Ciqual */}
+                    {name.trim().length >= 2 && suggestions.length === 0 && offSuggestions.length === 0 && !offLoading && (
+                      <View style={styles.notFoundInline}>
+                        <Ionicons name="search-outline" size={22} color={COLORS.textTertiary} />
+                        <Text style={styles.notFoundInlineTitle}>Introuvable dans la base locale</Text>
+                        <Text style={styles.notFoundInlineSub}>
+                          "{name.trim()}" n'est pas dans la base Ciqual.{'\n'}
+                          Cherche sur Open Food Facts (base mondiale) ou saisis les calories manuellement.
+                        </Text>
+                        <TouchableOpacity style={styles.offInlineBtn} onPress={searchOff} activeOpacity={0.8}>
+                          <Ionicons name="globe-outline" size={14} color="#fff" />
+                          <Text style={styles.offInlineBtnText}>Chercher sur Open Food Facts</Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
+
+                    {/* Spinner OFF */}
+                    {offLoading && (
+                      <View style={styles.offLoadingRow}>
+                        <ActivityIndicator size="small" color={COLORS.primary} />
+                        <Text style={styles.offLoadingText}>Recherche sur Open Food Facts…</Text>
+                      </View>
+                    )}
+
+                    {/* Résultats OFF */}
+                    {offSuggestions.length > 0 && (
+                      <View style={styles.suggestionsBox}>
+                        <Text style={styles.offResultsLabel}>Open Food Facts</Text>
+                        {offSuggestions.map((p, i) => (
+                          <TouchableOpacity
+                            key={`off-${i}`}
+                            style={[styles.suggestionRow, i < offSuggestions.length - 1 && styles.suggestionBorder]}
+                            onPress={() => selectOffSuggestion(p)}
+                            activeOpacity={0.7}
+                          >
+                            <View style={styles.suggestionInfo}>
+                              <Text style={styles.suggestionName} numberOfLines={1}>
+                                {p.name}{p.brand ? ` · ${p.brand}` : ''}
+                              </Text>
+                              <Text style={styles.suggestionBrand}>
+                                {p.macrosPer100
+                                  ? `P:${p.macrosPer100.protein}g · G:${p.macrosPer100.carbs}g · L:${p.macrosPer100.fat}g`
+                                  : 'pour 100g'}
+                              </Text>
+                            </View>
+                            <Text style={styles.suggestionKcal}>{p.caloriesPer100} kcal</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    )}
+
+                    {/* Aucun résultat OFF */}
+                    {!offLoading && offSuggestions.length === 0 && name.trim().length >= 2 && suggestions.length === 0 && offAbortRef.current && (
+                      <Text style={styles.offNoResult}>Aucun résultat sur Open Food Facts. Saisis les infos manuellement ci-dessous.</Text>
+                    )}
+                  </View>
 
                   {/* Quantity + unit */}
                   <View style={styles.quantityRow}>
                     <TextInput
                       style={[styles.input, styles.quantityInput]}
                       value={quantity}
-                      onChangeText={setQuantity}
+                      onChangeText={handleQuantityChange}
                       placeholder="100"
                       placeholderTextColor={COLORS.textTertiary}
                       keyboardType="decimal-pad"
@@ -444,7 +682,7 @@ export default function AddEntryModal({ visible, onClose, date, prefillFood }: P
                         <TouchableOpacity
                           key={u.value}
                           style={[styles.unitBtn, unit === u.value && styles.unitBtnActive]}
-                          onPress={() => setUnit(u.value)}
+                          onPress={() => handleUnitChange(u.value)}
                         >
                           <Text style={[styles.unitBtnText, unit === u.value && styles.unitBtnTextActive]}>
                             {u.label}
@@ -458,7 +696,7 @@ export default function AddEntryModal({ visible, onClose, date, prefillFood }: P
                     <TextInput
                       style={styles.input}
                       value={caloriesInput}
-                      onChangeText={(v) => { setCaloriesInput(v); setPerLabel(null); }}
+                      onChangeText={(v) => { setCaloriesInput(v); setPerLabel(null); setBasePer100(null); }}
                       placeholder="Calories (kcal)"
                       placeholderTextColor={COLORS.textTertiary}
                       keyboardType="numeric"
@@ -632,8 +870,108 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 
+  // Meal selector
+  mealRow: { flexDirection: 'row', gap: 6 },
+  mealPill: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.bgElevated,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    gap: 2,
+  },
+  mealPillActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  mealPillIcon: { fontSize: 14 },
+  mealPillText: { fontSize: 9, fontWeight: FONT_WEIGHT.semibold, color: COLORS.textSecondary },
+  mealPillTextActive: { color: '#fff' },
+
   // Form
   form: { gap: SPACING.sm },
+  suggestionsBox: {
+    backgroundColor: COLORS.bgElevated,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    marginTop: 4,
+    overflow: 'hidden',
+  },
+  suggestionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 12,
+    gap: SPACING.sm,
+  },
+  suggestionBorder: { borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  suggestionInfo: { flex: 1 },
+  suggestionName: { fontSize: FONT_SIZE.sm, color: COLORS.textPrimary, fontWeight: FONT_WEIGHT.medium },
+  suggestionBrand: { fontSize: FONT_SIZE.xs, color: COLORS.textTertiary, marginTop: 2 },
+  suggestionKcal: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.semibold, color: COLORS.primary },
+
+  // Lien OFF discret en bas de la dropdown Ciqual
+  offLinkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: SPACING.md,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  },
+  offLinkText: { fontSize: FONT_SIZE.xs, color: COLORS.textTertiary },
+
+  // Carte "introuvable localement"
+  notFoundInline: {
+    alignItems: 'center',
+    gap: SPACING.sm,
+    padding: SPACING.md,
+    marginTop: 4,
+    backgroundColor: COLORS.bgElevated,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  notFoundInlineTitle: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.bold, color: COLORS.textPrimary, textAlign: 'center' },
+  notFoundInlineSub: { fontSize: FONT_SIZE.xs, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 17 },
+  offInlineBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.primary,
+    borderRadius: RADIUS.md,
+    paddingVertical: 10,
+    paddingHorizontal: SPACING.md,
+    width: '100%',
+    justifyContent: 'center',
+    marginTop: 2,
+  },
+  offInlineBtnText: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.bold, color: '#fff' },
+  offLoadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    paddingVertical: SPACING.md,
+    justifyContent: 'center',
+  },
+  offLoadingText: { fontSize: FONT_SIZE.sm, color: COLORS.textSecondary },
+  offResultsLabel: {
+    fontSize: FONT_SIZE.xs,
+    fontWeight: FONT_WEIGHT.semibold,
+    color: COLORS.textTertiary,
+    paddingHorizontal: SPACING.md,
+    paddingTop: SPACING.sm,
+    paddingBottom: 4,
+  },
+  offNoResult: {
+    fontSize: FONT_SIZE.xs,
+    color: COLORS.textTertiary,
+    textAlign: 'center',
+    paddingVertical: SPACING.sm,
+    fontStyle: 'italic',
+  },
+
   input: {
     backgroundColor: COLORS.bgElevated,
     borderRadius: RADIUS.md,

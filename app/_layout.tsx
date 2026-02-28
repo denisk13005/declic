@@ -6,6 +6,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StyleSheet } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { listenToAuthState } from '@/stores/authStore';
+import { warmupCiqual } from '@/services/ciqualSearch';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -13,6 +14,8 @@ export default function RootLayout() {
   useEffect(() => {
     const unsubscribe = listenToAuthState();
     SplashScreen.hideAsync();
+    // Pré-charge l'index Fuse.js en arrière-plan après le 1er render
+    warmupCiqual();
     return unsubscribe;
   }, []);
 

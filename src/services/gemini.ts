@@ -9,6 +9,51 @@ export interface FoodAnalysis {
   macros: Macros | null;
 }
 
+export interface FoodSuggestion {
+  name: string;
+  caloriesPer100: number;
+  macros: Macros | null;
+}
+
+export async function searchFoodSuggestions(query: string, signal?: AbortSignal): Promise<FoodSuggestion[]> {
+  const prompt =
+    `Liste 5 aliments français dont le nom correspond à "${query}". ` +
+    'Réponds UNIQUEMENT en JSON valide, sans markdown : ' +
+    '[{"name":"Nom en français","caloriesPer100":165,"protein":31,"carbs":0,"fat":3.6}]. ' +
+    'Valeurs pour 100g. Si macros inconnues, mets 0.';
+
+  const response = await fetch(GEMINI_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    signal,
+    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+  });
+
+  if (!response.ok) return [];
+
+  const data = await response.json();
+  const text: string = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+  const jsonMatch = text.match(/\[[\s\S]*\]/);
+  if (!jsonMatch) return [];
+
+  try {
+    const parsed: any[] = JSON.parse(jsonMatch[0]);
+    return parsed
+      .filter((item) => item.name && Number(item.caloriesPer100) > 0)
+      .map((item) => ({
+        name: String(item.name),
+        caloriesPer100: Math.round(Number(item.caloriesPer100)),
+        macros: {
+          protein: Math.round(Number(item.protein || 0) * 10) / 10,
+          carbs: Math.round(Number(item.carbs || 0) * 10) / 10,
+          fat: Math.round(Number(item.fat || 0) * 10) / 10,
+        },
+      }));
+  } catch {
+    return [];
+  }
+}
+
 export async function analyzeFoodPhoto(base64Image: string): Promise<FoodAnalysis> {
   const response = await fetch(GEMINI_URL, {
     method: 'POST',
