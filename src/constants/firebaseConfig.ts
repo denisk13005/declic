@@ -1,8 +1,8 @@
 export const FIREBASE_CONFIG = {
-  apiKey: 'AIzaSyB08S37q--l7teBYENrGnsmA1Pt13Y8glM',
-  authDomain: 'declic-64bbf.firebaseapp.com',
-  projectId: 'declic-64bbf',
-  storageBucket: 'declic-64bbf.firebasestorage.app',
-  messagingSenderId: '108946336876',
-  appId: '1:108946336876:web:d6bb3309a8c71f49097c49',
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY ?? '',
+  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN ?? '',
+  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID ?? '',
+  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET ?? '',
+  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ?? '',
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID ?? '',
 };

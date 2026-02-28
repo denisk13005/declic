@@ -1,7 +1,7 @@
 export const CONFIG = {
-  // RevenueCat — replace with your real keys from app.revenuecat.com
-  REVENUECAT_IOS_KEY: 'appl_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-  REVENUECAT_ANDROID_KEY: 'goog_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+  // RevenueCat
+  REVENUECAT_IOS_KEY: process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY ?? '',
+  REVENUECAT_ANDROID_KEY: process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY ?? '',
 
   // Offering / entitlement IDs (must match RevenueCat dashboard)
   RC_ENTITLEMENT_ID: 'premium',
