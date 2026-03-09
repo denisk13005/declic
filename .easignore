@@ -1,0 +1,10 @@
+node_modules/
+.git/
+android/.gradle/
+android/app/build/
+android/build/
+assets/food.db
+src/data/off-fr.json
+scripts/fr.openfoodfacts.org.products.csv.gz
+__tests__/
+.claude/
