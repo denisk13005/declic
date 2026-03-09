@@ -14,7 +14,6 @@ export default function RootLayout() {
   useEffect(() => {
     const unsubscribe = listenToAuthState();
     SplashScreen.hideAsync();
-    // Pré-charge l'index Fuse.js en arrière-plan après le 1er render
     warmupCiqual();
     return unsubscribe;
   }, []);

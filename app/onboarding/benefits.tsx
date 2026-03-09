@@ -54,7 +54,7 @@ export default function BenefitsScreen() {
 
       <View style={styles.footer}>
         <TouchableOpacity
-          onPress={() => router.push('/onboarding/notifications')}
+          onPress={() => router.push('/onboarding/healthconnect')}
           style={styles.btnWrapper}
           activeOpacity={0.9}
         >
@@ -67,6 +67,7 @@ export default function BenefitsScreen() {
         <View style={styles.dots}>
           <View style={styles.dot} />
           <View style={[styles.dot, styles.dotActive]} />
+          <View style={styles.dot} />
           <View style={styles.dot} />
         </View>
       </View>

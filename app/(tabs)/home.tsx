@@ -91,6 +91,8 @@ function AddHabitModal({
     onClose();
   };
 
+  // @ts-ignore
+  // @ts-ignore
   return (
     <Modal visible={visible} animationType="slide" transparent>
       <View style={styles.modalOverlay}>

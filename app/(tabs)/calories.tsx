@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
@@ -19,6 +20,7 @@ import AddEntryModal from '@/components/nutrition/AddEntryModal';
 import FoodLibraryModal from '@/components/nutrition/FoodLibraryModal';
 import GoalsModal from '@/components/nutrition/GoalsModal';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
+import { useHealthConnect } from '@/hooks/useHealthConnect';
 
 function todayISO(): string {
   return format(new Date(), 'yyyy-MM-dd');
@@ -214,6 +216,9 @@ export default function CaloriesScreen() {
   const { calories: total, macros } = getTotalsForDate(selectedDate);
   const remaining = goals.calories - total;
 
+  const { status: hcStatus, burnedCalories, isLoading: hcLoading, requestPermissions, openPlayStore } = useHealthConnect(selectedDate);
+  const netCalories = burnedCalories != null ? total - burnedCalories : null;
+
   const hasMacroGoals = goals.protein != null || goals.carbs != null || goals.fat != null;
 
   const entriesByMeal = MEAL_ORDER.reduce<Record<MealType, FoodEntry[]>>(
@@ -307,6 +312,73 @@ export default function CaloriesScreen() {
             <Text style={styles.summaryLabel}>{remaining < 0 ? 'Dépassé' : 'Restantes'}</Text>
           </View>
         </View>
+
+        {/* Activité — Health Connect */}
+        {hcStatus !== 'checking' && hcStatus !== 'unavailable' && (
+          <View style={styles.hcCard}>
+            <View style={styles.hcRow}>
+              <Ionicons name="flame" size={18} color="#F97316" />
+              <Text style={styles.hcTitle}>Activité physique</Text>
+              {hcLoading && <Text style={styles.hcSub}>…</Text>}
+            </View>
+
+            {hcStatus === 'not_authorized' && (
+              <>
+                <Text style={styles.hcDesc}>
+                  Connecte Samsung Health pour voir tes calories brûlées et ajuster ton objectif net.
+                </Text>
+                <TouchableOpacity onPress={requestPermissions} activeOpacity={0.85} style={styles.hcBtnWrapper}>
+                  <LinearGradient colors={['#F97316', '#EA580C']} style={styles.hcBtn}>
+                    <Ionicons name="heart" size={16} color="#fff" />
+                    <Text style={styles.hcBtnText}>Connecter Samsung Health</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </>
+            )}
+
+            {hcStatus === 'not_installed' && (
+              <>
+                <Text style={styles.hcDesc}>
+                  Health Connect n'est pas installé sur ton téléphone. Il est nécessaire pour synchroniser Samsung Health.
+                </Text>
+                <TouchableOpacity onPress={openPlayStore} activeOpacity={0.85} style={styles.hcBtnWrapper}>
+                  <LinearGradient colors={['#6366F1', '#4F46E5']} style={styles.hcBtn}>
+                    <Ionicons name="logo-google-playstore" size={16} color="#fff" />
+                    <Text style={styles.hcBtnText}>Installer Health Connect</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </>
+            )}
+
+            {hcStatus === 'ready' && (
+              <View style={styles.hcStats}>
+                <View style={styles.hcStat}>
+                  <Text style={styles.hcStatValue}>
+                    {burnedCalories != null ? burnedCalories : '—'}
+                  </Text>
+                  <Text style={styles.hcStatLabel}>Brûlées</Text>
+                </View>
+                <View style={[styles.hcStat, styles.hcStatMid]}>
+                  <Text style={[
+                    styles.hcStatValue,
+                    netCalories != null && netCalories < 0 && { color: COLORS.error },
+                  ]}>
+                    {netCalories != null
+                      ? (netCalories < 0 ? `+${Math.abs(netCalories)}` : netCalories)
+                      : '—'}
+                  </Text>
+                  <Text style={styles.hcStatLabel}>
+                    {netCalories != null && netCalories < 0 ? 'Dépassé' : 'Nettes'}
+                  </Text>
+                </View>
+                <View style={styles.hcStat}>
+                  <Text style={styles.hcStatValue}>{total}</Text>
+                  <Text style={styles.hcStatLabel}>Consommées</Text>
+                </View>
+              </View>
+            )}
+          </View>
+        )}
 
         {/* Macro bars */}
         {(hasMacroGoals || macros.protein > 0 || macros.carbs > 0 || macros.fat > 0) && (
@@ -430,6 +502,34 @@ const styles = StyleSheet.create({
   summaryCardMid: { borderColor: COLORS.primaryGlow },
   summaryValue: { fontSize: FONT_SIZE.lg, fontWeight: FONT_WEIGHT.bold, color: COLORS.textPrimary },
   summaryLabel: { fontSize: FONT_SIZE.xs, color: COLORS.textSecondary },
+
+  hcCard: {
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: '#F97316' + '33',
+    padding: SPACING.md,
+    marginBottom: SPACING.lg,
+    gap: SPACING.sm,
+  },
+  hcRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs },
+  hcTitle: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.semibold, color: COLORS.textPrimary, flex: 1 },
+  hcSub: { fontSize: FONT_SIZE.xs, color: COLORS.textSecondary },
+  hcDesc: { fontSize: FONT_SIZE.sm, color: COLORS.textSecondary, lineHeight: 20 },
+  hcBtnWrapper: { borderRadius: RADIUS.md, overflow: 'hidden', marginTop: SPACING.xs },
+  hcBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.sm + 2,
+    gap: SPACING.xs,
+  },
+  hcBtnText: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.bold, color: '#fff' },
+  hcStats: { flexDirection: 'row', gap: SPACING.sm, marginTop: SPACING.xs },
+  hcStat: { flex: 1, alignItems: 'center', gap: 2 },
+  hcStatMid: { borderLeftWidth: 1, borderRightWidth: 1, borderColor: COLORS.border },
+  hcStatValue: { fontSize: FONT_SIZE.md, fontWeight: FONT_WEIGHT.bold, color: COLORS.textPrimary },
+  hcStatLabel: { fontSize: FONT_SIZE.xs, color: COLORS.textSecondary },
 
   macroBarsCard: {
     backgroundColor: COLORS.bgCard,

@@ -1,5 +1,62 @@
 # Déclic — Dev Log
 
+## Health Connect — Samsung Health (2026-03-08)
+
+### Feature : Calories brûlées via Health Connect
+
+**Architecture :**
+```
+Samsung Health → sync auto → Health Connect → permission → Déclic
+```
+
+**Fichiers créés/modifiés :**
+- `src/services/healthConnect.ts` — `checkHCStatus`, `requestHCPermissions`, `readBurnedCalories`, `openHCPlayStore`
+- `src/hooks/useHealthConnect.ts` — hook React exposant `{ status, burnedCalories, isLoading, requestPermissions, openSettings, openPlayStore }`
+- `app/(tabs)/calories.tsx` — hcCard restylisée (bouton gradient orange, description, redirection Play Store)
+- `app/onboarding/healthconnect.tsx` — nouvel écran step 3 onboarding
+- `android/app/src/main/AndroidManifest.xml` — permissions HC, queries, intent-filter
+- `android/app/src/main/java/com/declic/app/MainActivity.kt` — `HealthConnectPermissionDelegate.setPermissionDelegate(this)`
+
+**Onboarding mis à jour (4 étapes) :**
+`welcome → benefits → healthconnect → notifications`
+
+**Bugs corrigés :**
+
+1. **`InvalidRecordType: Record type is not valid`**
+   - Types corrects : `'TotalCaloriesBurned'` et `'ActiveCaloriesBurned'` (SANS suffixe "Record")
+   - Les noms TypeScript des interfaces (`TotalCaloriesBurnedRecord`) ≠ les valeurs de chaîne passées au SDK natif
+
+2. **`lateinit property requestPermission has not been initialized`**
+   - Cause : le `ActivityResultLauncher` de HC n'était pas enregistré dans `MainActivity.onCreate()`
+   - Fix : `HealthConnectPermissionDelegate.setPermissionDelegate(this)` dans `MainActivity.kt`
+   - ⚠️ Ce call doit rester dans `MainActivity.kt` — il sera perdu si android/ est régénéré par prebuild
+
+---
+
+## Build Android — migration Gradle 8.13 (2026-03-08)
+
+### Problèmes résolus
+
+**1. `AccessDeniedException` sur `dependencies-accessors` (Windows Defender)**
+- Windows Defender lockait le dossier temporaire au moment du rename atomique par Gradle
+- Fix : `org.gradle.projectcachedir=C\:/Users/kdkle/.gradle/declic-cache` dans `gradle.properties`
+- Le cache est stocké hors du dossier projet → hors de la portée du scan temps-réel
+
+**2. Gradle version**
+- AGP avec `compileSdk 36` / `buildTools 36` exige Gradle **8.13 minimum**
+- `gradle-wrapper.properties` : `gradle-8.13-all.zip`
+
+**3. `minSdkVersion 26` requis par Health Connect**
+- `androidx.health.connect:connect-client` requiert min API 26 (Android 8.0)
+- Hardcodé dans `android/app/build.gradle` : `minSdkVersion 26`
+- Aussi défini dans `app.config.ts` : `android.minSdkVersion: 26`
+
+**4. JitPack 521 — `@react-native-async-storage/async-storage` v3.x**
+- La v3.x utilise un dépôt JitPack (`org.asyncstorage.shared_storage`) régulièrement en panne
+- Fix : pinner à `^2.2.0` qui n'a pas cette dépendance
+
+---
+
 ## Build & environnement
 
 ### Android build (expo run:android)
@@ -166,6 +223,65 @@ Variables concernées : `REVENUECAT_IOS_KEY`, `REVENUECAT_ANDROID_KEY`, toutes l
 
 ---
 
+## Nutrition — Poids par pièce / portion (2026-03-08)
+
+### Feature : Calcul correct pour les unités pièce/portion
+
+**Problème :** Changer l'unité en "pièce" ou "portion" n'actualisait pas les calories.
+
+**Solution :**
+- `applyBase(base, qty, unit, gpp)` : paramètre `gpp` (grammes par pièce)
+- g/ml : `factor = qty/100` — inchangé
+- pièce/portion : `factor = gpp × qty / 100` — nécessite le poids d'une pièce
+- Si `gpp` absent → pas de calcul, saisie manuelle
+- Nouveau champ "Poids d'une pièce (g)" affiché uniquement pour pièce/portion
+
+### Feature : Poids de référence par pièce (`src/data/portionWeights.ts`)
+
+- ~100 aliments courants avec poids moyen ANSES/PNNS
+- `lookupPortionWeight(foodName)` → `{ grams, hint } | null`
+- Pré-remplit automatiquement le champ "Poids par pièce" à la sélection ou au changement d'unité
+- Ex : pomme → 150g, oeuf → 60g, yaourt → 125g, banane → 120g
+
+### Bugs corrigés
+
+**Bug 1 — faux positif "boeuf" → oeuf :**
+- `lookupPortionWeight` utilisait `includes()` (sous-chaîne) → "b**oeuf**".includes("oeuf") = true
+- Fix : matching par mots entiers (`nameWords.includes(kwWord)`)
+
+**Bug 2 — accents dans ciqualSearch :**
+- `matchesWordPrefix("entrecôte", "entrecote")` → false (ô ≠ o)
+- Fix : fonction `normalize()` avec NFD + suppression diacritiques dans les deux sens
+
+**Bug 3 — tri des résultats :**
+- Fuse.js retournait "Pomme de terre" avant "Pomme" pour la requête "pomme"
+- Fix : tri par longueur de nom croissante après le filtrage Fuse
+
+**Bug 4 — valeurs stales dans le formulaire :**
+- Après sélection d'un aliment, retaper un nouveau nom laissait les anciennes calories affichées
+- Fix : `handleNameChange` efface caloriesInput/macros si `basePer100` était positionné
+
+### Tentative SQLite (non aboutie — à reprendre)
+
+**Objectif :** Remplacer Fuse.js + off-fr.json (6.3MB, crashait Android) par expo-sqlite + FTS5.
+
+**Réalisé :**
+- `scripts/build-food-db.js` → génère `assets/food.db` (5.7MB, 55 098 aliments, FTS5)
+- `src/services/foodDb.ts` → service async SQLite
+- `metro.config.js` → `.db` dans `assetExts`
+- `expo-sqlite` + `better-sqlite3` installés
+
+**Bloquant :** La copie de `food.db` depuis les assets vers le device échoue silencieusement.
+- `asset.localUri` était null avec `expo-asset` + `copyAsync`
+- `FileSystem.downloadAsync(asset.uri, DB_PATH)` aussi
+- La DB ouverte par expo-sqlite est toujours vide (no such table: foods_fts)
+- Piste : Metro sert peut-être le `.db` corrompu, ou `openDatabaseAsync` ignore l'asset et crée une DB vide
+
+**État actuel :** Revenu à `ciqualSearch.ts` (Ciqual seul, 3 339 aliments, fonctionne).
+`foodDb.ts`, `food.db`, `off-fr.json` restent dans le projet pour reprise ultérieure.
+
+---
+
 ### Feature : Catégorisation par repas
 
 **Types ajoutés** (`src/types/index.ts`) :
@@ -215,22 +331,70 @@ node scripts/convert-ciqual.js
 
 **Service de recherche** : `src/services/ciqualSearch.ts`
 - Utilise **Fuse.js** (`npm install fuse.js`) pour la recherche floue (tolérance aux fautes)
-- Fuse initialisé une seule fois au chargement du module
+- Init Fuse **lazy** (1er appel de `searchCiqual`) + `warmupCiqual()` au démarrage → évite ANR
 - `searchCiqual(query, limit?)` → synchrone, <5ms, hors-ligne
+- Filtre post-Fuse : **word prefix match** — chaque mot de la requête doit avoir un mot du résultat qui commence par lui (ex : "dan" → "danette", pas "orangeade")
 
 **Intégration :**
-- `AddEntryModal` : frappe → `searchCiqual()` → suggestions instantanées (supprimé : AbortController, debounce, spinner)
+- `AddEntryModal` : frappe + debounce 200ms → `searchCiqual()` → suggestions instantanées
 - `FoodLibraryModal` (création de repas composé) : même logique dans le sélecteur d'ingrédients
+- `app/_layout.tsx` : `warmupCiqual()` appelé après le 1er render (pré-chauffe l'index Fuse)
 
 **Architecture des sources de données :**
 | Cas d'usage | Source |
 |---|---|
-| Recherche d'aliment par nom | Ciqual local (instantané, hors-ligne) |
-| Scan code-barres (produit industriel) | Open Food Facts API (1 requête) |
+| Recherche d'aliment par nom (principal) | Ciqual local (instantané, hors-ligne) |
+| Fallback produit introuvable localement | Open Food Facts API (`searchByName`) |
+| Scan code-barres (produit industriel) | Open Food Facts API (`lookupBarcode`) |
 | Reconnaissance photo d'un plat | Gemini Flash API |
-| Aliment introuvable | Création manuelle → bibliothèque perso |
+| Aliment introuvable partout | Création manuelle → bibliothèque perso |
 
 **Dépendance ajoutée :** `fuse.js`
+
+---
+
+### Feature : Base OFF France locale — recherche instantanée produits de marque (2026-02-28)
+
+**Objectif :** Éliminer les appels réseau OFF lents (20s) en embarquant les données localement, comme Yazio.
+
+**Source :** Export OFF France — `fr.openfoodfacts.org/data/fr.openfoodfacts.org.products.csv.gz`
+- Fichier compressé : ~1.2 GB
+- Script de conversion : `scripts/convert-off.js`
+
+**Script `convert-off.js` :**
+- Lecture en streaming gzip ligne par ligne (évite de charger 6+ GB en mémoire)
+- Détection automatique du séparateur (TAB) et du format (gzip vs texte)
+- Filtre : nom français + calories valides (0-900) + caractères latins uniquement
+- Déduplique par `name|brand`
+- Champs compacts : `{ name, brand?, code?, kcal, p?, c?, f? }`
+
+```bash
+node scripts/convert-off.js
+# → src/data/off-fr.json  (59 100 produits, ~6.3 MB)
+```
+
+**Service unifié** : `src/services/foodSearch.ts`
+- Combine Ciqual (3 339) + OFF France (59 100) = **62 439 aliments**
+- Index Fuse.js unique, init lazy + `warmupFoodSearch()` au démarrage
+- Priorité Ciqual (aliments génériques ANSES) → déduplique par nom
+- `searchFood(query, limit?)` → synchrone, hors-ligne
+- `FoodResult` : `{ name, caloriesPer100, macros, brand? }`
+
+**Intégration :**
+- `AddEntryModal` → remplace `searchCiqual` + suppression total du fallback OFF API
+- `FoodLibraryModal` → idem, section "Base alimentaire" unifiée
+- `app/_layout.tsx` → `warmupFoodSearch()` remplace `warmupCiqual()`
+
+**Nettoyage :**
+- Suppression des états `offSuggestions`, `offLoading`, `offAbortRef` dans les deux modales
+- Suppression des fonctions `searchOff`, `selectOffSuggestion`, `addOffResult`
+- Suppression des styles OFF (notFoundInline, offLoadingRow, fallbackRow, etc.)
+
+**⚠️ Crash au lancement — NON RÉSOLU (à investiguer)**
+- L'app plante après le rebuild intégrant `off-fr.json`
+- Cause probable : JSON 6.3 MB trop lourd pour `require()` Metro / Fuse.js init sur 62K items bloque le JS thread malgré le lazy + setTimeout
+- Pistes : réduire le dataset OFF, chunking, SQLite, ou index pré-calculé
+- Log crash à récupérer : `adb logcat --pid=$(adb shell pidof -s com.declic)`
 
 ---
 
@@ -338,6 +502,67 @@ Après :
 
 ---
 
+### Feature : UX fallback Open Food Facts quand aliment introuvable localement (2026-02-28)
+
+**Problème :** Ciqual couvre 3 339 aliments génériques ANSES, mais pas les produits industriels (Danette, etc.).
+
+**Solution :** Affichage explicite "introuvable dans la base locale" + bouton/appel vers OFF.
+
+**UX dans `FoodLibraryModal` (sélecteur d'ingrédients) et `AddEntryModal` :**
+
+- Si résultats Ciqual → liste normale + petite ligne "Pas ce que tu cherches ?" avec bouton OFF
+- Si aucun résultat Ciqual → card "Introuvable dans la base locale" + bouton OFF primaire
+- OFF : spinner pendant la requête, puis résultats dans la même liste déroulante
+- "Aucun résultat sur OFF" si la requête échoue
+- Bouton "Créer manuellement" toujours accessible dès qu'il y a une frappe
+
+---
+
+### Fix : Qualité de la recherche OFF — word prefix + endpoint v1 CGI (2026-02-28)
+
+**Problème :** `searchByName` (OFF API v2) retournait des produits hors-sujet (recherchait dans TOUS les champs).
+
+**Symptôme :** Taper "danette" retournait des orangeades, des produits arabes. "Danette au chocolat" introuvable.
+
+**Causes :**
+1. Endpoint v2 (`/api/v2/search`) cherche dans tous les champs → résultats non pertinents
+2. Filtre client en `includes()` → "ette" matchait n'importe quel mot contenant "ette"
+
+**Fix appliqué (`src/services/openFoodFacts.ts`) :**
+
+1. **Endpoint v1 CGI** : `world.openfoodfacts.org/cgi/search.pl` avec `search_simple=1`
+   - Cherche UNIQUEMENT dans les noms de produits → résultats bien plus pertinents
+   - `sort_by: unique_scans_n` → produits les plus scannés en premier
+
+2. **Word prefix matching** côté client :
+   ```ts
+   function wordPrefixMatch(text, queryWords): boolean {
+     const textWords = text.toLowerCase().split(/[\s\-_',().%]+/).filter(Boolean);
+     return queryWords.every(qw => textWords.some(tw => tw.startsWith(qw)));
+   }
+   ```
+   - "dan" → correspond à "danette" mais pas à "orangeade"
+   - `every` : tous les mots significatifs de la requête doivent matcher
+
+3. **Stop words** exclus du filtre (trop courts ou non-discriminants) :
+   ```ts
+   const STOP_WORDS = new Set(['au', 'aux', 'à', 'a', 'de', 'du', 'des', 'le', 'la', 'les', 'un', 'une', 'en', 'et']);
+   ```
+   - "danette au chocolat" → queryWords = ["danette", "chocolat"] ("au" exclu)
+   - Évite les faux négatifs sur des requêtes composées
+
+---
+
+### Feature : Sélecteur d'unité par ingrédient dans CreateMealForm (2026-02-28)
+
+**Avant :** Unité affichée en texte statique non modifiable.
+
+**Après :** Layout 2 lignes par ingrédient dans `FoodLibraryModal` → `CreateMealForm` :
+- Ligne 1 : nom de l'ingrédient + icône poubelle
+- Ligne 2 : champ quantité + 4 pills d'unité (g / ml / pièce / portion)
+
+---
+
 ## Tests unitaires (Jest)
 
 ### Configuration
@@ -356,14 +581,16 @@ npm run test:coverage # avec rapport de couverture
 - `setupFiles`: `jest.setup.js` (mock AsyncStorage)
 - `transformIgnorePatterns`: exclut `expo`, `@expo`, `expo-modules-core`, `fuse.js`, `zustand`, `date-fns` du filtre pour qu'ils soient transpilés par babel-jest
 
-### Suites (53 tests, 4 suites — tous ✅)
+### Suites (96 tests, 7 suites — tous ✅)
 
 | Fichier | Tests | Ce qui est couvert |
 |---|---|---|
 | `__tests__/scripts/convert-ciqual.test.js` | 14 | `decodeEntities`, `parseNum`, `extractField` |
-| `__tests__/services/ciqualSearch.test.ts` | 10 | `searchCiqual` (nominal, fuzzy, limites, edge cases) |
+| `__tests__/services/ciqualSearch.test.ts` | 20 | `searchCiqual` (nominal, fuzzy, accents, word-prefix, tri par longueur) |
 | `__tests__/services/openFoodFacts.test.ts` | 12 | `parseProduct` (filtrage Arabic/Cyrillique, kJ→kcal, macros partielles, portions) |
 | `__tests__/stores/calorieStore.test.ts` | 17 | `computeCalories`, `computeMacros`, `getTotalsForDate`, `getMealTotals`, `removeEntry` |
+| `__tests__/data/portionWeights.test.ts` | 14 | `lookupPortionWeight` (correspondances, faux positifs, accents, null) |
+| `__tests__/components/addEntryCalcUnit.test.ts` | 19 | `applyBase` g/ml/pièce/portion + cohérence avec store |
 
 ### Problèmes résolus
 

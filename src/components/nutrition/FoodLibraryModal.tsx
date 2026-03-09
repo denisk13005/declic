@@ -18,8 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCalorieStore } from '@/stores/calorieStore';
 import { FoodItem, ComposedMeal, ComposedMealIngredient, Macros, Serving, ServingUnit } from '@/types';
 import { PrefillFood } from './AddEntryModal';
-import { searchCiqual, CiqualResult } from '@/services/ciqualSearch';
-import { searchByName, ProductInfo } from '@/services/openFoodFacts';
+import { searchCiqual, CiqualResult as FoodResult } from '@/services/ciqualSearch';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
 
 interface Props {
@@ -164,18 +163,13 @@ function CreateMealForm({ onCreated }: { onCreated: () => void }) {
   >([]);
   const [pickingFood, setPickingFood] = useState(false);
   const [search, setSearch] = useState('');
-  const [aiSuggestions, setAiSuggestions] = useState<CiqualResult[]>([]);
+  const [foodSuggestions, setFoodSuggestions] = useState<FoodResult[]>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Création manuelle d'un aliment introuvable
   const [creatingCustom, setCreatingCustom] = useState(false);
   const [customName, setCustomName] = useState('');
   const [customCal, setCustomCal] = useState('');
-
-  // Recherche Open Food Facts (fallback réseau)
-  const [offResults, setOffResults] = useState<ProductInfo[]>([]);
-  const [offLoading, setOffLoading] = useState(false);
-  const offAbortRef = useRef<AbortController | null>(null);
 
   const filtered = foodLibrary.filter((f) =>
     f.name.toLowerCase().includes(search.toLowerCase())
@@ -185,52 +179,21 @@ function CreateMealForm({ onCreated }: { onCreated: () => void }) {
     setSearch(text);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (text.trim().length < 2) {
-      setAiSuggestions([]);
+      setFoodSuggestions([]);
       return;
     }
     debounceRef.current = setTimeout(() => {
-      setAiSuggestions(searchCiqual(text.trim()));
-    }, 200);
+      setFoodSuggestions(searchCiqual(text.trim()));
+    }, 150);
   }
 
   function closePicking() {
-    offAbortRef.current?.abort();
     setPickingFood(false);
     setSearch('');
-    setAiSuggestions([]);
+    setFoodSuggestions([]);
     setCreatingCustom(false);
     setCustomName('');
     setCustomCal('');
-    setOffResults([]);
-    setOffLoading(false);
-  }
-
-  async function searchOff() {
-    if (search.trim().length < 2) return;
-    offAbortRef.current?.abort();
-    const ctrl = new AbortController();
-    offAbortRef.current = ctrl;
-    setOffLoading(true);
-    setOffResults([]);
-    try {
-      const results = await searchByName(search.trim(), ctrl.signal);
-      setOffResults(results);
-    } catch {
-      // requête annulée ou erreur réseau → on ne fait rien
-    } finally {
-      setOffLoading(false);
-    }
-  }
-
-  function addOffResult(product: ProductInfo) {
-    const newItem = addFoodItem({
-      name: product.brand ? `${product.name} (${product.brand})` : product.name,
-      caloriesPer100: product.caloriesPer100,
-      macrosPer100: product.macrosPer100,
-      defaultServing: { quantity: 100, unit: 'g' },
-      isCustom: false,
-    });
-    addIngredient(newItem);
   }
 
   function openCreateCustom() {
@@ -261,9 +224,9 @@ function CreateMealForm({ onCreated }: { onCreated: () => void }) {
     closePicking();
   }
 
-  function addAiIngredient(suggestion: CiqualResult) {
+  function addFoodSuggestion(suggestion: FoodResult) {
     const newItem = addFoodItem({
-      name: suggestion.name,
+      name: suggestion.brand ? `${suggestion.name} (${suggestion.brand})` : suggestion.name,
       caloriesPer100: suggestion.caloriesPer100,
       macrosPer100: suggestion.macros,
       defaultServing: { quantity: 100, unit: 'g' },
@@ -401,14 +364,16 @@ function CreateMealForm({ onCreated }: { onCreated: () => void }) {
           </>
         )}
 
-        {/* Suggestions Ciqual */}
-        {aiSuggestions.length > 0 && (
+        {/* Suggestions base alimentaire (Ciqual + OFF France) */}
+        {foodSuggestions.length > 0 && (
           <>
-            <Text style={styles.sectionLabel}>Base Ciqual (ANSES)</Text>
-            {aiSuggestions.map((s, i) => (
-              <TouchableOpacity key={i} style={styles.foodRow} onPress={() => addAiIngredient(s)}>
+            <Text style={styles.sectionLabel}>Base alimentaire</Text>
+            {foodSuggestions.map((s, i) => (
+              <TouchableOpacity key={i} style={styles.foodRow} onPress={() => addFoodSuggestion(s)}>
                 <View style={styles.foodInfo}>
-                  <Text style={styles.foodName}>{s.name}</Text>
+                  <Text style={styles.foodName}>
+                    {s.name}{s.brand ? ` · ${s.brand}` : ''}
+                  </Text>
                   <Text style={styles.foodMeta}>
                     {s.caloriesPer100} kcal/100g
                     {s.macros ? `  ·  P:${s.macros.protein}g G:${s.macros.carbs}g L:${s.macros.fat}g` : ''}
@@ -420,68 +385,18 @@ function CreateMealForm({ onCreated }: { onCreated: () => void }) {
           </>
         )}
 
-        {/* Résultats Open Food Facts */}
-        {offResults.length > 0 && (
-          <>
-            <Text style={styles.sectionLabel}>Open Food Facts</Text>
-            {offResults.map((p, i) => (
-              <TouchableOpacity key={i} style={styles.foodRow} onPress={() => addOffResult(p)}>
-                <View style={styles.foodInfo}>
-                  <Text style={styles.foodName}>
-                    {p.name}{p.brand ? ` · ${p.brand}` : ''}
-                  </Text>
-                  <Text style={styles.foodMeta}>
-                    {p.caloriesPer100} kcal/100g
-                    {p.macrosPer100 ? `  ·  P:${p.macrosPer100.protein}g G:${p.macrosPer100.carbs}g L:${p.macrosPer100.fat}g` : ''}
-                  </Text>
-                </View>
-                <Ionicons name="add-circle-outline" size={20} color={COLORS.primary} />
-              </TouchableOpacity>
-            ))}
-          </>
-        )}
-
-        {/* Carte "introuvable" — aucun résultat local, pas encore cherché sur OFF */}
-        {search.trim().length >= 2 && filtered.length === 0 && aiSuggestions.length === 0 && offResults.length === 0 && !offLoading && (
+        {/* Introuvable — propose création manuelle */}
+        {search.trim().length >= 2 && filtered.length === 0 && foodSuggestions.length === 0 && (
           <View style={styles.notFoundCard}>
             <Ionicons name="search-outline" size={28} color={COLORS.textTertiary} />
-            <Text style={styles.notFoundTitle}>
-              Introuvable dans la base locale
-            </Text>
+            <Text style={styles.notFoundTitle}>Introuvable</Text>
             <Text style={styles.notFoundSub}>
-              "{search.trim()}" n'est ni dans ta bibliothèque ni dans la base Ciqual (3 339 aliments français).{'\n'}
-              Tu peux chercher dans la base mondiale Open Food Facts ou créer l'aliment manuellement.
+              "{search.trim()}" n'est pas dans la base (62 000 aliments).{'\n'}
+              Crée-le manuellement.
             </Text>
-            <TouchableOpacity style={styles.offPrimaryBtn} onPress={searchOff} activeOpacity={0.8}>
-              <Ionicons name="globe-outline" size={16} color="#fff" />
-              <Text style={styles.offPrimaryBtnText}>Chercher sur Open Food Facts</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.manualSecondaryBtn} onPress={openCreateCustom} activeOpacity={0.7}>
-              <Ionicons name="create-outline" size={14} color={COLORS.textSecondary} />
-              <Text style={styles.manualSecondaryBtnText}>Créer "{search.trim()}" manuellement</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Spinner OFF */}
-        {offLoading && (
-          <View style={styles.offLoadingRow}>
-            <ActivityIndicator size="small" color={COLORS.primary} />
-            <Text style={styles.offLoadingText}>Recherche sur Open Food Facts…</Text>
-          </View>
-        )}
-
-        {/* Aucun résultat OFF après recherche */}
-        {!offLoading && offResults.length === 0 && search.trim().length >= 2 && (filtered.length > 0 || aiSuggestions.length > 0) && (
-          <View style={styles.fallbackRow}>
-            <Text style={styles.fallbackHint}>Pas ce que tu cherches ?</Text>
-            <TouchableOpacity style={styles.fallbackBtn} onPress={searchOff} activeOpacity={0.7}>
-              <Ionicons name="globe-outline" size={13} color={COLORS.primary} />
-              <Text style={styles.fallbackBtnText}>Open Food Facts</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.fallbackBtn} onPress={openCreateCustom} activeOpacity={0.7}>
-              <Ionicons name="create-outline" size={13} color={COLORS.textSecondary} />
-              <Text style={[styles.fallbackBtnText, { color: COLORS.textSecondary }]}>Manuel</Text>
+            <TouchableOpacity style={styles.offPrimaryBtn} onPress={openCreateCustom} activeOpacity={0.8}>
+              <Ionicons name="create-outline" size={16} color="#fff" />
+              <Text style={styles.offPrimaryBtnText}>Créer "{search.trim()}" manuellement</Text>
             </TouchableOpacity>
           </View>
         )}

@@ -89,37 +89,50 @@ export function parseProduct(p: any): ProductInfo | null {
   };
 }
 
+// Mots vides ignorés dans le filtre (trop courts ou non-discriminants)
+const STOP_WORDS = new Set(['au', 'aux', 'à', 'a', 'de', 'du', 'des', 'le', 'la', 'les', 'un', 'une', 'en', 'et']);
+const NON_LATIN = /[\u0600-\u06FF\u0400-\u04FF\u4E00-\u9FFF\u3040-\u30FF]/;
+
+function wordPrefixMatch(text: string, queryWords: string[]): boolean {
+  const textWords = text.toLowerCase().split(/[\s\-_',().%]+/).filter(Boolean);
+  // Chaque mot significatif de la requête doit avoir un mot du texte qui commence par lui
+  return queryWords.every(qw => textWords.some(tw => tw.startsWith(qw)));
+}
+
 export async function searchByName(query: string, signal?: AbortSignal): Promise<ProductInfo[]> {
+  // Endpoint v1 CGI : search_simple=1 cherche UNIQUEMENT dans les noms de produits
+  // → bien plus pertinent que le v2 qui cherche dans tous les champs
   const params = new URLSearchParams({
     search_terms: query,
+    search_simple: '1',
+    action: 'process',
+    json: '1',
     fields: 'product_name,product_name_fr,brands,nutriments,serving_size,code',
-    page_size: '30',   // on récupère plus pour mieux filtrer
+    page_size: '30',
     lc: 'fr',
-    sort_by: 'unique_scans_n',  // produits les plus scannés en premier
+    sort_by: 'unique_scans_n',
   });
-  const url = `https://world.openfoodfacts.org/api/v2/search?${params}`;
+  const url = `https://world.openfoodfacts.org/cgi/search.pl?${params}`;
   const response = await fetch(url, { signal });
   if (!response.ok) return [];
   const data = await response.json();
 
-  // Mots significatifs de la requête (>= 3 caractères)
-  const words = query.toLowerCase().split(/\s+/).filter(w => w.length >= 3);
-
-  const NON_LATIN = /[\u0600-\u06FF\u0400-\u04FF\u4E00-\u9FFF\u3040-\u30FF]/;
+  // Mots significatifs de la requête (sans mots vides, >= 2 chars)
+  const queryWords = query.toLowerCase().trim()
+    .split(/\s+/)
+    .filter(w => w.length >= 2 && !STOP_WORDS.has(w));
 
   return (data.products ?? [])
     .filter((p: any) => {
-      const nameFr = (p.product_name_fr ?? '').trim().toLowerCase();
-      const nameGen = (p.product_name ?? '').trim().toLowerCase();
-      const brand = (p.brands ?? '').split(',')[0].trim().toLowerCase();
-      const combined = `${nameFr} ${nameGen} ${brand}`;
+      const nameFr = (p.product_name_fr ?? '').trim();
+      const nameGen = (p.product_name ?? '').trim();
+      const brand = (p.brands ?? '').split(',')[0].trim();
+      const name = nameFr || nameGen;
 
-      // Exige un nom français ou générique
-      if (!nameFr && !nameGen) return false;
-      // Rejette les caractères non-latins
-      if (NON_LATIN.test(nameFr || nameGen)) return false;
-      // Au moins un mot de la requête doit apparaître dans le nom ou la marque
-      return words.length === 0 || words.some(w => combined.includes(w));
+      if (!name) return false;
+      if (NON_LATIN.test(name)) return false;
+      // Le nom OU la marque doit matcher tous les mots significatifs de la requête par préfixe
+      return wordPrefixMatch(name, queryWords) || wordPrefixMatch(`${name} ${brand}`, queryWords);
     })
     .map(parseProduct)
     .filter(Boolean)

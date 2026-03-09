@@ -20,8 +20,9 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { useCalorieStore } from '@/stores/calorieStore';
 import { analyzeFoodPhoto } from '@/services/gemini';
-import { searchCiqual, CiqualResult } from '@/services/ciqualSearch';
-import { lookupBarcode, searchByName, ProductInfo } from '@/services/openFoodFacts';
+import { searchCiqual, CiqualResult as FoodResult } from '@/services/ciqualSearch';
+import { lookupPortionWeight } from '@/data/portionWeights';
+import { lookupBarcode } from '@/services/openFoodFacts';
 import { FoodItem, Macros, Serving, ServingUnit, MealType } from '@/types';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
 
@@ -184,15 +185,12 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
 
   // Base nutritionnelle du produit sélectionné (pour recalcul à la volée)
   const [basePer100, setBasePer100] = useState<{ calories: number; macros: Macros | null } | null>(null);
+  // Poids en grammes d'une pièce/portion (requis pour recalculer quand unit = piece/portion)
+  const [gramsPerPiece, setGramsPerPiece] = useState('');
 
-  // Search suggestions (Ciqual — synchrone, pas de réseau)
-  const [suggestions, setSuggestions] = useState<CiqualResult[]>([]);
+  // Search suggestions (index local unifié Ciqual + OFF France — synchrone, hors-ligne)
+  const [suggestions, setSuggestions] = useState<FoodResult[]>([]);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Recherche Open Food Facts (fallback réseau)
-  const [offSuggestions, setOffSuggestions] = useState<ProductInfo[]>([]);
-  const [offLoading, setOffLoading] = useState(false);
-  const offAbortRef = useRef<AbortController | null>(null);
 
   // Photo / barcode state
   const [photoUri, setPhotoUri] = useState<string | null>(null);
@@ -217,9 +215,7 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
     setScannerVisible(false);
     setBasePer100(null);
     setSuggestions([]);
-    offAbortRef.current?.abort();
-    setOffSuggestions([]);
-    setOffLoading(false);
+    setGramsPerPiece('');
   }
 
   function handleClose() {
@@ -250,24 +246,22 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
     base: { calories: number; macros: Macros | null },
     qty: number,
     u: ServingUnit,
+    gpp?: number, // grammes par pièce/portion (requis si u = piece/portion)
   ) {
+    let factor: number;
     if (u === 'g' || u === 'ml') {
-      setCaloriesInput(String(Math.round(base.calories * qty / 100)));
-      if (base.macros) {
-        setProteinInput(String(Math.round(base.macros.protein * qty / 100 * 10) / 10));
-        setCarbsInput(String(Math.round(base.macros.carbs * qty / 100 * 10) / 10));
-        setFatInput(String(Math.round(base.macros.fat * qty / 100 * 10) / 10));
-        setMacrosOpen(true);
-      }
+      factor = qty / 100;
     } else {
-      // pièce / portion : on affiche la valeur pour 1 unité (= per100 d'OFF)
-      setCaloriesInput(String(base.calories));
-      if (base.macros) {
-        setProteinInput(String(base.macros.protein));
-        setCarbsInput(String(base.macros.carbs));
-        setFatInput(String(base.macros.fat));
-        setMacrosOpen(true);
-      }
+      // pièce / portion : on a besoin du poids d'une pièce pour calculer
+      if (!gpp || gpp <= 0) return; // pas assez d'info, l'utilisateur saisit manuellement
+      factor = (gpp * qty) / 100;
+    }
+    setCaloriesInput(String(Math.round(base.calories * factor)));
+    if (base.macros) {
+      setProteinInput(String(Math.round(base.macros.protein * factor * 10) / 10));
+      setCarbsInput(String(Math.round(base.macros.carbs * factor * 10) / 10));
+      setFatInput(String(Math.round(base.macros.fat * factor * 10) / 10));
+      setMacrosOpen(true);
     }
   }
 
@@ -276,22 +270,52 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
     if (!basePer100) return;
     const qty = parseFloat(text);
     if (!qty || qty <= 0) return;
-    applyBase(basePer100, qty, unit);
+    applyBase(basePer100, qty, unit, parseFloat(gramsPerPiece) || 0);
   }
 
   function handleUnitChange(newUnit: ServingUnit) {
     setUnit(newUnit);
+    if (newUnit === 'piece' || newUnit === 'portion') {
+      if (basePer100 && name) {
+        const portionRef = lookupPortionWeight(name);
+        if (portionRef) {
+          setGramsPerPiece(String(portionRef.grams));
+          setPerLabel(`${portionRef.hint} · ${portionRef.grams}g/pièce`);
+          applyBase(basePer100, parseFloat(quantity) || 1, newUnit, portionRef.grams);
+        } else {
+          setGramsPerPiece('');
+          setPerLabel('Indique le poids d\'une pièce pour calculer');
+        }
+      } else {
+        setGramsPerPiece('');
+      }
+      return;
+    }
     if (!basePer100) return;
     applyBase(basePer100, parseFloat(quantity) || 100, newUnit);
   }
 
+  function handleGramsPerPieceChange(text: string) {
+    setGramsPerPiece(text);
+    if (!basePer100) return;
+    const gpp = parseFloat(text);
+    const qty = parseFloat(quantity) || 1;
+    applyBase(basePer100, qty, unit, gpp);
+  }
+
   function handleNameChange(text: string) {
     setName(text);
+    if (basePer100) {
+      // Efface les valeurs auto quand l'utilisateur modifie le nom après une sélection
+      setCaloriesInput('');
+      setProteinInput('');
+      setCarbsInput('');
+      setFatInput('');
+      setMacrosOpen(false);
+      setPerLabel(null);
+      setGramsPerPiece('');
+    }
     setBasePer100(null);
-    // Reset OFF quand l'utilisateur retape
-    offAbortRef.current?.abort();
-    setOffSuggestions([]);
-    setOffLoading(false);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (text.trim().length < 2) {
       setSuggestions([]);
@@ -299,43 +323,33 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
     }
     debounceRef.current = setTimeout(() => {
       setSuggestions(searchCiqual(text.trim()));
-    }, 200);
+    }, 150);
   }
 
-  async function searchOff() {
-    if (name.trim().length < 2) return;
-    offAbortRef.current?.abort();
-    const ctrl = new AbortController();
-    offAbortRef.current = ctrl;
-    setOffLoading(true);
-    setOffSuggestions([]);
-    try {
-      const results = await searchByName(name.trim(), ctrl.signal);
-      setOffSuggestions(results);
-    } catch {
-      // annulé ou erreur réseau
-    } finally {
-      setOffLoading(false);
-    }
-  }
-
-  function selectOffSuggestion(product: ProductInfo) {
-    setOffSuggestions([]);
-    setSuggestions([]);
-    const base = { calories: product.caloriesPer100, macros: product.macrosPer100 };
-    setBasePer100(base);
-    setName(product.brand ? `${product.name} (${product.brand})` : product.name);
-    setPerLabel('pour 100g');
-    applyBase(base, parseFloat(quantity) || 100, unit);
-  }
-
-  function selectSuggestion(item: CiqualResult) {
+  function selectSuggestion(item: FoodResult) {
     setSuggestions([]);
     const base = { calories: item.caloriesPer100, macros: item.macros };
     setBasePer100(base);
-    setName(item.name);
-    setPerLabel('pour 100g');
-    applyBase(base, parseFloat(quantity) || 100, unit);
+    setName(('brand' in item && item.brand) ? `${item.name} (${(item as any).brand})` : item.name);
+
+    // Cherche un poids de référence par pièce pour cet aliment
+    const portionRef = lookupPortionWeight(item.name);
+
+    if (unit === 'piece' || unit === 'portion') {
+      if (portionRef) {
+        // Poids connu : pré-rempli, calcul immédiat
+        setGramsPerPiece(String(portionRef.grams));
+        setPerLabel(`${portionRef.hint} · ${portionRef.grams}g/pièce`);
+        applyBase(base, parseFloat(quantity) || 1, unit, portionRef.grams);
+      } else {
+        // Poids inconnu : l'utilisateur devra le saisir
+        setGramsPerPiece('');
+        setPerLabel('Indique le poids d\'une pièce pour calculer');
+      }
+    } else {
+      setPerLabel(`pour 100g`);
+      applyBase(base, parseFloat(quantity) || 100, unit, 0);
+    }
   }
 
   function prefillFromAnalysis(n: string, cal: number, macros?: Macros | null, label?: string | null) {
@@ -580,7 +594,7 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
                       returnKeyType="next"
                     />
 
-                    {/* Suggestions Ciqual */}
+                    {/* Suggestions (Ciqual + OFF France local) */}
                     {suggestions.length > 0 && (
                       <View style={styles.suggestionsBox}>
                         {suggestions.map((item, i) => (
@@ -601,68 +615,7 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
                             <Text style={styles.suggestionKcal}>{item.caloriesPer100} kcal</Text>
                           </TouchableOpacity>
                         ))}
-                        {/* Lien OFF discret en bas de la dropdown Ciqual */}
-                        <TouchableOpacity style={styles.offLinkRow} onPress={searchOff} activeOpacity={0.7}>
-                          <Ionicons name="globe-outline" size={12} color={COLORS.textTertiary} />
-                          <Text style={styles.offLinkText}>Pas ce que tu cherches ? → Open Food Facts</Text>
-                        </TouchableOpacity>
                       </View>
-                    )}
-
-                    {/* Carte "introuvable" — aucun résultat Ciqual */}
-                    {name.trim().length >= 2 && suggestions.length === 0 && offSuggestions.length === 0 && !offLoading && (
-                      <View style={styles.notFoundInline}>
-                        <Ionicons name="search-outline" size={22} color={COLORS.textTertiary} />
-                        <Text style={styles.notFoundInlineTitle}>Introuvable dans la base locale</Text>
-                        <Text style={styles.notFoundInlineSub}>
-                          "{name.trim()}" n'est pas dans la base Ciqual.{'\n'}
-                          Cherche sur Open Food Facts (base mondiale) ou saisis les calories manuellement.
-                        </Text>
-                        <TouchableOpacity style={styles.offInlineBtn} onPress={searchOff} activeOpacity={0.8}>
-                          <Ionicons name="globe-outline" size={14} color="#fff" />
-                          <Text style={styles.offInlineBtnText}>Chercher sur Open Food Facts</Text>
-                        </TouchableOpacity>
-                      </View>
-                    )}
-
-                    {/* Spinner OFF */}
-                    {offLoading && (
-                      <View style={styles.offLoadingRow}>
-                        <ActivityIndicator size="small" color={COLORS.primary} />
-                        <Text style={styles.offLoadingText}>Recherche sur Open Food Facts…</Text>
-                      </View>
-                    )}
-
-                    {/* Résultats OFF */}
-                    {offSuggestions.length > 0 && (
-                      <View style={styles.suggestionsBox}>
-                        <Text style={styles.offResultsLabel}>Open Food Facts</Text>
-                        {offSuggestions.map((p, i) => (
-                          <TouchableOpacity
-                            key={`off-${i}`}
-                            style={[styles.suggestionRow, i < offSuggestions.length - 1 && styles.suggestionBorder]}
-                            onPress={() => selectOffSuggestion(p)}
-                            activeOpacity={0.7}
-                          >
-                            <View style={styles.suggestionInfo}>
-                              <Text style={styles.suggestionName} numberOfLines={1}>
-                                {p.name}{p.brand ? ` · ${p.brand}` : ''}
-                              </Text>
-                              <Text style={styles.suggestionBrand}>
-                                {p.macrosPer100
-                                  ? `P:${p.macrosPer100.protein}g · G:${p.macrosPer100.carbs}g · L:${p.macrosPer100.fat}g`
-                                  : 'pour 100g'}
-                              </Text>
-                            </View>
-                            <Text style={styles.suggestionKcal}>{p.caloriesPer100} kcal</Text>
-                          </TouchableOpacity>
-                        ))}
-                      </View>
-                    )}
-
-                    {/* Aucun résultat OFF */}
-                    {!offLoading && offSuggestions.length === 0 && name.trim().length >= 2 && suggestions.length === 0 && offAbortRef.current && (
-                      <Text style={styles.offNoResult}>Aucun résultat sur Open Food Facts. Saisis les infos manuellement ci-dessous.</Text>
                     )}
                   </View>
 
@@ -691,6 +644,19 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
                       ))}
                     </View>
                   </View>
+
+                  {/* Poids par pièce — affiché uniquement si unité = pièce/portion et aliment sélectionné */}
+                  {(unit === 'piece' || unit === 'portion') && basePer100 && (
+                    <TextInput
+                      style={styles.input}
+                      value={gramsPerPiece}
+                      onChangeText={handleGramsPerPieceChange}
+                      placeholder={`Poids d'une ${unit === 'piece' ? 'pièce' : 'portion'} en g`}
+                      placeholderTextColor={COLORS.textTertiary}
+                      keyboardType="decimal-pad"
+                      returnKeyType="next"
+                    />
+                  )}
 
                   <View>
                     <TextInput
@@ -909,68 +875,6 @@ const styles = StyleSheet.create({
   suggestionName: { fontSize: FONT_SIZE.sm, color: COLORS.textPrimary, fontWeight: FONT_WEIGHT.medium },
   suggestionBrand: { fontSize: FONT_SIZE.xs, color: COLORS.textTertiary, marginTop: 2 },
   suggestionKcal: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.semibold, color: COLORS.primary },
-
-  // Lien OFF discret en bas de la dropdown Ciqual
-  offLinkRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    paddingHorizontal: SPACING.md,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-  },
-  offLinkText: { fontSize: FONT_SIZE.xs, color: COLORS.textTertiary },
-
-  // Carte "introuvable localement"
-  notFoundInline: {
-    alignItems: 'center',
-    gap: SPACING.sm,
-    padding: SPACING.md,
-    marginTop: 4,
-    backgroundColor: COLORS.bgElevated,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  notFoundInlineTitle: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.bold, color: COLORS.textPrimary, textAlign: 'center' },
-  notFoundInlineSub: { fontSize: FONT_SIZE.xs, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 17 },
-  offInlineBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-    backgroundColor: COLORS.primary,
-    borderRadius: RADIUS.md,
-    paddingVertical: 10,
-    paddingHorizontal: SPACING.md,
-    width: '100%',
-    justifyContent: 'center',
-    marginTop: 2,
-  },
-  offInlineBtnText: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.bold, color: '#fff' },
-  offLoadingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-    paddingVertical: SPACING.md,
-    justifyContent: 'center',
-  },
-  offLoadingText: { fontSize: FONT_SIZE.sm, color: COLORS.textSecondary },
-  offResultsLabel: {
-    fontSize: FONT_SIZE.xs,
-    fontWeight: FONT_WEIGHT.semibold,
-    color: COLORS.textTertiary,
-    paddingHorizontal: SPACING.md,
-    paddingTop: SPACING.sm,
-    paddingBottom: 4,
-  },
-  offNoResult: {
-    fontSize: FONT_SIZE.xs,
-    color: COLORS.textTertiary,
-    textAlign: 'center',
-    paddingVertical: SPACING.sm,
-    fontStyle: 'italic',
-  },
 
   input: {
     backgroundColor: COLORS.bgElevated,

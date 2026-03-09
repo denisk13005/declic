@@ -4,6 +4,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'Déclic',
   slug: 'declic',
+  owner: 'dk13',
   version: '1.0.0',
   orientation: 'portrait',
   icon: './assets/icon.png',
@@ -29,6 +30,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     },
     package: 'com.declic.app',
     permissions: ['RECEIVE_BOOT_COMPLETED', 'SCHEDULE_EXACT_ALARM'],
+    minSdkVersion: 26,
   },
   plugins: [
     'expo-router',
@@ -56,7 +58,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   extra: {
     eas: {
-      projectId: 'your-eas-project-id',
+      projectId: 'a7a0bf7e-4398-42eb-9dae-36b1dfb03334',
     },
   },
   scheme: 'declic',
