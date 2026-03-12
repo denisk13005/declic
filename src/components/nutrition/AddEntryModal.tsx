@@ -20,9 +20,16 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { useCalorieStore } from '@/stores/calorieStore';
 import { analyzeFoodPhoto } from '@/services/gemini';
-import { searchCiqual, CiqualResult as FoodResult } from '@/services/ciqualSearch';
+import { searchCiqual } from '@/services/ciqualSearch';
 import { lookupPortionWeight } from '@/data/portionWeights';
-import { lookupBarcode } from '@/services/openFoodFacts';
+import { lookupBarcode, searchByName as searchOFF } from '@/services/openFoodFacts';
+
+interface FoodSuggestion {
+  name: string;
+  caloriesPer100: number;
+  macros: Macros | null;
+  brand?: string;
+}
 import { FoodItem, Macros, Serving, ServingUnit, MealType } from '@/types';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
 
@@ -166,7 +173,7 @@ function BarcodeScanner({
 // ─── Main modal ───────────────────────────────────────────────────────────────
 
 export default function AddEntryModal({ visible, onClose, date, initialMeal, prefillFood }: Props) {
-  const { addEntry, addFoodItem } = useCalorieStore();
+  const { addEntry, addFoodItem, foodLibrary } = useCalorieStore();
 
   const [tab, setTab] = useState<Tab>('manuel');
   const [meal, setMeal] = useState<MealType>(defaultMeal);
@@ -188,9 +195,11 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
   // Poids en grammes d'une pièce/portion (requis pour recalculer quand unit = piece/portion)
   const [gramsPerPiece, setGramsPerPiece] = useState('');
 
-  // Search suggestions (index local unifié Ciqual + OFF France — synchrone, hors-ligne)
-  const [suggestions, setSuggestions] = useState<FoodResult[]>([]);
+  // Search suggestions
+  const [suggestions, setSuggestions] = useState<FoodSuggestion[]>([]);
+  const [offLoading, setOffLoading] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const offAbortRef = useRef<AbortController | null>(null);
 
   // Photo / barcode state
   const [photoUri, setPhotoUri] = useState<string | null>(null);
@@ -215,6 +224,9 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
     setScannerVisible(false);
     setBasePer100(null);
     setSuggestions([]);
+    offAbortRef.current?.abort();
+    offAbortRef.current = null;
+    setOffLoading(false);
     setGramsPerPiece('');
   }
 
@@ -306,7 +318,6 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
   function handleNameChange(text: string) {
     setName(text);
     if (basePer100) {
-      // Efface les valeurs auto quand l'utilisateur modifie le nom après une sélection
       setCaloriesInput('');
       setProteinInput('');
       setCarbsInput('');
@@ -316,21 +327,75 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
       setGramsPerPiece('');
     }
     setBasePer100(null);
+    offAbortRef.current?.abort();
+    offAbortRef.current = null;
+    setOffLoading(false);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (text.trim().length < 2) {
       setSuggestions([]);
       return;
     }
     debounceRef.current = setTimeout(() => {
-      setSuggestions(searchCiqual(text.trim()));
-    }, 150);
+      const q = text.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+      // 1. Bibliothèque perso (prioritaire — instantané)
+      const libItems: FoodSuggestion[] = foodLibrary
+        .filter(item => item.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(q))
+        .slice(0, 4)
+        .map(item => ({
+          name: item.name,
+          caloriesPer100: item.caloriesPer100,
+          macros: item.macrosPer100 ?? null,
+          brand: undefined,
+        }));
+
+      // 2. Ciqual local
+      const ciqualItems: FoodSuggestion[] = searchCiqual(text.trim())
+        .filter(r => !libItems.some(l => l.name.toLowerCase() === r.name.toLowerCase()))
+        .map(r => ({ name: r.name, caloriesPer100: r.caloriesPer100, macros: r.macros }));
+
+      const localItems = [...libItems, ...ciqualItems];
+      setSuggestions(localItems);
+
+      // 3. Fallback OFF si peu de résultats locaux
+      if (localItems.length < 3) {
+        const ctrl = new AbortController();
+        offAbortRef.current = ctrl;
+        setOffLoading(true);
+        // Timeout 6s : évite de tourner indéfiniment si le réseau est lent
+        const timeoutId = setTimeout(() => ctrl.abort(), 20000);
+        searchOFF(text.trim(), ctrl.signal)
+          .then(offResults => {
+            if (offAbortRef.current !== ctrl) return;
+            const offItems: FoodSuggestion[] = offResults.map(p => ({
+              name: p.name,
+              caloriesPer100: p.caloriesPer100,
+              macros: p.macrosPer100,
+              brand: p.brand,
+            }));
+            const existingNames = new Set(localItems.map(r => r.name.toLowerCase()));
+            const newOff = offItems.filter(r => !existingNames.has(r.name.toLowerCase()));
+            setSuggestions([...localItems, ...newOff]);
+          })
+          .catch(() => {})
+          .finally(() => {
+            clearTimeout(timeoutId);
+            if (offAbortRef.current === ctrl) setOffLoading(false);
+          });
+      }
+    }, 200);
   }
 
-  function selectSuggestion(item: FoodResult) {
+  function selectSuggestion(item: FoodSuggestion) {
     setSuggestions([]);
+    offAbortRef.current?.abort();
+    offAbortRef.current = null;
+    setOffLoading(false);
     const base = { calories: item.caloriesPer100, macros: item.macros };
     setBasePer100(base);
-    setName(('brand' in item && item.brand) ? `${item.name} (${(item as any).brand})` : item.name);
+    setName(item.brand ? `${item.name} (${item.brand})` : item.name);
+    // Les résultats OFF (avec marque) ne sont pas dans Ciqual : on propose de les sauvegarder
+    if (item.brand) setSaveToLib(true);
 
     // Cherche un poids de référence par pièce pour cet aliment
     const portionRef = lookupPortionWeight(item.name);
@@ -594,19 +659,20 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
                       returnKeyType="next"
                     />
 
-                    {/* Suggestions (Ciqual + OFF France local) */}
-                    {suggestions.length > 0 && (
+                    {/* Suggestions Ciqual + fallback OFF */}
+                    {(suggestions.length > 0 || offLoading) && (
                       <View style={styles.suggestionsBox}>
                         {suggestions.map((item, i) => (
                           <TouchableOpacity
                             key={`${item.name}-${i}`}
-                            style={[styles.suggestionRow, i < suggestions.length - 1 && styles.suggestionBorder]}
+                            style={[styles.suggestionRow, (i < suggestions.length - 1 || offLoading) && styles.suggestionBorder]}
                             onPress={() => selectSuggestion(item)}
                             activeOpacity={0.7}
                           >
                             <View style={styles.suggestionInfo}>
                               <Text style={styles.suggestionName} numberOfLines={1}>{item.name}</Text>
                               <Text style={styles.suggestionBrand}>
+                                {item.brand ? `${item.brand} · ` : ''}
                                 {item.macros
                                   ? `P:${item.macros.protein}g · G:${item.macros.carbs}g · L:${item.macros.fat}g`
                                   : 'pour 100g'}
@@ -615,6 +681,12 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
                             <Text style={styles.suggestionKcal}>{item.caloriesPer100} kcal</Text>
                           </TouchableOpacity>
                         ))}
+                        {offLoading && (
+                          <View style={styles.offLoadingRow}>
+                            <ActivityIndicator size="small" color={COLORS.textTertiary} />
+                            <Text style={styles.offLoadingText}>Recherche en ligne…</Text>
+                          </View>
+                        )}
                       </View>
                     )}
                   </View>
@@ -875,6 +947,14 @@ const styles = StyleSheet.create({
   suggestionName: { fontSize: FONT_SIZE.sm, color: COLORS.textPrimary, fontWeight: FONT_WEIGHT.medium },
   suggestionBrand: { fontSize: FONT_SIZE.xs, color: COLORS.textTertiary, marginTop: 2 },
   suggestionKcal: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.semibold, color: COLORS.primary },
+  offLoadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 10,
+    gap: SPACING.sm,
+  },
+  offLoadingText: { fontSize: FONT_SIZE.xs, color: COLORS.textTertiary },
 
   input: {
     backgroundColor: COLORS.bgElevated,
