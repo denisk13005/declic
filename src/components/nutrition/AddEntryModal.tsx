@@ -29,6 +29,7 @@ interface FoodSuggestion {
   caloriesPer100: number;
   macros: Macros | null;
   brand?: string;
+  source?: 'library' | 'ciqual' | 'off';
 }
 import { FoodItem, Macros, Serving, ServingUnit, MealType } from '@/types';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
@@ -347,12 +348,13 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
           caloriesPer100: item.caloriesPer100,
           macros: item.macrosPer100 ?? null,
           brand: undefined,
+          source: 'library' as const,
         }));
 
       // 2. Ciqual local
       const ciqualItems: FoodSuggestion[] = searchCiqual(text.trim())
         .filter(r => !libItems.some(l => l.name.toLowerCase() === r.name.toLowerCase()))
-        .map(r => ({ name: r.name, caloriesPer100: r.caloriesPer100, macros: r.macros }));
+        .map(r => ({ name: r.name, caloriesPer100: r.caloriesPer100, macros: r.macros, source: 'ciqual' as const }));
 
       const localItems = [...libItems, ...ciqualItems];
       setSuggestions(localItems);
@@ -372,6 +374,7 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
               caloriesPer100: p.caloriesPer100,
               macros: p.macrosPer100,
               brand: p.brand,
+              source: 'off' as const,
             }));
             const existingNames = new Set(localItems.map(r => r.name.toLowerCase()));
             const newOff = offItems.filter(r => !existingNames.has(r.name.toLowerCase()));
@@ -662,29 +665,44 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
                     {/* Suggestions Ciqual + fallback OFF */}
                     {(suggestions.length > 0 || offLoading) && (
                       <View style={styles.suggestionsBox}>
-                        {suggestions.map((item, i) => (
-                          <TouchableOpacity
-                            key={`${item.name}-${i}`}
-                            style={[styles.suggestionRow, (i < suggestions.length - 1 || offLoading) && styles.suggestionBorder]}
-                            onPress={() => selectSuggestion(item)}
-                            activeOpacity={0.7}
-                          >
-                            <View style={styles.suggestionInfo}>
-                              <Text style={styles.suggestionName} numberOfLines={1}>{item.name}</Text>
-                              <Text style={styles.suggestionBrand}>
-                                {item.brand ? `${item.brand} · ` : ''}
-                                {item.macros
-                                  ? `P:${item.macros.protein}g · G:${item.macros.carbs}g · L:${item.macros.fat}g`
-                                  : 'pour 100g'}
-                              </Text>
-                            </View>
-                            <Text style={styles.suggestionKcal}>{item.caloriesPer100} kcal</Text>
-                          </TouchableOpacity>
-                        ))}
+                        {suggestions.map((item, i) => {
+                          const prevIsLocal = i === 0 || suggestions[i - 1].source !== 'off';
+                          const isFirstOff = item.source === 'off' && prevIsLocal;
+                          return (
+                            <React.Fragment key={`${item.name}-${i}`}>
+                              {isFirstOff && (
+                                <View style={styles.offSeparator}>
+                                  <Ionicons name="globe-outline" size={13} color="#6366F1" />
+                                  <Text style={styles.offSeparatorText}>Résultats Open Food Facts</Text>
+                                </View>
+                              )}
+                              <TouchableOpacity
+                                style={[
+                                  styles.suggestionRow,
+                                  (i < suggestions.length - 1 || offLoading) && styles.suggestionBorder,
+                                  item.source === 'off' && styles.suggestionRowOff,
+                                ]}
+                                onPress={() => selectSuggestion(item)}
+                                activeOpacity={0.7}
+                              >
+                                <View style={styles.suggestionInfo}>
+                                  <Text style={styles.suggestionName} numberOfLines={1}>{item.name}</Text>
+                                  <Text style={styles.suggestionBrand}>
+                                    {item.brand ? `${item.brand} · ` : ''}
+                                    {item.macros
+                                      ? `P:${item.macros.protein}g · G:${item.macros.carbs}g · L:${item.macros.fat}g`
+                                      : 'pour 100g'}
+                                  </Text>
+                                </View>
+                                <Text style={styles.suggestionKcal}>{item.caloriesPer100} kcal</Text>
+                              </TouchableOpacity>
+                            </React.Fragment>
+                          );
+                        })}
                         {offLoading && (
                           <View style={styles.offLoadingRow}>
-                            <ActivityIndicator size="small" color={COLORS.textTertiary} />
-                            <Text style={styles.offLoadingText}>Recherche en ligne…</Text>
+                            <ActivityIndicator size="small" color="#6366F1" />
+                            <Text style={styles.offLoadingText}>Recherche sur Open Food Facts…</Text>
                           </View>
                         )}
                       </View>
@@ -947,14 +965,34 @@ const styles = StyleSheet.create({
   suggestionName: { fontSize: FONT_SIZE.sm, color: COLORS.textPrimary, fontWeight: FONT_WEIGHT.medium },
   suggestionBrand: { fontSize: FONT_SIZE.xs, color: COLORS.textTertiary, marginTop: 2 },
   suggestionKcal: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.semibold, color: COLORS.primary },
+  suggestionRowOff: {
+    backgroundColor: '#6366F108',
+  },
+  offSeparator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 8,
+    backgroundColor: '#6366F114',
+    borderBottomWidth: 1,
+    borderBottomColor: '#6366F130',
+  },
+  offSeparatorText: {
+    fontSize: FONT_SIZE.xs,
+    fontWeight: FONT_WEIGHT.semibold,
+    color: '#6366F1',
+    flex: 1,
+  },
   offLoadingRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: SPACING.md,
-    paddingVertical: 10,
+    paddingVertical: 12,
     gap: SPACING.sm,
+    backgroundColor: '#6366F10A',
   },
-  offLoadingText: { fontSize: FONT_SIZE.xs, color: COLORS.textTertiary },
+  offLoadingText: { fontSize: FONT_SIZE.sm, color: '#6366F1', fontWeight: FONT_WEIGHT.medium },
 
   input: {
     backgroundColor: COLORS.bgElevated,

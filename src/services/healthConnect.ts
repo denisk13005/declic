@@ -17,6 +17,7 @@ import {
   requestPermission,
   readRecords,
   openHealthConnectSettings,
+  getGrantedPermissions,
   SdkAvailabilityStatus,
 } from 'react-native-health-connect';
 import { startOfDay, endOfDay } from 'date-fns';
@@ -48,6 +49,13 @@ export async function checkHCStatus(): Promise<HCStatus> {
 
     const initialized = await initialize();
     if (!initialized) return 'unavailable';
+
+    // Vérifie si les permissions sont déjà accordées
+    const granted = await getGrantedPermissions();
+    const hasPermission = granted.some(
+      (p) => p.recordType === 'TotalCaloriesBurned' && p.accessType === 'read'
+    );
+    if (!hasPermission) return 'not_authorized';
 
     return 'ready';
   } catch {
@@ -99,15 +107,23 @@ export async function readBurnedCalories(date: string): Promise<number | null> {
       timeRangeFilter: { operator: 'between', startTime: start, endTime: end },
     });
 
-    if (!records || records.length === 0) return null;
-
-    // Somme de tous les enregistrements du jour (plusieurs sources possibles)
-    const total = records.reduce((sum, r) => {
-      const val = r.energy?.inKilocalories ?? 0;
-      return sum + val;
+    // Somme TotalCaloriesBurned
+    const totalBurned = (records ?? []).reduce((sum, r) => {
+      return sum + (r.energy?.inKilocalories ?? 0);
     }, 0);
 
-    return total > 0 ? Math.round(total) : null;
+    if (totalBurned > 0) return Math.round(totalBurned);
+
+    // Fallback : Samsung Health peut aussi syncer en ActiveCaloriesBurned
+    const { records: activeRecords } = await readRecords('ActiveCaloriesBurned', {
+      timeRangeFilter: { operator: 'between', startTime: start, endTime: end },
+    });
+
+    const activeBurned = (activeRecords ?? []).reduce((sum, r) => {
+      return sum + (r.energy?.inKilocalories ?? 0);
+    }, 0);
+
+    return activeBurned > 0 ? Math.round(activeBurned) : null;
   } catch {
     return null;
   }
