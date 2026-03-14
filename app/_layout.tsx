@@ -7,6 +7,7 @@ import { StyleSheet } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { listenToAuthState } from '@/stores/authStore';
 import { warmupCiqual } from '@/services/ciqualSearch';
+import { initNotificationChannel } from '@/services/notifications';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -15,6 +16,7 @@ export default function RootLayout() {
     const unsubscribe = listenToAuthState();
     SplashScreen.hideAsync();
     warmupCiqual();
+    initNotificationChannel();
     return unsubscribe;
   }, []);
 

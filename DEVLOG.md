@@ -1,5 +1,24 @@
 # Déclic — Dev Log
 
+## Rappels d'habitudes par notifications (2026-03-14)
+
+### Feature : Notifications quotidiennes par habitude
+
+**Architecture :**
+- `expo-notifications` v55 → `AlarmManager.RTC_WAKEUP` + `setExactAndAllowWhileIdle` → fonctionne en veille
+- `SCHEDULE_EXACT_ALARM` déjà dans le manifest (Android 12+)
+- Trigger : `SchedulableTriggerInputTypes.DAILY` (correction de l'ancien format sans `type`)
+
+**Fichiers modifiés / créés :**
+- `src/services/notifications.ts` — `initNotificationChannel()` + fix trigger DAILY + `promptBatteryOptimizationIfNeeded()` (invite Samsung une fois par session)
+- `src/hooks/useHabitNotifications.ts` (nouveau) — `setReminder(habit, h, m)` / `removeReminder(habit)` + gestion permissions
+- `app/_layout.tsx` — `initNotificationChannel()` au démarrage
+- `app/(tabs)/home.tsx` — `AddHabitModal` avec toggle rappel + `TimePicker` custom (HH:MM), appui long → `EditHabitSheet` (modifier nom/emoji/couleur/rappel + archiver/supprimer), indicateur cloche sur la carte
+
+**Points clés Samsung :**
+- `promptBatteryOptimizationIfNeeded()` : Alert une fois par session pour guider l'utilisateur vers Paramètres → Applications → Déclic → Batterie → "Sans restriction"
+- Sans cette étape, Samsung One UI peut bloquer les alarmes exactes en veille profonde
+
 ## Saisie manuelle des calories brûlées (2026-03-14)
 
 ### Feature : Override manuel des calories brûlées
