@@ -6,6 +6,10 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
+  Modal,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -198,10 +202,129 @@ function MealSection({
   );
 }
 
+// ─── Modal calories brûlées ───────────────────────────────────────────────────
+
+function BurnedCaloriesModal({
+  visible,
+  currentValue,
+  isManual,
+  onSave,
+  onReset,
+  onClose,
+}: {
+  visible: boolean;
+  currentValue: string;
+  isManual: boolean;
+  onSave: (val: string) => void;
+  onReset: () => void;
+  onClose: () => void;
+}) {
+  const [input, setInput] = useState(currentValue);
+
+  React.useEffect(() => {
+    if (visible) setInput(currentValue);
+  }, [visible, currentValue]);
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={burnedStyles.overlay}
+      >
+        <TouchableOpacity style={burnedStyles.backdrop} activeOpacity={1} onPress={onClose} />
+        <View style={burnedStyles.sheet}>
+          <View style={burnedStyles.handle} />
+          <View style={burnedStyles.iconRow}>
+            <Ionicons name="flame" size={22} color="#F97316" />
+            <Text style={burnedStyles.title}>Calories brûlées</Text>
+          </View>
+          <Text style={burnedStyles.subtitle}>
+            Saisis la valeur manuellement si la synchronisation Health Connect est incorrecte ou indisponible.
+          </Text>
+          <TextInput
+            style={burnedStyles.input}
+            value={input}
+            onChangeText={setInput}
+            keyboardType="numeric"
+            placeholder="ex. 450"
+            placeholderTextColor={COLORS.textTertiary}
+            autoFocus
+            selectTextOnFocus
+            returnKeyType="done"
+            onSubmitEditing={() => onSave(input)}
+          />
+          <TouchableOpacity style={burnedStyles.saveBtn} onPress={() => onSave(input)} activeOpacity={0.85}>
+            <Text style={burnedStyles.saveBtnText}>Enregistrer</Text>
+          </TouchableOpacity>
+          {isManual && (
+            <TouchableOpacity style={burnedStyles.resetBtn} onPress={onReset} activeOpacity={0.7}>
+              <Ionicons name="sync-outline" size={14} color={COLORS.textSecondary} />
+              <Text style={burnedStyles.resetBtnText}>Réinitialiser (revenir à Health Connect)</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity style={burnedStyles.cancelBtn} onPress={onClose} activeOpacity={0.7}>
+            <Text style={burnedStyles.cancelBtnText}>Annuler</Text>
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+}
+
+const burnedStyles = StyleSheet.create({
+  overlay: { flex: 1, justifyContent: 'flex-end' },
+  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.6)' },
+  sheet: {
+    backgroundColor: COLORS.bgCard,
+    borderTopLeftRadius: RADIUS.xl,
+    borderTopRightRadius: RADIUS.xl,
+    padding: SPACING.lg,
+    paddingBottom: SPACING.xl,
+    gap: SPACING.sm,
+  },
+  handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: COLORS.border, alignSelf: 'center', marginBottom: SPACING.sm },
+  iconRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
+  title: { fontSize: FONT_SIZE.lg, fontWeight: FONT_WEIGHT.bold, color: COLORS.textPrimary },
+  subtitle: { fontSize: FONT_SIZE.sm, color: COLORS.textSecondary, lineHeight: 20 },
+  input: {
+    backgroundColor: COLORS.bgElevated,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.borderFocus,
+    color: COLORS.textPrimary,
+    fontSize: FONT_SIZE.xl,
+    fontWeight: FONT_WEIGHT.bold,
+    padding: SPACING.md,
+    textAlign: 'center',
+    marginTop: SPACING.sm,
+  },
+  saveBtn: {
+    backgroundColor: COLORS.primary,
+    borderRadius: RADIUS.md,
+    paddingVertical: SPACING.sm + 4,
+    alignItems: 'center',
+    marginTop: SPACING.xs,
+  },
+  saveBtnText: { color: '#fff', fontSize: FONT_SIZE.md, fontWeight: FONT_WEIGHT.bold },
+  resetBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.xs,
+    paddingVertical: SPACING.sm,
+  },
+  resetBtnText: { fontSize: FONT_SIZE.sm, color: COLORS.textSecondary },
+  cancelBtn: { alignItems: 'center', paddingVertical: SPACING.sm },
+  cancelBtnText: { fontSize: FONT_SIZE.sm, color: COLORS.textTertiary },
+});
+
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function CaloriesScreen() {
-  const { getEntriesForDate, getTotalsForDate, removeEntry, goals } = useCalorieStore();
+  const {
+    getEntriesForDate, getTotalsForDate, removeEntry, goals,
+    manualBurnedCalories, setManualBurnedCalories, clearManualBurnedCalories,
+  } = useCalorieStore();
 
   const [selectedDate, setSelectedDate] = useState(todayISO());
   const [addModalVisible, setAddModalVisible] = useState(false);
@@ -209,6 +332,7 @@ export default function CaloriesScreen() {
   const [libraryModalVisible, setLibraryModalVisible] = useState(false);
   const [goalsModalVisible, setGoalsModalVisible] = useState(false);
   const [prefillFood, setPrefillFood] = useState<PrefillFood | null>(null);
+  const [burnedModalVisible, setBurnedModalVisible] = useState(false);
 
   const isToday = selectedDate === todayISO();
 
@@ -216,8 +340,27 @@ export default function CaloriesScreen() {
   const { calories: total, macros } = getTotalsForDate(selectedDate);
   const remaining = goals.calories - total;
 
-  const { status: hcStatus, burnedCalories, isLoading: hcLoading, requestPermissions, openPlayStore } = useHealthConnect(selectedDate);
-  const netCalories = burnedCalories != null ? total - burnedCalories : null;
+  const { status: hcStatus, burnedCalories: hcBurnedCalories, isLoading: hcLoading, requestPermissions, openPlayStore } = useHealthConnect(selectedDate);
+
+  const manualBurned = manualBurnedCalories[selectedDate];
+  const effectiveBurned = manualBurned != null ? manualBurned : hcBurnedCalories;
+  const isManualBurned = manualBurned != null;
+  const netCalories = effectiveBurned != null ? total - effectiveBurned : null;
+
+  function handleSaveBurned(val: string) {
+    const n = parseInt(val, 10);
+    if (!isNaN(n) && n >= 0) {
+      setManualBurnedCalories(selectedDate, n);
+      setBurnedModalVisible(false);
+    } else {
+      Alert.alert('Valeur invalide', 'Saisis un nombre entier positif.');
+    }
+  }
+
+  function handleResetBurned() {
+    clearManualBurnedCalories(selectedDate);
+    setBurnedModalVisible(false);
+  }
 
   const hasMacroGoals = goals.protein != null || goals.carbs != null || goals.fat != null;
 
@@ -314,13 +457,19 @@ export default function CaloriesScreen() {
         </View>
 
         {/* Activité — Health Connect */}
-        {hcStatus !== 'checking' && hcStatus !== 'unavailable' && (
+        {hcStatus !== 'checking' && (
           <View style={styles.hcCard}>
             <View style={styles.hcRow}>
               <Ionicons name="flame" size={18} color="#F97316" />
               <Text style={styles.hcTitle}>Activité physique</Text>
               {hcLoading && <Text style={styles.hcSub}>…</Text>}
             </View>
+
+            {hcStatus === 'unavailable' && !isManualBurned && (
+              <Text style={styles.hcDesc}>
+                Health Connect n'est pas disponible sur cet appareil.
+              </Text>
+            )}
 
             {hcStatus === 'not_authorized' && (
               <>
@@ -350,14 +499,20 @@ export default function CaloriesScreen() {
               </>
             )}
 
-            {hcStatus === 'ready' && (
+            {/* Stats : visible en mode "ready" ou si valeur manuelle définie */}
+            {(hcStatus === 'ready' || isManualBurned) && (
               <View style={styles.hcStats}>
-                <View style={styles.hcStat}>
-                  <Text style={styles.hcStatValue}>
-                    {burnedCalories != null ? burnedCalories : '—'}
+                <TouchableOpacity style={styles.hcStat} onPress={() => setBurnedModalVisible(true)} activeOpacity={0.7}>
+                  <View style={styles.hcStatValueRow}>
+                    <Text style={styles.hcStatValue}>
+                      {effectiveBurned != null ? effectiveBurned : '—'}
+                    </Text>
+                    <Ionicons name="pencil" size={12} color={COLORS.textTertiary} style={{ marginLeft: 4, marginTop: 2 }} />
+                  </View>
+                  <Text style={styles.hcStatLabel}>
+                    {isManualBurned ? 'Brûlées ✎' : 'Brûlées'}
                   </Text>
-                  <Text style={styles.hcStatLabel}>Brûlées</Text>
-                </View>
+                </TouchableOpacity>
                 <View style={[styles.hcStat, styles.hcStatMid]}>
                   <Text style={[
                     styles.hcStatValue,
@@ -376,6 +531,22 @@ export default function CaloriesScreen() {
                   <Text style={styles.hcStatLabel}>Consommées</Text>
                 </View>
               </View>
+            )}
+
+            {/* Lien saisie manuelle quand HC non connecté/indispo */}
+            {(hcStatus === 'not_authorized' || hcStatus === 'not_installed' || hcStatus === 'unavailable') && (
+              <TouchableOpacity
+                style={styles.hcManualLink}
+                onPress={() => setBurnedModalVisible(true)}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="create-outline" size={14} color={COLORS.textSecondary} />
+                <Text style={styles.hcManualLinkText}>
+                  {isManualBurned
+                    ? `Modifier la valeur manuelle (${effectiveBurned} kcal)`
+                    : 'Saisir manuellement les calories brûlées'}
+                </Text>
+              </TouchableOpacity>
             )}
           </View>
         )}
@@ -426,6 +597,15 @@ export default function CaloriesScreen() {
       </View>
 
       {/* Modals */}
+      <BurnedCaloriesModal
+        visible={burnedModalVisible}
+        currentValue={String(effectiveBurned ?? '')}
+        isManual={isManualBurned}
+        onSave={handleSaveBurned}
+        onReset={handleResetBurned}
+        onClose={() => setBurnedModalVisible(false)}
+      />
+
       <GoalsModal visible={goalsModalVisible} onClose={() => setGoalsModalVisible(false)} />
 
       <AddEntryModal
@@ -528,8 +708,16 @@ const styles = StyleSheet.create({
   hcStats: { flexDirection: 'row', gap: SPACING.sm, marginTop: SPACING.xs },
   hcStat: { flex: 1, alignItems: 'center', gap: 2 },
   hcStatMid: { borderLeftWidth: 1, borderRightWidth: 1, borderColor: COLORS.border },
+  hcStatValueRow: { flexDirection: 'row', alignItems: 'center' },
   hcStatValue: { fontSize: FONT_SIZE.md, fontWeight: FONT_WEIGHT.bold, color: COLORS.textPrimary },
   hcStatLabel: { fontSize: FONT_SIZE.xs, color: COLORS.textSecondary },
+  hcManualLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    paddingTop: SPACING.xs,
+  },
+  hcManualLinkText: { fontSize: FONT_SIZE.xs, color: COLORS.textSecondary },
 
   macroBarsCard: {
     backgroundColor: COLORS.bgCard,

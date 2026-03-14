@@ -1,5 +1,22 @@
 # Déclic — Dev Log
 
+## Saisie manuelle des calories brûlées (2026-03-14)
+
+### Feature : Override manuel des calories brûlées
+
+**Problème :** La synchronisation Health Connect peut être incorrecte ou indisponible. L'utilisateur avait aucun moyen de corriger la valeur.
+
+**Solution :**
+- `calorieStore.ts` : nouveau champ `manualBurnedCalories: Record<string, number>` + méthodes `setManualBurnedCalories(date, kcal)` et `clearManualBurnedCalories(date)`.
+- `calories.tsx` : modal bottom-sheet `BurnedCaloriesModal` avec `TextInput` numérique.
+  - En mode HC `ready` : bouton crayon cliquable sur la stat "Brûlées".
+  - En mode HC non connecté / non installé / indisponible : lien "Saisir manuellement" sous la carte.
+  - Si valeur manuelle active : label "Brûlées ✎" + option "Réinitialiser (revenir à Health Connect)".
+- La valeur effective = `manualBurnedCalories[date] ?? hcBurnedCalories`.
+- La `hcCard` s'affiche aussi quand `hcStatus === 'unavailable'` (pour permettre la saisie manuelle).
+
+
+
 ## Health Connect — Samsung Health (2026-03-08)
 
 ### Feature : Calories brûlées via Health Connect

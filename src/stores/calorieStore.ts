@@ -26,6 +26,7 @@ interface CalorieStore {
   foodLibrary: FoodItem[];
   composedMeals: ComposedMeal[];
   goals: NutritionGoals;
+  manualBurnedCalories: Record<string, number>;
 
   addEntry: (entry: Omit<FoodEntry, 'id' | 'createdAt'>) => void;
   removeEntry: (id: string) => void;
@@ -46,6 +47,8 @@ interface CalorieStore {
   deleteComposedMeal: (id: string) => void;
 
   setGoals: (patch: Partial<NutritionGoals>) => void;
+  setManualBurnedCalories: (date: string, kcal: number) => void;
+  clearManualBurnedCalories: (date: string) => void;
 
   computeCalories: (item: FoodItem, serving: Serving) => number;
   computeMacros: (item: FoodItem, serving: Serving) => Macros | null;
@@ -58,6 +61,7 @@ export const useCalorieStore = create<CalorieStore>()(
       foodLibrary: [],
       composedMeals: [],
       goals: DEFAULT_GOALS,
+      manualBurnedCalories: {},
 
       addEntry: (entry) => {
         const newEntry: FoodEntry = {
@@ -150,6 +154,18 @@ export const useCalorieStore = create<CalorieStore>()(
         set((s) => ({ goals: { ...s.goals, ...patch } }));
       },
 
+      setManualBurnedCalories: (date, kcal) => {
+        set((s) => ({ manualBurnedCalories: { ...s.manualBurnedCalories, [date]: kcal } }));
+      },
+
+      clearManualBurnedCalories: (date) => {
+        set((s) => {
+          const next = { ...s.manualBurnedCalories };
+          delete next[date];
+          return { manualBurnedCalories: next };
+        });
+      },
+
       computeCalories: (item, serving) => {
         const factor =
           serving.unit === 'g' || serving.unit === 'ml'
@@ -197,6 +213,7 @@ export const useCalorieStore = create<CalorieStore>()(
         }
         if (!state.foodLibrary) state.foodLibrary = [];
         if (!state.composedMeals) state.composedMeals = [];
+        if (!state.manualBurnedCalories) state.manualBurnedCalories = {};
       },
     }
   )
