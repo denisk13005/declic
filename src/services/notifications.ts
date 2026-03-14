@@ -1,6 +1,7 @@
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
-import { Platform, Linking, Alert } from 'react-native';
+import * as IntentLauncher from 'expo-intent-launcher';
+import { Platform } from 'react-native';
 
 // ─── Foreground handler ───────────────────────────────────────────────────────
 
@@ -88,22 +89,25 @@ export async function cancelAllReminders(): Promise<void> {
 let _batteryPromptShown = false;
 
 /**
- * Affiche une invite une seule fois par session pour désactiver l'optimisation
- * batterie sur Samsung (One UI tue les alarmes exactes si l'app est "optimisée").
+ * Ouvre le dialog système Android "Autoriser [App] à s'exécuter en arrière-plan
+ * sans restriction ?" — une seule fois par session.
+ *
+ * Sur Samsung One UI, sans cette exemption, l'AlarmManager est suspendu quand
+ * l'app est fermée et les notifications n'arrivent pas.
+ *
+ * Requiert : android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS dans le manifest.
  */
-export function promptBatteryOptimizationIfNeeded(): void {
+export async function requestBatteryOptimizationExemption(): Promise<void> {
+  if (Platform.OS !== 'android') return;
   if (_batteryPromptShown) return;
   _batteryPromptShown = true;
 
-  Alert.alert(
-    '📵 Rappels en veille',
-    'Pour recevoir tes rappels même quand le téléphone dort, désactive l\'optimisation batterie pour Déclic :\n\nParamètres → Applications → Déclic → Batterie → "Sans restriction"',
-    [
-      {
-        text: 'Ouvrir les paramètres',
-        onPress: () => Linking.openSettings(),
-      },
-      { text: 'Plus tard', style: 'cancel' },
-    ]
-  );
+  try {
+    await IntentLauncher.startActivityAsync(
+      IntentLauncher.ActivityAction.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+      { data: 'package:com.declic.app' }
+    );
+  } catch {
+    // Certains ROM ne supportent pas cet intent — silencieux
+  }
 }
