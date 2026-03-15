@@ -2,6 +2,9 @@
 
 export type HabitFrequency = 'daily' | 'weekly';
 
+/** Unité de répétition d'un rappel */
+export type ReminderUnit = 'hours' | 'days' | 'weeks' | 'months';
+
 export interface Habit {
   id: string;
   name: string;
@@ -12,7 +15,19 @@ export interface Habit {
   targetDays: number[];
   /** ISO date strings of completed check-ins */
   completions: string[];
-  reminderTime: { hour: number; minute: number } | null;
+  /**
+   * Configuration du rappel.
+   * - unit/value optionnels pour rétro-compat (anciens habitudes = daily à HH:MM).
+   * - Pour unit='hours' : hour/minute ne sont pas utilisés pour le scheduling.
+   * - Pour unit='days' && value=1 : trigger DAILY exact à hour:minute.
+   * - Pour les autres : trigger TIME_INTERVAL.
+   */
+  reminderTime: {
+    hour: number;
+    minute: number;
+    unit?: ReminderUnit;
+    value?: number;
+  } | null;
   notificationId: string | null;
   createdAt: string;
   archived: boolean;

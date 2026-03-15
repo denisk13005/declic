@@ -1,9 +1,9 @@
 import { Alert } from 'react-native';
 import { useHabitStore } from '@/stores/habitStore';
-import { Habit } from '@/types';
+import { Habit, ReminderUnit } from '@/types';
 import {
   requestNotificationPermission,
-  scheduleHabitReminder,
+  scheduleHabitReminderFull,
   cancelHabitReminder,
   requestBatteryOptimizationExemption,
 } from '@/services/notifications';
@@ -13,10 +13,17 @@ export function useHabitNotifications() {
 
   /**
    * Active ou met à jour le rappel d'une habitude.
-   * Annule l'ancienne notification si elle existait, planifie la nouvelle.
+   * - unit='days' && value=1 : rappel quotidien exact à hour:minute.
+   * - Autres : intervalle libre (TIME_INTERVAL).
    * Retourne true si la permission est accordée et la notif planifiée.
    */
-  async function setReminder(habit: Habit, hour: number, minute: number): Promise<boolean> {
+  async function setReminder(
+    habit: Habit,
+    hour: number,
+    minute: number,
+    unit: ReminderUnit = 'days',
+    value: number = 1,
+  ): Promise<boolean> {
     const granted = await requestNotificationPermission();
     if (!granted) {
       Alert.alert(
@@ -27,16 +34,18 @@ export function useHabitNotifications() {
       return false;
     }
 
-    // Annule l'ancienne notif avant d'en créer une nouvelle
     if (habit.notificationId) {
       await cancelHabitReminder(habit.notificationId);
     }
 
-    const notificationId = await scheduleHabitReminder(habit.name, habit.emoji, hour, minute);
-    updateHabit(habit.id, { reminderTime: { hour, minute }, notificationId });
+    const notificationId = await scheduleHabitReminderFull(
+      habit.name, habit.emoji, unit, value, hour, minute,
+    );
+    updateHabit(habit.id, {
+      reminderTime: { hour, minute, unit, value },
+      notificationId,
+    });
 
-    // Dialog système Android : "Autoriser Déclic à s'exécuter sans restriction ?"
-    // Nécessaire sur Samsung pour que les alarmes AlarmManager survivent à la fermeture de l'app
     requestBatteryOptimizationExemption();
     return true;
   }

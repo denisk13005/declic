@@ -1,5 +1,47 @@
 # Déclic — Dev Log
 
+## Rappels par intervalle configurable (2026-03-15)
+
+### Feature : Rappels en heures / jours / semaines / mois
+
+**Contexte :** Les rappels n'existaient qu'en mode "quotidien à HH:MM". L'utilisateur voulait pouvoir configurer des intervalles libres.
+
+**Nouveau comportement :**
+- Sélecteur d'intervalle : [N spinners] + pills [Heures | Jours | Semaines | Mois]
+- Pour jours/semaines/mois : TimePicker HH:MM reste visible
+- Trigger backend :
+  - `unit='days' && value=1` → DAILY trigger exact (AlarmManager setExactAndAllowWhileIdle, 08:00 précis)
+  - Autres → TIME_INTERVAL repeating (toutes les N × unité secondes)
+- Badge HabitCard mis à jour : "08:00" / "2h" / "3j" / "2 sem." / "1 mois"
+- Rétro-compat : anciens rappels `{ hour, minute }` sans unit/value traités comme daily
+
+**Fichiers modifiés :**
+- `src/types/index.ts` — `ReminderUnit` type, extension de `Habit.reminderTime`
+- `src/services/notifications.ts` — `scheduleHabitReminderFull()` + helper `unitToSeconds()`
+- `src/hooks/useHabitNotifications.ts` — `setReminder()` accepte `unit` + `value`
+- `app/(tabs)/home.tsx` — composant `ReminderConfig` + `formatReminder()` + `AddHabitModal` + `EditHabitSheet` mis à jour
+
+---
+
+## Recherche OFF dans FoodLibraryModal (2026-03-15)
+
+### Feature : Fallback Open Food Facts dans CreateMealForm
+
+**Contexte :** `FoodLibraryModal` → onglet "Repas composés" → "Ajouter un ingrédient" n'avait que Ciqual local. Les produits de marque étaient introuvables.
+
+**Comportement ajouté :**
+- Après le debounce (200ms), si Ciqual retourne < 3 résultats → déclenche automatiquement `searchByName` (OFF API)
+- Spinner "Recherche sur Open Food Facts…" pendant le chargement
+- Section "Open Food Facts" avec les résultats au-dessous de Ciqual
+- Sélection d'un résultat OFF → auto-sauvegardé dans `foodLibrary` (via `addFoodItem`) + ajouté comme ingrédient
+- Carte "Introuvable" visible uniquement quand Ciqual ET OFF ont retourné 0 résultat ET la recherche OFF est terminée
+- Annulation propre de la requête OFF en vol si recherche changée ou modal fermé (AbortController)
+
+**Fichier modifié :**
+- `src/components/nutrition/FoodLibraryModal.tsx` — import `searchByName + ProductInfo`, états `offResults/isSearchingOFF`, ref `offAbortRef`, fonction `addOFFSuggestion`, render OFF section
+
+---
+
 ## Rappels d'habitudes par notifications (2026-03-14)
 
 ### Feature : Notifications quotidiennes par habitude

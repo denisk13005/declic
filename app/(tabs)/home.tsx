@@ -20,7 +20,7 @@ import { useHabitStore } from '@/stores/habitStore';
 import { usePremium } from '@/hooks/usePremium';
 import { useHabitNotifications } from '@/hooks/useHabitNotifications';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
-import { Habit } from '@/types';
+import { Habit, ReminderUnit } from '@/types';
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
@@ -41,6 +41,159 @@ function pad(n: number) {
 function formatTime(hour: number, minute: number) {
   return `${pad(hour)}:${pad(minute)}`;
 }
+
+/** Libellé court du rappel pour la HabitCard. */
+function formatReminder(rt: NonNullable<Habit['reminderTime']>): string {
+  const unit = rt.unit ?? 'days';
+  const value = rt.value ?? 1;
+  if (unit === 'hours') return value === 1 ? 'chaque heure' : `/${value}h`;
+  if (unit === 'days' && value === 1) return formatTime(rt.hour, rt.minute);
+  if (unit === 'days') return `/${value}j`;
+  if (unit === 'weeks') return value === 1 ? '/sem.' : `/${value} sem.`;
+  if (unit === 'months') return value === 1 ? '/mois' : `/${value} mois`;
+  return formatTime(rt.hour, rt.minute);
+}
+
+// ─── Sélecteur d'intervalle de rappel ─────────────────────────────────────────
+
+const REMINDER_UNITS: { value: ReminderUnit; label: string }[] = [
+  { value: 'hours',  label: 'Heures' },
+  { value: 'days',   label: 'Jours' },
+  { value: 'weeks',  label: 'Semaines' },
+  { value: 'months', label: 'Mois' },
+];
+
+function maxForUnit(unit: ReminderUnit): number {
+  switch (unit) {
+    case 'hours':  return 23;
+    case 'days':   return 30;
+    case 'weeks':  return 12;
+    case 'months': return 12;
+  }
+}
+
+function ReminderConfig({
+  unit,
+  value,
+  hour,
+  minute,
+  onUnitChange,
+  onValueChange,
+  onHourChange,
+  onMinuteChange,
+}: {
+  unit: ReminderUnit;
+  value: number;
+  hour: number;
+  minute: number;
+  onUnitChange: (u: ReminderUnit) => void;
+  onValueChange: (v: number) => void;
+  onHourChange: (h: number) => void;
+  onMinuteChange: (m: number) => void;
+}) {
+  const max = maxForUnit(unit);
+  const showTimePicker = unit !== 'hours';
+
+  return (
+    <View style={rcStyles.box}>
+      {/* Ligne 1 : "Toutes les N [unité]" */}
+      <Text style={rcStyles.rowLabel}>Toutes les</Text>
+      <View style={rcStyles.valueRow}>
+        <TimeUnit value={value} max={max} onChange={(v) => onValueChange(Math.max(1, v))} />
+        <View style={rcStyles.unitPills}>
+          {REMINDER_UNITS.map((u) => (
+            <TouchableOpacity
+              key={u.value}
+              style={[rcStyles.pill, unit === u.value && rcStyles.pillActive]}
+              onPress={() => {
+                onUnitChange(u.value);
+                onValueChange(1);
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={[rcStyles.pillText, unit === u.value && rcStyles.pillTextActive]}>
+                {u.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+      {/* Ligne 2 : heure (sauf pour "heures") */}
+      {showTimePicker && (
+        <>
+          <Text style={[rcStyles.rowLabel, { marginTop: SPACING.sm }]}>À quelle heure</Text>
+          <TimePicker
+            hour={hour}
+            minute={minute}
+            onChangeHour={onHourChange}
+            onChangeMinute={onMinuteChange}
+          />
+        </>
+      )}
+      {/* Info contextuelle */}
+      <Text style={rcStyles.hint}>
+        {unit === 'hours' && `Notification toutes les ${value}h`}
+        {unit === 'days'   && value === 1 && `Chaque jour à ${formatTime(hour, minute)}`}
+        {unit === 'days'   && value > 1   && `Tous les ${value} jours à ${formatTime(hour, minute)}`}
+        {unit === 'weeks'  && value === 1 && `Toutes les semaines à ${formatTime(hour, minute)}`}
+        {unit === 'weeks'  && value > 1   && `Toutes les ${value} semaines à ${formatTime(hour, minute)}`}
+        {unit === 'months' && value === 1 && `Chaque mois à ${formatTime(hour, minute)}`}
+        {unit === 'months' && value > 1   && `Tous les ${value} mois à ${formatTime(hour, minute)}`}
+      </Text>
+    </View>
+  );
+}
+
+const rcStyles = StyleSheet.create({
+  box: {
+    backgroundColor: COLORS.bgElevated,
+    borderRadius: RADIUS.md,
+    padding: SPACING.md,
+    marginBottom: SPACING.lg,
+    gap: SPACING.xs,
+  },
+  rowLabel: {
+    fontSize: FONT_SIZE.xs,
+    fontWeight: FONT_WEIGHT.semibold,
+    color: COLORS.textSecondary,
+    marginBottom: 2,
+  },
+  valueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+  },
+  unitPills: {
+    flex: 1,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 4,
+  },
+  pill: {
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 6,
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.bg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  pillActive: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+  },
+  pillText: {
+    fontSize: FONT_SIZE.xs,
+    fontWeight: FONT_WEIGHT.semibold,
+    color: COLORS.textSecondary,
+  },
+  pillTextActive: { color: '#fff' },
+  hint: {
+    fontSize: FONT_SIZE.xs,
+    color: COLORS.textTertiary,
+    textAlign: 'center',
+    marginTop: SPACING.xs,
+  },
+});
 
 // ─── TimePicker ───────────────────────────────────────────────────────────────
 
@@ -172,7 +325,7 @@ function HabitCard({
                 <View style={styles.cardBell}>
                   <Ionicons name="notifications" size={11} color={COLORS.textTertiary} />
                   <Text style={styles.cardBellText}>
-                    {formatTime(habit.reminderTime.hour, habit.reminderTime.minute)}
+                    {formatReminder(habit.reminderTime)}
                   </Text>
                 </View>
               )}
@@ -195,6 +348,8 @@ type AddHabitData = {
   color: string;
   reminderHour?: number;
   reminderMinute?: number;
+  reminderUnit?: ReminderUnit;
+  reminderValue?: number;
 };
 
 function AddHabitModal({
@@ -210,6 +365,8 @@ function AddHabitModal({
   const [emoji, setEmoji] = useState('🏃');
   const [color, setColor] = useState<string>(COLORS.primary);
   const [reminderEnabled, setReminderEnabled] = useState(false);
+  const [reminderUnit, setReminderUnit] = useState<ReminderUnit>('days');
+  const [reminderValue, setReminderValue] = useState(1);
   const [reminderHour, setReminderHour] = useState(8);
   const [reminderMinute, setReminderMinute] = useState(0);
 
@@ -218,6 +375,8 @@ function AddHabitModal({
     setEmoji('🏃');
     setColor(COLORS.primary);
     setReminderEnabled(false);
+    setReminderUnit('days');
+    setReminderValue(1);
     setReminderHour(8);
     setReminderMinute(0);
   }
@@ -228,7 +387,12 @@ function AddHabitModal({
       name: name.trim(),
       emoji,
       color,
-      ...(reminderEnabled ? { reminderHour, reminderMinute } : {}),
+      ...(reminderEnabled ? {
+        reminderHour,
+        reminderMinute,
+        reminderUnit,
+        reminderValue,
+      } : {}),
     });
     reset();
     onClose();
@@ -283,7 +447,7 @@ function AddHabitModal({
           <View style={styles.reminderToggleRow}>
             <View style={styles.reminderToggleLeft}>
               <Ionicons name="notifications-outline" size={18} color={COLORS.textSecondary} />
-              <Text style={styles.reminderToggleLabel}>Rappel quotidien</Text>
+              <Text style={styles.reminderToggleLabel}>Rappel</Text>
             </View>
             <Switch
               value={reminderEnabled}
@@ -294,14 +458,16 @@ function AddHabitModal({
           </View>
 
           {reminderEnabled && (
-            <View style={styles.reminderPickerBox}>
-              <TimePicker
-                hour={reminderHour}
-                minute={reminderMinute}
-                onChangeHour={setReminderHour}
-                onChangeMinute={setReminderMinute}
-              />
-            </View>
+            <ReminderConfig
+              unit={reminderUnit}
+              value={reminderValue}
+              hour={reminderHour}
+              minute={reminderMinute}
+              onUnitChange={setReminderUnit}
+              onValueChange={setReminderValue}
+              onHourChange={setReminderHour}
+              onMinuteChange={setReminderMinute}
+            />
           )}
 
           <TouchableOpacity style={styles.addBtn} onPress={handleAdd}>
@@ -335,13 +501,15 @@ function EditHabitSheet({
   onSave: (id: string, data: { name: string; emoji: string; color: string }) => void;
   onArchive: (id: string) => void;
   onDelete: (id: string) => void;
-  onSetReminder: (habit: Habit, hour: number, minute: number) => void;
+  onSetReminder: (habit: Habit, hour: number, minute: number, unit: ReminderUnit, value: number) => void;
   onRemoveReminder: (habit: Habit) => void;
 }) {
   const [name, setName] = useState('');
   const [emoji, setEmoji] = useState('🏃');
   const [color, setColor] = useState<string>(COLORS.primary);
   const [reminderEnabled, setReminderEnabled] = useState(false);
+  const [reminderUnit, setReminderUnit] = useState<ReminderUnit>('days');
+  const [reminderValue, setReminderValue] = useState(1);
   const [reminderHour, setReminderHour] = useState(8);
   const [reminderMinute, setReminderMinute] = useState(0);
 
@@ -352,6 +520,8 @@ function EditHabitSheet({
       setEmoji(habit.emoji);
       setColor(habit.color);
       setReminderEnabled(habit.reminderTime != null);
+      setReminderUnit(habit.reminderTime?.unit ?? 'days');
+      setReminderValue(habit.reminderTime?.value ?? 1);
       setReminderHour(habit.reminderTime?.hour ?? 8);
       setReminderMinute(habit.reminderTime?.minute ?? 0);
     }
@@ -364,7 +534,7 @@ function EditHabitSheet({
     if (!trimmed) return;
     onSave(habit.id, { name: trimmed, emoji, color });
     if (reminderEnabled) {
-      onSetReminder({ ...habit, name: trimmed, emoji }, reminderHour, reminderMinute);
+      onSetReminder({ ...habit, name: trimmed, emoji }, reminderHour, reminderMinute, reminderUnit, reminderValue);
     } else if (habit.reminderTime) {
       onRemoveReminder(habit);
     }
@@ -373,7 +543,12 @@ function EditHabitSheet({
 
   const hasReminderChanged =
     reminderEnabled !== (habit.reminderTime != null) ||
-    (reminderEnabled && (reminderHour !== habit.reminderTime?.hour || reminderMinute !== habit.reminderTime?.minute));
+    (reminderEnabled && (
+      reminderHour !== habit.reminderTime?.hour ||
+      reminderMinute !== habit.reminderTime?.minute ||
+      reminderUnit !== (habit.reminderTime?.unit ?? 'days') ||
+      reminderValue !== (habit.reminderTime?.value ?? 1)
+    ));
 
   return (
     <Modal visible={habit != null} animationType="slide" transparent onRequestClose={onClose}>
@@ -423,7 +598,7 @@ function EditHabitSheet({
           <View style={styles.reminderToggleRow}>
             <View style={styles.reminderToggleLeft}>
               <Ionicons name="notifications-outline" size={18} color={COLORS.textSecondary} />
-              <Text style={styles.reminderToggleLabel}>Rappel quotidien</Text>
+              <Text style={styles.reminderToggleLabel}>Rappel</Text>
               {habit.reminderTime && !reminderEnabled && (
                 <Text style={styles.reminderBadgeOff}>Actif</Text>
               )}
@@ -437,19 +612,23 @@ function EditHabitSheet({
           </View>
 
           {reminderEnabled && (
-            <View style={styles.reminderPickerBox}>
-              <TimePicker
+            <>
+              <ReminderConfig
+                unit={reminderUnit}
+                value={reminderValue}
                 hour={reminderHour}
                 minute={reminderMinute}
-                onChangeHour={setReminderHour}
-                onChangeMinute={setReminderMinute}
+                onUnitChange={setReminderUnit}
+                onValueChange={setReminderValue}
+                onHourChange={setReminderHour}
+                onMinuteChange={setReminderMinute}
               />
               {hasReminderChanged && (
                 <Text style={styles.reminderChanged}>
                   {habit.reminderTime ? 'Le rappel sera mis à jour.' : 'Un rappel sera planifié.'}
                 </Text>
               )}
-            </View>
+            </>
           )}
 
           <TouchableOpacity style={styles.addBtn} onPress={handleSave}>
@@ -508,7 +687,7 @@ export default function HomeScreen() {
       const id = addHabit({ ...data, frequency: 'daily', targetDays: [], reminderTime: null });
       if (data.reminderHour !== undefined && data.reminderMinute !== undefined) {
         const habit = { id, name: data.name, emoji: data.emoji, color: data.color, frequency: 'daily' as const, targetDays: [], completions: [], reminderTime: null, notificationId: null, createdAt: new Date().toISOString(), archived: false };
-        await setReminder(habit, data.reminderHour, data.reminderMinute);
+        await setReminder(habit, data.reminderHour, data.reminderMinute, data.reminderUnit ?? 'days', data.reminderValue ?? 1);
       }
     },
     [addHabit, setReminder]
@@ -534,10 +713,10 @@ export default function HomeScreen() {
   );
 
   const handleSetReminder = useCallback(
-    async (habit: Habit, hour: number, minute: number) => {
-      // Récupère l'habituation à jour depuis le store pour avoir le bon notificationId
+    async (habit: Habit, hour: number, minute: number, unit: ReminderUnit, value: number) => {
+      // Récupère l'habitude à jour depuis le store pour avoir le bon notificationId
       const current = habits.find((h) => h.id === habit.id) ?? habit;
-      await setReminder(current, hour, minute);
+      await setReminder(current, hour, minute, unit, value);
     },
     [habits, setReminder]
   );

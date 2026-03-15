@@ -2,6 +2,7 @@ import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import * as IntentLauncher from 'expo-intent-launcher';
 import { Platform } from 'react-native';
+import { ReminderUnit } from '@/types';
 
 // ─── Foreground handler ───────────────────────────────────────────────────────
 
@@ -72,6 +73,63 @@ export async function scheduleHabitReminder(
       type: Notifications.SchedulableTriggerInputTypes.DAILY,
       hour,
       minute,
+    },
+  });
+}
+
+/** Secondes correspondant à 1 unité de répétition. */
+function unitToSeconds(unit: ReminderUnit, value: number): number {
+  switch (unit) {
+    case 'hours':  return value * 3600;
+    case 'days':   return value * 86400;
+    case 'weeks':  return value * 7 * 86400;
+    case 'months': return value * 30 * 86400;
+  }
+}
+
+/**
+ * Planifie un rappel répétitif configurable.
+ *
+ * - unit='days' && value=1 → DAILY trigger exact à hour:minute (AlarmManager setExactAndAllowWhileIdle).
+ * - Toute autre combinaison → TIME_INTERVAL répétitif (toutes les N secondes).
+ *
+ * Pour hours : hour/minute sont ignorés dans le scheduling.
+ * Pour days>1 / weeks / months : le premier déclenchement a lieu après 1 intervalle depuis maintenant.
+ */
+export async function scheduleHabitReminderFull(
+  habitName: string,
+  emoji: string,
+  unit: ReminderUnit,
+  value: number,
+  hour: number,
+  minute: number,
+): Promise<string> {
+  const content = {
+    title: `${emoji} ${habitName}`,
+    body: "C'est l'heure de ton habitude !",
+    sound: 'default' as const,
+    data: {},
+  };
+
+  // Cas exact : chaque jour à une heure fixe
+  if (unit === 'days' && value === 1) {
+    return Notifications.scheduleNotificationAsync({
+      content,
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DAILY,
+        hour,
+        minute,
+      },
+    });
+  }
+
+  // Cas intervalle libre
+  return Notifications.scheduleNotificationAsync({
+    content,
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+      seconds: unitToSeconds(unit, value),
+      repeats: true,
     },
   });
 }

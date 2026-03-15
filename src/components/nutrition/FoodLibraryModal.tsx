@@ -19,6 +19,7 @@ import { useCalorieStore } from '@/stores/calorieStore';
 import { FoodItem, ComposedMeal, ComposedMealIngredient, Macros, Serving, ServingUnit } from '@/types';
 import { PrefillFood } from './AddEntryModal';
 import { searchCiqual, CiqualResult as FoodResult } from '@/services/ciqualSearch';
+import { searchByName as searchOFF, ProductInfo } from '@/services/openFoodFacts';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
 
 interface Props {
@@ -164,7 +165,10 @@ function CreateMealForm({ onCreated }: { onCreated: () => void }) {
   const [pickingFood, setPickingFood] = useState(false);
   const [search, setSearch] = useState('');
   const [foodSuggestions, setFoodSuggestions] = useState<FoodResult[]>([]);
+  const [offResults, setOffResults] = useState<ProductInfo[]>([]);
+  const [isSearchingOFF, setIsSearchingOFF] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const offAbortRef = useRef<AbortController | null>(null);
 
   // Création manuelle d'un aliment introuvable
   const [creatingCustom, setCreatingCustom] = useState(false);
@@ -178,19 +182,41 @@ function CreateMealForm({ onCreated }: { onCreated: () => void }) {
   function handleSearchChange(text: string) {
     setSearch(text);
     if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (offAbortRef.current) { offAbortRef.current.abort(); offAbortRef.current = null; }
     if (text.trim().length < 2) {
       setFoodSuggestions([]);
+      setOffResults([]);
+      setIsSearchingOFF(false);
       return;
     }
-    debounceRef.current = setTimeout(() => {
-      setFoodSuggestions(searchCiqual(text.trim()));
-    }, 150);
+    debounceRef.current = setTimeout(async () => {
+      const local = searchCiqual(text.trim());
+      setFoodSuggestions(local);
+      setOffResults([]);
+      // Fallback OFF si peu de résultats locaux
+      if (local.length < 3) {
+        setIsSearchingOFF(true);
+        const ctrl = new AbortController();
+        offAbortRef.current = ctrl;
+        try {
+          const results = await searchOFF(text.trim(), ctrl.signal);
+          if (!ctrl.signal.aborted) setOffResults(results);
+        } catch {
+          // ignoré (abort ou réseau)
+        } finally {
+          if (!ctrl.signal.aborted) setIsSearchingOFF(false);
+        }
+      }
+    }, 200);
   }
 
   function closePicking() {
+    if (offAbortRef.current) { offAbortRef.current.abort(); offAbortRef.current = null; }
     setPickingFood(false);
     setSearch('');
     setFoodSuggestions([]);
+    setOffResults([]);
+    setIsSearchingOFF(false);
     setCreatingCustom(false);
     setCustomName('');
     setCustomCal('');
@@ -229,6 +255,17 @@ function CreateMealForm({ onCreated }: { onCreated: () => void }) {
       name: suggestion.brand ? `${suggestion.name} (${suggestion.brand})` : suggestion.name,
       caloriesPer100: suggestion.caloriesPer100,
       macrosPer100: suggestion.macros,
+      defaultServing: { quantity: 100, unit: 'g' },
+      isCustom: false,
+    });
+    addIngredient(newItem);
+  }
+
+  function addOFFSuggestion(product: ProductInfo) {
+    const newItem = addFoodItem({
+      name: product.brand ? `${product.name} (${product.brand})` : product.name,
+      caloriesPer100: product.caloriesPer100,
+      macrosPer100: product.macrosPer100,
       defaultServing: { quantity: 100, unit: 'g' },
       isCustom: false,
     });
@@ -364,7 +401,7 @@ function CreateMealForm({ onCreated }: { onCreated: () => void }) {
           </>
         )}
 
-        {/* Suggestions base alimentaire (Ciqual + OFF France) */}
+        {/* Suggestions base alimentaire (Ciqual) */}
         {foodSuggestions.length > 0 && (
           <>
             <Text style={styles.sectionLabel}>Base alimentaire</Text>
@@ -385,13 +422,42 @@ function CreateMealForm({ onCreated }: { onCreated: () => void }) {
           </>
         )}
 
+        {/* Spinner OFF */}
+        {isSearchingOFF && (
+          <View style={styles.offLoadingRow}>
+            <ActivityIndicator size="small" color={COLORS.primary} />
+            <Text style={styles.offLoadingText}>Recherche sur Open Food Facts…</Text>
+          </View>
+        )}
+
+        {/* Résultats Open Food Facts */}
+        {offResults.length > 0 && (
+          <>
+            <Text style={styles.sectionLabel}>Open Food Facts</Text>
+            {offResults.map((p, i) => (
+              <TouchableOpacity key={i} style={styles.foodRow} onPress={() => addOFFSuggestion(p)}>
+                <View style={styles.foodInfo}>
+                  <Text style={styles.foodName}>
+                    {p.name}{p.brand ? ` · ${p.brand}` : ''}
+                  </Text>
+                  <Text style={styles.foodMeta}>
+                    {p.caloriesPer100} kcal/100g
+                    {p.macrosPer100 ? `  ·  P:${p.macrosPer100.protein}g G:${p.macrosPer100.carbs}g L:${p.macrosPer100.fat}g` : ''}
+                  </Text>
+                </View>
+                <Ionicons name="add-circle-outline" size={20} color={COLORS.primary} />
+              </TouchableOpacity>
+            ))}
+          </>
+        )}
+
         {/* Introuvable — propose création manuelle */}
-        {search.trim().length >= 2 && filtered.length === 0 && foodSuggestions.length === 0 && (
+        {search.trim().length >= 2 && filtered.length === 0 && foodSuggestions.length === 0 && offResults.length === 0 && !isSearchingOFF && (
           <View style={styles.notFoundCard}>
             <Ionicons name="search-outline" size={28} color={COLORS.textTertiary} />
             <Text style={styles.notFoundTitle}>Introuvable</Text>
             <Text style={styles.notFoundSub}>
-              "{search.trim()}" n'est pas dans la base (62 000 aliments).{'\n'}
+              "{search.trim()}" n'est pas dans la base.{'\n'}
               Crée-le manuellement.
             </Text>
             <TouchableOpacity style={styles.offPrimaryBtn} onPress={openCreateCustom} activeOpacity={0.8}>
