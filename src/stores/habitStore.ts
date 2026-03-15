@@ -167,10 +167,9 @@ export const useHabitStore = create<HabitStore>()(
         return done / active.length;
       },
 
-      canAddHabit: (isPremium) => {
-        if (isPremium) return true;
-        const active = get().habits.filter((h) => !h.archived);
-        return active.length < CONFIG.FREE_HABIT_LIMIT;
+      canAddHabit: (_isPremium) => {
+        // TODO: réactiver la limite FREE_HABIT_LIMIT après les tests
+        return true;
       },
     }),
     {
