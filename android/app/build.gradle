@@ -87,9 +87,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.declic.app'
+    namespace 'com.declic.nutrition'
     defaultConfig {
-        applicationId 'com.declic.app'
+        applicationId 'com.declic.nutrition'
         minSdkVersion 26
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
