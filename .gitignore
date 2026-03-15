@@ -60,3 +60,8 @@ android/app/debug.keystore
 # Large data files
 src/data/off-fr.json
 assets/food.db
+scripts/*.gz
+scripts/*.csv
+
+# Claude Code local config
+.claude/
