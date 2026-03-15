@@ -17,7 +17,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   assetBundlePatterns: ['**/*'],
   ios: {
     supportsTablet: false,
-    bundleIdentifier: 'com.declic.app',
+    bundleIdentifier: 'com.declic.nutrition',
     infoPlist: {
       NSUserNotificationUsageDescription:
         'Déclic uses notifications to remind you of your daily habits.',
@@ -28,7 +28,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       foregroundImage: './assets/adaptive-icon.png',
       backgroundColor: '#0A0A0F',
     },
-    package: 'com.declic.app',
+    package: 'com.declic.nutrition',
     permissions: ['RECEIVE_BOOT_COMPLETED', 'SCHEDULE_EXACT_ALARM'],
     minSdkVersion: 26,
   },

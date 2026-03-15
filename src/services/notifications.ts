@@ -163,7 +163,7 @@ export async function requestBatteryOptimizationExemption(): Promise<void> {
   try {
     await IntentLauncher.startActivityAsync(
       IntentLauncher.ActivityAction.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
-      { data: 'package:com.declic.app' }
+      { data: 'package:com.declic.nutrition' }
     );
   } catch {
     // Certains ROM ne supportent pas cet intent — silencieux
