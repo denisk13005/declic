@@ -46,7 +46,12 @@ function formatTime(hour: number, minute: number) {
 function formatReminder(rt: NonNullable<Habit['reminderTime']>): string {
   const unit = rt.unit ?? 'days';
   const value = rt.value ?? 1;
-  if (unit === 'hours') return value === 1 ? 'chaque heure' : `/${value}h`;
+  if (unit === 'hours') {
+    const window = (rt.startHour !== undefined && rt.endHour !== undefined)
+      ? ` ${rt.startHour}h-${rt.endHour}h`
+      : '';
+    return value === 1 ? `1h${window}` : `/${value}h${window}`;
+  }
   if (unit === 'days' && value === 1) return formatTime(rt.hour, rt.minute);
   if (unit === 'days') return `/${value}j`;
   if (unit === 'weeks') return value === 1 ? '/sem.' : `/${value} sem.`;
@@ -77,22 +82,29 @@ function ReminderConfig({
   value,
   hour,
   minute,
+  startHour,
+  endHour,
   onUnitChange,
   onValueChange,
   onHourChange,
   onMinuteChange,
+  onStartHourChange,
+  onEndHourChange,
 }: {
   unit: ReminderUnit;
   value: number;
   hour: number;
   minute: number;
+  startHour: number;
+  endHour: number;
   onUnitChange: (u: ReminderUnit) => void;
   onValueChange: (v: number) => void;
   onHourChange: (h: number) => void;
   onMinuteChange: (m: number) => void;
+  onStartHourChange: (h: number) => void;
+  onEndHourChange: (h: number) => void;
 }) {
   const max = maxForUnit(unit);
-  const showTimePicker = unit !== 'hours';
 
   return (
     <View style={rcStyles.box}>
@@ -118,8 +130,42 @@ function ReminderConfig({
           ))}
         </View>
       </View>
-      {/* Ligne 2 : heure (sauf pour "heures") */}
-      {showTimePicker && (
+
+      {/* Plage horaire (uniquement pour "heures") */}
+      {unit === 'hours' && (
+        <>
+          <Text style={[rcStyles.rowLabel, { marginTop: SPACING.sm }]}>Plage horaire</Text>
+          <View style={rcStyles.windowRow}>
+            <View style={rcStyles.windowPicker}>
+              <Text style={rcStyles.windowLabel}>De</Text>
+              <TimeUnit
+                value={startHour}
+                max={23}
+                onChange={(h) => {
+                  onStartHourChange(h);
+                  if (h >= endHour) onEndHourChange(Math.min(23, h + value));
+                }}
+              />
+              <Text style={rcStyles.windowSuffix}>h</Text>
+            </View>
+            <Text style={rcStyles.windowSeparator}>→</Text>
+            <View style={rcStyles.windowPicker}>
+              <Text style={rcStyles.windowLabel}>À</Text>
+              <TimeUnit
+                value={endHour}
+                max={23}
+                onChange={(h) => {
+                  if (h > startHour) onEndHourChange(h);
+                }}
+              />
+              <Text style={rcStyles.windowSuffix}>h</Text>
+            </View>
+          </View>
+        </>
+      )}
+
+      {/* Heure fixe (pour jours, semaines, mois) */}
+      {unit !== 'hours' && (
         <>
           <Text style={[rcStyles.rowLabel, { marginTop: SPACING.sm }]}>À quelle heure</Text>
           <TimePicker
@@ -130,9 +176,10 @@ function ReminderConfig({
           />
         </>
       )}
+
       {/* Info contextuelle */}
       <Text style={rcStyles.hint}>
-        {unit === 'hours' && `Notification toutes les ${value}h`}
+        {unit === 'hours' && `Toutes les ${value}h de ${startHour}h à ${endHour}h`}
         {unit === 'days'   && value === 1 && `Chaque jour à ${formatTime(hour, minute)}`}
         {unit === 'days'   && value > 1   && `Tous les ${value} jours à ${formatTime(hour, minute)}`}
         {unit === 'weeks'  && value === 1 && `Toutes les semaines à ${formatTime(hour, minute)}`}
@@ -187,6 +234,33 @@ const rcStyles = StyleSheet.create({
     color: COLORS.textSecondary,
   },
   pillTextActive: { color: '#fff' },
+  windowRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.md,
+    marginTop: 4,
+  },
+  windowPicker: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  windowLabel: {
+    fontSize: FONT_SIZE.xs,
+    fontWeight: FONT_WEIGHT.semibold,
+    color: COLORS.textSecondary,
+    minWidth: 20,
+  },
+  windowSuffix: {
+    fontSize: FONT_SIZE.sm,
+    color: COLORS.textSecondary,
+    fontWeight: FONT_WEIGHT.semibold,
+  },
+  windowSeparator: {
+    fontSize: FONT_SIZE.md,
+    color: COLORS.textTertiary,
+  },
   hint: {
     fontSize: FONT_SIZE.xs,
     color: COLORS.textTertiary,
@@ -350,6 +424,8 @@ type AddHabitData = {
   reminderMinute?: number;
   reminderUnit?: ReminderUnit;
   reminderValue?: number;
+  reminderStartHour?: number;
+  reminderEndHour?: number;
 };
 
 function AddHabitModal({
@@ -369,6 +445,8 @@ function AddHabitModal({
   const [reminderValue, setReminderValue] = useState(1);
   const [reminderHour, setReminderHour] = useState(8);
   const [reminderMinute, setReminderMinute] = useState(0);
+  const [reminderStartHour, setReminderStartHour] = useState(8);
+  const [reminderEndHour, setReminderEndHour] = useState(22);
 
   function reset() {
     setName('');
@@ -379,6 +457,8 @@ function AddHabitModal({
     setReminderValue(1);
     setReminderHour(8);
     setReminderMinute(0);
+    setReminderStartHour(8);
+    setReminderEndHour(22);
   }
 
   const handleAdd = () => {
@@ -392,6 +472,8 @@ function AddHabitModal({
         reminderMinute,
         reminderUnit,
         reminderValue,
+        reminderStartHour,
+        reminderEndHour,
       } : {}),
     });
     reset();
@@ -463,10 +545,14 @@ function AddHabitModal({
               value={reminderValue}
               hour={reminderHour}
               minute={reminderMinute}
+              startHour={reminderStartHour}
+              endHour={reminderEndHour}
               onUnitChange={setReminderUnit}
               onValueChange={setReminderValue}
               onHourChange={setReminderHour}
               onMinuteChange={setReminderMinute}
+              onStartHourChange={setReminderStartHour}
+              onEndHourChange={setReminderEndHour}
             />
           )}
 
@@ -501,7 +587,7 @@ function EditHabitSheet({
   onSave: (id: string, data: { name: string; emoji: string; color: string }) => void;
   onArchive: (id: string) => void;
   onDelete: (id: string) => void;
-  onSetReminder: (habit: Habit, hour: number, minute: number, unit: ReminderUnit, value: number) => void;
+  onSetReminder: (habit: Habit, hour: number, minute: number, unit: ReminderUnit, value: number, startHour?: number, endHour?: number) => void;
   onRemoveReminder: (habit: Habit) => void;
 }) {
   const [name, setName] = useState('');
@@ -512,6 +598,8 @@ function EditHabitSheet({
   const [reminderValue, setReminderValue] = useState(1);
   const [reminderHour, setReminderHour] = useState(8);
   const [reminderMinute, setReminderMinute] = useState(0);
+  const [reminderStartHour, setReminderStartHour] = useState(8);
+  const [reminderEndHour, setReminderEndHour] = useState(22);
 
   // Sync state when habit changes
   React.useEffect(() => {
@@ -524,6 +612,8 @@ function EditHabitSheet({
       setReminderValue(habit.reminderTime?.value ?? 1);
       setReminderHour(habit.reminderTime?.hour ?? 8);
       setReminderMinute(habit.reminderTime?.minute ?? 0);
+      setReminderStartHour(habit.reminderTime?.startHour ?? 8);
+      setReminderEndHour(habit.reminderTime?.endHour ?? 22);
     }
   }, [habit?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -534,7 +624,7 @@ function EditHabitSheet({
     if (!trimmed) return;
     onSave(habit.id, { name: trimmed, emoji, color });
     if (reminderEnabled) {
-      onSetReminder({ ...habit, name: trimmed, emoji }, reminderHour, reminderMinute, reminderUnit, reminderValue);
+      onSetReminder({ ...habit, name: trimmed, emoji }, reminderHour, reminderMinute, reminderUnit, reminderValue, reminderStartHour, reminderEndHour);
     } else if (habit.reminderTime) {
       onRemoveReminder(habit);
     }
@@ -547,7 +637,9 @@ function EditHabitSheet({
       reminderHour !== habit.reminderTime?.hour ||
       reminderMinute !== habit.reminderTime?.minute ||
       reminderUnit !== (habit.reminderTime?.unit ?? 'days') ||
-      reminderValue !== (habit.reminderTime?.value ?? 1)
+      reminderValue !== (habit.reminderTime?.value ?? 1) ||
+      reminderStartHour !== (habit.reminderTime?.startHour ?? 8) ||
+      reminderEndHour !== (habit.reminderTime?.endHour ?? 22)
     ));
 
   return (
@@ -618,10 +710,14 @@ function EditHabitSheet({
                 value={reminderValue}
                 hour={reminderHour}
                 minute={reminderMinute}
+                startHour={reminderStartHour}
+                endHour={reminderEndHour}
                 onUnitChange={setReminderUnit}
                 onValueChange={setReminderValue}
                 onHourChange={setReminderHour}
                 onMinuteChange={setReminderMinute}
+                onStartHourChange={setReminderStartHour}
+                onEndHourChange={setReminderEndHour}
               />
               {hasReminderChanged && (
                 <Text style={styles.reminderChanged}>
@@ -687,7 +783,7 @@ export default function HomeScreen() {
       const id = addHabit({ ...data, frequency: 'daily', targetDays: [], reminderTime: null });
       if (data.reminderHour !== undefined && data.reminderMinute !== undefined) {
         const habit = { id, name: data.name, emoji: data.emoji, color: data.color, frequency: 'daily' as const, targetDays: [], completions: [], reminderTime: null, notificationId: null, createdAt: new Date().toISOString(), archived: false };
-        await setReminder(habit, data.reminderHour, data.reminderMinute, data.reminderUnit ?? 'days', data.reminderValue ?? 1);
+        await setReminder(habit, data.reminderHour, data.reminderMinute, data.reminderUnit ?? 'days', data.reminderValue ?? 1, data.reminderStartHour, data.reminderEndHour);
       }
     },
     [addHabit, setReminder]
@@ -713,10 +809,10 @@ export default function HomeScreen() {
   );
 
   const handleSetReminder = useCallback(
-    async (habit: Habit, hour: number, minute: number, unit: ReminderUnit, value: number) => {
+    async (habit: Habit, hour: number, minute: number, unit: ReminderUnit, value: number, startHour?: number, endHour?: number) => {
       // Récupère l'habitude à jour depuis le store pour avoir le bon notificationId
       const current = habits.find((h) => h.id === habit.id) ?? habit;
-      await setReminder(current, hour, minute, unit, value);
+      await setReminder(current, hour, minute, unit, value, startHour, endHour);
     },
     [habits, setReminder]
   );

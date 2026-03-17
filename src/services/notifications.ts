@@ -134,8 +134,44 @@ export async function scheduleHabitReminderFull(
   });
 }
 
-export async function cancelHabitReminder(notificationId: string): Promise<void> {
-  await Notifications.cancelScheduledNotificationAsync(notificationId).catch(() => {});
+/**
+ * Planifie des rappels horaires sur une plage horaire.
+ * Une notification DAILY est créée pour chaque créneau (startHour, startHour+interval, …, endHour).
+ * Ex: intervalHours=2, startHour=8, endHour=22 → notifications à 8h, 10h, 12h, …, 22h.
+ */
+export async function scheduleHourlyWindowReminders(
+  habitName: string,
+  emoji: string,
+  intervalHours: number,
+  startHour: number,
+  endHour: number,
+): Promise<string[]> {
+  const content = {
+    title: `${emoji} ${habitName}`,
+    body: "C'est l'heure de ton habitude !",
+    sound: 'default' as const,
+    data: {},
+  };
+  const ids: string[] = [];
+  for (let h = startHour; h <= endHour; h += intervalHours) {
+    const id = await Notifications.scheduleNotificationAsync({
+      content,
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DAILY,
+        hour: h,
+        minute: 0,
+      },
+    });
+    ids.push(id);
+  }
+  return ids;
+}
+
+export async function cancelHabitReminder(notificationId: string | string[]): Promise<void> {
+  const ids = Array.isArray(notificationId) ? notificationId : [notificationId];
+  for (const id of ids) {
+    await Notifications.cancelScheduledNotificationAsync(id).catch(() => {});
+  }
 }
 
 export async function cancelAllReminders(): Promise<void> {

@@ -1,5 +1,36 @@
 # Déclic — Dev Log
 
+## 2026-03-17 — Plage horaire pour rappels horaires
+
+**Fonctionnalité** : Quand un rappel "Heures" est sélectionné, l'utilisateur peut maintenant définir une heure de début et une heure de fin pour éviter les notifications nocturnes.
+
+**Implémentation** :
+- `src/types/index.ts` : Ajout de `startHour?` et `endHour?` dans `reminderTime`. `notificationId` devient `string | string[] | null` pour supporter plusieurs IDs.
+- `src/services/notifications.ts` : Nouvelle fonction `scheduleHourlyWindowReminders()` qui planifie une notification DAILY par créneau horaire dans la plage (ex: toutes les 2h de 8h à 22h → 8 notifications quotidiennes). `cancelHabitReminder()` accepte maintenant `string | string[]`.
+- `src/hooks/useHabitNotifications.ts` : `setReminder()` prend `startHour?`/`endHour?`, appelle le bon scheduler selon le contexte.
+- `app/(tabs)/home.tsx` : UI dans `ReminderConfig` — quand unit='hours', affiche deux sélecteurs "De Xh → À Yh" (défaut 8h-22h). `formatReminder()` affiche la plage (ex: `/2h 8h-22h`).
+
+## 2026-03-16 — Incident clé de signature Android
+
+**Problème** : Lors d'un build EAS production, WebStorm a proposé de changer la clé de signature → répondu "oui" par inadvertance. La nouvelle clé (`ED:6D:EA...A5:CE`) a été rejetée par Google Play car l'ancienne clé d'upload attendue était `C3:DB:42...60:D5`.
+
+**Diagnostic** :
+- Google Play App Signing activé → clé de signature finale détenue par Google (safe)
+- Ancienne clé d'upload introuvable en local ni dans EAS (écrasée)
+- EAS ne contient plus qu'une seule keystore : `@dk13__declic.jks` (SHA1 `ED:6D...A5:CE`)
+
+**Résolution** :
+1. Téléchargé le `.jks` actuel via `eas credentials` → Download existing keystore
+2. Exporté le certificat PEM : `keytool -export -rfc -keystore @dk13__declic.jks ...`
+3. Soumis une demande de réinitialisation de clé d'importation sur Play Console (motif : Autre)
+4. En attente d'approbation Google (1-5 jours ouvrés)
+
+**Action post-approbation** : `eas build --platform android --profile production`
+
+**Leçon** : Ne jamais accepter un changement de keystore proposé par l'IDE sans vérifier.
+
+---
+
 ## Rappels par intervalle configurable (2026-03-15)
 
 ### Feature : Rappels en heures / jours / semaines / mois

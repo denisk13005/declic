@@ -4,6 +4,7 @@ import { Habit, ReminderUnit } from '@/types';
 import {
   requestNotificationPermission,
   scheduleHabitReminderFull,
+  scheduleHourlyWindowReminders,
   cancelHabitReminder,
   requestBatteryOptimizationExemption,
 } from '@/services/notifications';
@@ -13,6 +14,7 @@ export function useHabitNotifications() {
 
   /**
    * Active ou met à jour le rappel d'une habitude.
+   * - unit='hours' avec startHour/endHour : planifie une notif DAILY par créneau dans la plage.
    * - unit='days' && value=1 : rappel quotidien exact à hour:minute.
    * - Autres : intervalle libre (TIME_INTERVAL).
    * Retourne true si la permission est accordée et la notif planifiée.
@@ -23,6 +25,8 @@ export function useHabitNotifications() {
     minute: number,
     unit: ReminderUnit = 'days',
     value: number = 1,
+    startHour?: number,
+    endHour?: number,
   ): Promise<boolean> {
     const granted = await requestNotificationPermission();
     if (!granted) {
@@ -38,13 +42,23 @@ export function useHabitNotifications() {
       await cancelHabitReminder(habit.notificationId);
     }
 
-    const notificationId = await scheduleHabitReminderFull(
-      habit.name, habit.emoji, unit, value, hour, minute,
-    );
-    updateHabit(habit.id, {
-      reminderTime: { hour, minute, unit, value },
-      notificationId,
-    });
+    if (unit === 'hours' && startHour !== undefined && endHour !== undefined) {
+      const notificationIds = await scheduleHourlyWindowReminders(
+        habit.name, habit.emoji, value, startHour, endHour,
+      );
+      updateHabit(habit.id, {
+        reminderTime: { hour: startHour, minute: 0, unit, value, startHour, endHour },
+        notificationId: notificationIds,
+      });
+    } else {
+      const notificationId = await scheduleHabitReminderFull(
+        habit.name, habit.emoji, unit, value, hour, minute,
+      );
+      updateHabit(habit.id, {
+        reminderTime: { hour, minute, unit, value },
+        notificationId,
+      });
+    }
 
     requestBatteryOptimizationExemption();
     return true;

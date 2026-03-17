@@ -18,7 +18,8 @@ export interface Habit {
   /**
    * Configuration du rappel.
    * - unit/value optionnels pour rétro-compat (anciens habitudes = daily à HH:MM).
-   * - Pour unit='hours' : hour/minute ne sont pas utilisés pour le scheduling.
+   * - Pour unit='hours' : startHour/endHour définissent la plage horaire (ex: 8h→22h).
+   *   Une notification DAILY est planifiée pour chaque créneau dans la plage.
    * - Pour unit='days' && value=1 : trigger DAILY exact à hour:minute.
    * - Pour les autres : trigger TIME_INTERVAL.
    */
@@ -27,8 +28,11 @@ export interface Habit {
     minute: number;
     unit?: ReminderUnit;
     value?: number;
+    startHour?: number; // unit='hours' : heure de début de la plage (ex: 8)
+    endHour?: number;   // unit='hours' : heure de fin de la plage (ex: 22)
   } | null;
-  notificationId: string | null;
+  /** ID(s) de notification(s) planifiée(s). Tableau pour les rappels horaires avec plage. */
+  notificationId: string | string[] | null;
   createdAt: string;
   archived: boolean;
 }
