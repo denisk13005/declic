@@ -49,8 +49,12 @@ export interface HabitStats {
 // ─── Profile / subscription ───────────────────────────────────────────────────
 
 export type Gender = 'male' | 'female';
-export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active';
+export type LifestyleLevel = 'sedentary' | 'lightly_active' | 'moderately_active' | 'very_active';
+export type ExerciseFrequency = 'none' | '1_2' | '3_4' | '5_6' | 'daily' | 'twice_daily';
 export type FitnessGoal = 'lose_fat' | 'maintain' | 'build_muscle';
+
+/** @deprecated Remplacé par LifestyleLevel + ExerciseFrequency */
+export type ActivityLevel = LifestyleLevel;
 
 export interface UserProfile {
   isPremium: boolean;
@@ -63,7 +67,8 @@ export interface UserProfile {
   height?: number; // cm
   currentWeight?: number; // kg
   gender?: Gender;
-  activityLevel?: ActivityLevel;
+  lifestyleLevel?: LifestyleLevel;
+  exerciseFrequency?: ExerciseFrequency;
   fitnessGoal?: FitnessGoal;
 }
 

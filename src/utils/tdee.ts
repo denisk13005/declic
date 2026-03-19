@@ -1,27 +1,44 @@
-import { ActivityLevel, FitnessGoal, Gender } from '@/types';
+import { LifestyleLevel, ExerciseFrequency, FitnessGoal, Gender } from '@/types';
 
-const ACTIVITY_MULTIPLIERS: Record<ActivityLevel, number> = {
-  sedentary: 1.2,
-  light: 1.375,
-  moderate: 1.55,
-  active: 1.725,
-  very_active: 1.9,
+// Multiplicateur de base selon le style de vie (hors sport)
+const LIFESTYLE_MULTIPLIERS: Record<LifestyleLevel, number> = {
+  sedentary: 1.2,        // Bureau, voiture, peu de marche
+  lightly_active: 1.35,  // Quelques déplacements, debout parfois
+  moderately_active: 1.5, // Travail debout, marche régulière
+  very_active: 1.65,     // Travail physique intensif
 };
 
-export const ACTIVITY_LABELS: Record<ActivityLevel, string> = {
+export const LIFESTYLE_LABELS: Record<LifestyleLevel, string> = {
   sedentary: 'Sédentaire',
-  light: 'Légèrement actif',
-  moderate: 'Modérément actif',
-  active: 'Très actif',
-  very_active: 'Extrêmement actif',
+  lightly_active: 'Légèrement actif',
+  moderately_active: 'Modérément actif',
+  very_active: 'Très actif',
 };
 
-export const ACTIVITY_DESCRIPTIONS: Record<ActivityLevel, string> = {
-  sedentary: 'Peu ou pas d\'exercice, travail de bureau',
-  light: '1-3 jours de sport par semaine',
-  moderate: '3-5 jours de sport par semaine',
-  active: '6-7 jours de sport par semaine',
-  very_active: 'Sport intense + travail physique',
+export const LIFESTYLE_DESCRIPTIONS: Record<LifestyleLevel, string> = {
+  sedentary: 'Bureau, télétravail, peu de marche',
+  lightly_active: 'Quelques déplacements, debout par moments',
+  moderately_active: 'Travail debout, marche régulière, livreur...',
+  very_active: 'Travail physique (chantier, restauration, agriculture...)',
+};
+
+// Bonus calorique journalier lié au sport (moyenne ≈ 400 kcal/séance)
+const EXERCISE_BONUS_KCAL: Record<ExerciseFrequency, number> = {
+  none: 0,
+  '1_2': 90,   // 1.5 × 400 / 7
+  '3_4': 200,  // 3.5 × 400 / 7
+  '5_6': 315,  // 5.5 × 400 / 7
+  daily: 400,  // 7 × 400 / 7
+  twice_daily: 650, // 11 × 400 / 7
+};
+
+export const EXERCISE_LABELS: Record<ExerciseFrequency, string> = {
+  none: 'Aucun sport',
+  '1_2': '1-2 séances / semaine',
+  '3_4': '3-4 séances / semaine',
+  '5_6': '5-6 séances / semaine',
+  daily: '1 séance / jour',
+  twice_daily: '2 séances / jour ou +',
 };
 
 export const GOAL_LABELS: Record<FitnessGoal, string> = {
@@ -44,16 +61,18 @@ export interface TDEEResult {
 }
 
 /**
- * Calcul BMR via Mifflin-St Jeor puis TDEE + macros pour les 3 scénarios.
+ * Calcul BMR via Mifflin-St Jeor.
+ * TDEE = BMR × coefficient_style_de_vie + bonus_sport_journalier
  */
 export function computeTDEE(params: {
-  weight: number;   // kg
-  height: number;   // cm
+  weight: number;
+  height: number;
   age: number;
   gender: Gender;
-  activityLevel: ActivityLevel;
+  lifestyleLevel: LifestyleLevel;
+  exerciseFrequency: ExerciseFrequency;
 }): TDEEResult {
-  const { weight, height, age, gender, activityLevel } = params;
+  const { weight, height, age, gender, lifestyleLevel, exerciseFrequency } = params;
 
   // Mifflin-St Jeor
   const bmr =
@@ -61,7 +80,9 @@ export function computeTDEE(params: {
       ? 10 * weight + 6.25 * height - 5 * age + 5
       : 10 * weight + 6.25 * height - 5 * age - 161;
 
-  const tdee = Math.round(bmr * ACTIVITY_MULTIPLIERS[activityLevel]);
+  const tdee = Math.round(
+    bmr * LIFESTYLE_MULTIPLIERS[lifestyleLevel] + EXERCISE_BONUS_KCAL[exerciseFrequency]
+  );
 
   return {
     bmr: Math.round(bmr),
@@ -75,16 +96,10 @@ export function computeTDEE(params: {
 }
 
 function macrosForGoal(weight: number, calories: number, goal: FitnessGoal): MacroTargets {
-  // Protéines : 2.2g/kg prise de muscle, 2.0g/kg perte de gras, 1.8g/kg maintien
   const proteinPerKg = goal === 'build_muscle' ? 2.2 : goal === 'lose_fat' ? 2.0 : 1.8;
   const protein = Math.round(weight * proteinPerKg);
-
-  // Lipides : 25% des calories (perte), 28% (maintien), 25% (muscle)
   const fatPct = goal === 'maintain' ? 0.28 : 0.25;
   const fat = Math.round((calories * fatPct) / 9);
-
-  // Glucides : le reste
   const carbs = Math.round((calories - protein * 4 - fat * 9) / 4);
-
   return { calories: Math.round(calories), protein, carbs: Math.max(carbs, 0), fat };
 }

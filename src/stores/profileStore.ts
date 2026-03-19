@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { UserProfile, Gender, ActivityLevel, FitnessGoal } from '@/types';
+import { UserProfile, Gender, LifestyleLevel, ExerciseFrequency, FitnessGoal } from '@/types';
 import { CONFIG } from '@/constants/config';
 
 interface PhysicalData {
@@ -10,7 +10,8 @@ interface PhysicalData {
   weight?: number;
   currentWeight?: number;
   gender: Gender;
-  activityLevel: ActivityLevel;
+  lifestyleLevel: LifestyleLevel;
+  exerciseFrequency: ExerciseFrequency;
   fitnessGoal: FitnessGoal;
 }
 

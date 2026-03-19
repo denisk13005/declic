@@ -15,8 +15,8 @@ import PhysicalProfileModal from '@/components/profile/PhysicalProfileModal';
 import TDEECard from '@/components/profile/TDEECard';
 import { restorePurchases } from '@/services/revenueCat';
 import { cancelAllReminders } from '@/services/notifications';
-import { computeTDEE, ACTIVITY_LABELS, GOAL_LABELS } from '@/utils/tdee';
-import { FitnessGoal } from '@/types';
+import { computeTDEE, LIFESTYLE_LABELS, GOAL_LABELS } from '@/utils/tdee';
+import { FitnessGoal, LifestyleLevel, ExerciseFrequency, Gender } from '@/types';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
 
 type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
@@ -62,20 +62,23 @@ export default function ProfileScreen() {
   const latestWeight = getLatestWeight();
 
   const tdeeResult =
-    profile.age && profile.height && profile.gender && profile.activityLevel && profile.currentWeight
+    profile.age && profile.height && profile.gender &&
+    profile.lifestyleLevel && profile.exerciseFrequency && profile.currentWeight
       ? computeTDEE({
           weight: profile.currentWeight,
           height: profile.height,
           age: profile.age,
           gender: profile.gender,
-          activityLevel: profile.activityLevel,
+          lifestyleLevel: profile.lifestyleLevel,
+          exerciseFrequency: profile.exerciseFrequency,
         })
       : null;
 
   const handleSavePhysical = (data: {
     age: number; height: number; weight: number;
-    gender: import('@/types').Gender;
-    activityLevel: import('@/types').ActivityLevel;
+    gender: Gender;
+    lifestyleLevel: LifestyleLevel;
+    exerciseFrequency: ExerciseFrequency;
     fitnessGoal: FitnessGoal;
   }) => {
     setPhysicalData(data);
@@ -96,7 +99,8 @@ export default function ProfileScreen() {
       height: profile.height!,
       weight: profile.currentWeight!,
       gender: profile.gender!,
-      activityLevel: profile.activityLevel!,
+      lifestyleLevel: profile.lifestyleLevel!,
+      exerciseFrequency: profile.exerciseFrequency!,
       fitnessGoal: goal,
     });
     Alert.alert('Objectifs appliqués', `${GOAL_LABELS[goal]} — ${macros.calories} kcal/jour`);
@@ -201,8 +205,8 @@ export default function ProfileScreen() {
             icon="body-outline"
             label="Profil physique"
             sublabel={
-              profile.age && profile.height && profile.activityLevel
-                ? `${profile.age} ans · ${profile.height} cm · ${ACTIVITY_LABELS[profile.activityLevel]}`
+              profile.age && profile.height && profile.lifestyleLevel
+                ? `${profile.age} ans · ${profile.height} cm · ${LIFESTYLE_LABELS[profile.lifestyleLevel]}`
                 : 'Non renseigné — requis pour le calcul TDEE'
             }
             onPress={() => setPhysicalModalVisible(true)}
@@ -286,7 +290,8 @@ export default function ProfileScreen() {
           height: profile.height,
           weight: profile.currentWeight ?? latestWeight?.weight,
           gender: profile.gender,
-          activityLevel: profile.activityLevel,
+          lifestyleLevel: profile.lifestyleLevel,
+          exerciseFrequency: profile.exerciseFrequency,
           fitnessGoal: profile.fitnessGoal,
         }}
       />
