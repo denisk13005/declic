@@ -9,9 +9,14 @@ import { fr } from 'date-fns/locale';
 import { useProfileStore } from '@/stores/profileStore';
 import { useHabitStore } from '@/stores/habitStore';
 import { useWeightStore } from '@/stores/weightStore';
+import { useCalorieStore } from '@/stores/calorieStore';
 import WeightModal from '@/components/nutrition/WeightModal';
+import PhysicalProfileModal from '@/components/profile/PhysicalProfileModal';
+import TDEECard from '@/components/profile/TDEECard';
 import { restorePurchases } from '@/services/revenueCat';
 import { cancelAllReminders } from '@/services/notifications';
+import { computeTDEE, ACTIVITY_LABELS, GOAL_LABELS } from '@/utils/tdee';
+import { FitnessGoal } from '@/types';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
 
 type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
@@ -47,10 +52,55 @@ function SettingsRow({
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { profile, setPremium, reset: resetProfile } = useProfileStore();
+  const { profile, setPremium, reset: resetProfile, setPhysicalData } = useProfileStore();
   const { habits } = useHabitStore();
-  const { getLatestWeight } = useWeightStore();
+  const { getLatestWeight, logWeight } = useWeightStore();
+  const { setGoals } = useCalorieStore();
   const [weightModalVisible, setWeightModalVisible] = useState(false);
+  const [physicalModalVisible, setPhysicalModalVisible] = useState(false);
+
+  const latestWeight = getLatestWeight();
+
+  const tdeeResult =
+    profile.age && profile.height && profile.gender && profile.activityLevel && profile.currentWeight
+      ? computeTDEE({
+          weight: profile.currentWeight,
+          height: profile.height,
+          age: profile.age,
+          gender: profile.gender,
+          activityLevel: profile.activityLevel,
+        })
+      : null;
+
+  const handleSavePhysical = (data: {
+    age: number; height: number; weight: number;
+    gender: import('@/types').Gender;
+    activityLevel: import('@/types').ActivityLevel;
+    fitnessGoal: FitnessGoal;
+  }) => {
+    setPhysicalData(data);
+    logWeight(data.weight);
+  };
+
+  const handleApplyGoal = (goal: FitnessGoal) => {
+    if (!tdeeResult) return;
+    const macros = tdeeResult.scenarios[goal];
+    setGoals({
+      calories: macros.calories,
+      protein: macros.protein,
+      carbs: macros.carbs,
+      fat: macros.fat,
+    });
+    setPhysicalData({
+      age: profile.age!,
+      height: profile.height!,
+      weight: profile.currentWeight!,
+      gender: profile.gender!,
+      activityLevel: profile.activityLevel!,
+      fitnessGoal: goal,
+    });
+    Alert.alert('Objectifs appliqués', `${GOAL_LABELS[goal]} — ${macros.calories} kcal/jour`);
+  };
 
   const activeCount = habits.filter((h) => !h.archived).length;
 
@@ -147,7 +197,43 @@ export default function ProfileScreen() {
             })()}
             onPress={() => setWeightModalVisible(true)}
           />
+          <SettingsRow
+            icon="body-outline"
+            label="Profil physique"
+            sublabel={
+              profile.age && profile.height && profile.activityLevel
+                ? `${profile.age} ans · ${profile.height} cm · ${ACTIVITY_LABELS[profile.activityLevel]}`
+                : 'Non renseigné — requis pour le calcul TDEE'
+            }
+            onPress={() => setPhysicalModalVisible(true)}
+          />
         </View>
+
+        {/* TDEE / Scénarios */}
+        {tdeeResult ? (
+          <>
+            <Text style={styles.section}>Objectifs caloriques</Text>
+            <TDEECard
+              result={tdeeResult}
+              activeGoal={profile.fitnessGoal ?? 'maintain'}
+              onApply={handleApplyGoal}
+            />
+          </>
+        ) : (
+          <>
+            <Text style={styles.section}>Objectifs caloriques</Text>
+            <TouchableOpacity onPress={() => setPhysicalModalVisible(true)} style={styles.tdeePrompt}>
+              <Ionicons name="calculator-outline" size={24} color={COLORS.primary} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.tdeePromptTitle}>Calcule tes besoins caloriques</Text>
+                <Text style={styles.tdeePromptSub}>
+                  Renseigne ton profil physique pour obtenir tes macros personnalisées
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={COLORS.textTertiary} />
+            </TouchableOpacity>
+          </>
+        )}
 
         <Text style={styles.section}>Abonnement</Text>
         <View style={styles.card}>
@@ -191,6 +277,19 @@ export default function ProfileScreen() {
       </ScrollView>
 
       <WeightModal visible={weightModalVisible} onClose={() => setWeightModalVisible(false)} />
+      <PhysicalProfileModal
+        visible={physicalModalVisible}
+        onClose={() => setPhysicalModalVisible(false)}
+        onSave={handleSavePhysical}
+        initial={{
+          age: profile.age,
+          height: profile.height,
+          weight: profile.currentWeight ?? latestWeight?.weight,
+          gender: profile.gender,
+          activityLevel: profile.activityLevel,
+          fitnessGoal: profile.fitnessGoal,
+        }}
+      />
     </SafeAreaView>
   );
 }
@@ -269,4 +368,18 @@ const styles = StyleSheet.create({
   rowLabel: { fontSize: FONT_SIZE.md, color: COLORS.textPrimary },
   rowSublabel: { fontSize: FONT_SIZE.xs, color: COLORS.textSecondary, marginTop: 2 },
   versionText: { fontSize: FONT_SIZE.sm, color: COLORS.textTertiary },
+
+  tdeePrompt: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: SPACING.md,
+    marginBottom: SPACING.lg,
+  },
+  tdeePromptTitle: { fontSize: FONT_SIZE.md, fontWeight: FONT_WEIGHT.semibold, color: COLORS.textPrimary },
+  tdeePromptSub: { fontSize: FONT_SIZE.xs, color: COLORS.textSecondary, marginTop: 2 },
 });

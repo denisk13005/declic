@@ -1,5 +1,17 @@
 # Déclic — Dev Log
 
+## 2026-03-19 — Calcul TDEE et objectifs macro personnalisés
+
+**Fonctionnalité** : Calcul automatique des besoins caloriques et macros selon les caractéristiques physiques de l'utilisateur (formule Mifflin-St Jeor), avec 3 scénarios : perte de gras, maintien, prise de muscle.
+
+**Implémentation** :
+- `src/types/index.ts` : Nouveaux types `Gender`, `ActivityLevel`, `FitnessGoal` + champs physiques optionnels dans `UserProfile` (`age`, `height`, `gender`, `activityLevel`, `fitnessGoal`)
+- `src/utils/tdee.ts` : Calcul BMR (Mifflin-St Jeor) + TDEE + macros pour les 3 scénarios. Protéines : 1.8-2.2g/kg selon objectif, lipides 25-28%, glucides le reste.
+- `src/stores/profileStore.ts` : Nouvelle action `setPhysicalData()`
+- `src/components/profile/PhysicalProfileModal.tsx` : Formulaire de saisie sexe / âge / taille / objectif / niveau d'activité
+- `src/components/profile/TDEECard.tsx` : Affichage des 3 scénarios avec calories et macros, bouton "Appliquer" pour injecter dans `calorieStore.goals`
+- `app/(tabs)/profile.tsx` : Intégration de la carte TDEE et du modal physique dans l'écran Profil
+
 ## 2026-03-17 — Plage horaire pour rappels horaires
 
 **Fonctionnalité** : Quand un rappel "Heures" est sélectionné, l'utilisateur peut maintenant définir une heure de début et une heure de fin pour éviter les notifications nocturnes.

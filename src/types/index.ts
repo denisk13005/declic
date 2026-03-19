@@ -48,12 +48,23 @@ export interface HabitStats {
 
 // ─── Profile / subscription ───────────────────────────────────────────────────
 
+export type Gender = 'male' | 'female';
+export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active';
+export type FitnessGoal = 'lose_fat' | 'maintain' | 'build_muscle';
+
 export interface UserProfile {
   isPremium: boolean;
   premiumExpiry: string | null;
   onboardingComplete: boolean;
   notificationsEnabled: boolean;
   createdAt: string;
+  // Données physiques
+  age?: number;
+  height?: number; // cm
+  currentWeight?: number; // kg
+  gender?: Gender;
+  activityLevel?: ActivityLevel;
+  fitnessGoal?: FitnessGoal;
 }
 
 // ─── Calories ─────────────────────────────────────────────────────────────────
