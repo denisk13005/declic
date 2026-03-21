@@ -44,6 +44,7 @@ interface CalorieStore {
   deleteFoodItem: (id: string) => void;
 
   addComposedMeal: (meal: Omit<ComposedMeal, 'id' | 'createdAt' | 'updatedAt'>) => ComposedMeal;
+  updateComposedMeal: (id: string, patch: Partial<Omit<ComposedMeal, 'id' | 'createdAt'>>) => void;
   deleteComposedMeal: (id: string) => void;
 
   setGoals: (patch: Partial<NutritionGoals>) => void;
@@ -144,6 +145,14 @@ export const useCalorieStore = create<CalorieStore>()(
         };
         set((s) => ({ composedMeals: [...s.composedMeals, newMeal] }));
         return newMeal;
+      },
+
+      updateComposedMeal: (id, patch) => {
+        set((s) => ({
+          composedMeals: s.composedMeals.map((m) =>
+            m.id === id ? { ...m, ...patch, updatedAt: new Date().toISOString() } : m
+          ),
+        }));
       },
 
       deleteComposedMeal: (id) => {

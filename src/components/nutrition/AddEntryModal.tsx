@@ -19,6 +19,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { useCalorieStore } from '@/stores/calorieStore';
+import { useAppColors } from '@/hooks/useAppColors';
 import { analyzeFoodPhoto } from '@/services/gemini';
 import { searchCiqual } from '@/services/ciqualSearch';
 import { lookupPortionWeight } from '@/data/portionWeights';
@@ -174,6 +175,7 @@ function BarcodeScanner({
 // ─── Main modal ───────────────────────────────────────────────────────────────
 
 export default function AddEntryModal({ visible, onClose, date, initialMeal, prefillFood }: Props) {
+  const C = useAppColors();
   const { addEntry, addFoodItem, foodLibrary } = useCalorieStore();
 
   const [tab, setTab] = useState<Tab>('manuel');
@@ -245,12 +247,27 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
   useEffect(() => {
     if (visible && prefillFood) {
       setName(prefillFood.name);
-      setCaloriesInput(String(prefillFood.calories));
-      if (prefillFood.macros) {
-        setProteinInput(String(prefillFood.macros.protein));
-        setCarbsInput(String(prefillFood.macros.carbs));
-        setFatInput(String(prefillFood.macros.fat));
-        setMacrosOpen(true);
+      if (prefillFood.foodItem) {
+        // Aliment de la bibliothèque : on définit basePer100 pour que le recalcul fonctionne
+        const base = {
+          calories: prefillFood.foodItem.caloriesPer100,
+          macros: prefillFood.foodItem.macrosPer100 ?? null,
+        };
+        setBasePer100(base);
+        const defQty = prefillFood.foodItem.defaultServing.quantity;
+        const defUnit = prefillFood.foodItem.defaultServing.unit;
+        setQuantity(String(defQty));
+        setUnit(defUnit);
+        applyBase(base, defQty, defUnit);
+        setPerLabel('pour 100g');
+      } else {
+        setCaloriesInput(String(prefillFood.calories));
+        if (prefillFood.macros) {
+          setProteinInput(String(prefillFood.macros.protein));
+          setCarbsInput(String(prefillFood.macros.carbs));
+          setFatInput(String(prefillFood.macros.fat));
+          setMacrosOpen(true);
+        }
       }
     }
   }, [visible, prefillFood]);
@@ -566,7 +583,7 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
               {tabs.map((t) => (
                 <TouchableOpacity
                   key={t.key}
-                  style={[styles.tabPill, tab === t.key && styles.tabPillActive]}
+                  style={[styles.tabPill, tab === t.key && { backgroundColor: C.primary, borderColor: C.primary }]}
                   onPress={() => setTab(t.key)}
                   activeOpacity={0.7}
                 >
@@ -587,7 +604,7 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
               {MEALS.map((m) => (
                 <TouchableOpacity
                   key={m.key}
-                  style={[styles.mealPill, meal === m.key && styles.mealPillActive]}
+                  style={[styles.mealPill, meal === m.key && { backgroundColor: C.primary, borderColor: C.primary }]}
                   onPress={() => setMeal(m.key)}
                   activeOpacity={0.7}
                 >
@@ -694,7 +711,7 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
                                       : 'pour 100g'}
                                   </Text>
                                 </View>
-                                <Text style={styles.suggestionKcal}>{item.caloriesPer100} kcal</Text>
+                                <Text style={[styles.suggestionKcal, { color: C.primary }]}>{item.caloriesPer100} kcal</Text>
                               </TouchableOpacity>
                             </React.Fragment>
                           );
@@ -724,7 +741,7 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
                       {UNITS.map((u) => (
                         <TouchableOpacity
                           key={u.value}
-                          style={[styles.unitBtn, unit === u.value && styles.unitBtnActive]}
+                          style={[styles.unitBtn, unit === u.value && { backgroundColor: C.primary, borderColor: C.primary }]}
                           onPress={() => handleUnitChange(u.value)}
                         >
                           <Text style={[styles.unitBtnText, unit === u.value && styles.unitBtnTextActive]}>
@@ -824,7 +841,7 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
                     <Switch
                       value={saveToLib}
                       onValueChange={setSaveToLib}
-                      trackColor={{ false: COLORS.bgElevated, true: COLORS.primary }}
+                      trackColor={{ false: COLORS.bgElevated, true: C.primary }}
                       thumbColor="#fff"
                     />
                   </View>
@@ -833,7 +850,7 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
             </ScrollView>
 
             {tab === 'manuel' && (
-              <TouchableOpacity style={styles.btn} onPress={handleAdd} activeOpacity={0.8}>
+              <TouchableOpacity style={[styles.btn, { backgroundColor: C.primary }]} onPress={handleAdd} activeOpacity={0.8}>
                 <Text style={styles.btnText}>Ajouter</Text>
               </TouchableOpacity>
             )}

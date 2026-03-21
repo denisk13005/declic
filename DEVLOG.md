@@ -1,5 +1,27 @@
 # Déclic — Dev Log
 
+## 2026-03-20 — Système de thèmes de couleurs
+
+**Fonctionnalité** : Sélecteur de thème de couleur (5 thèmes : Mauve, Océan, Forêt, Feu, Indigo). Thème persisté via AsyncStorage.
+
+**Architecture** :
+- `src/constants/themes.ts` : 5 palettes (primary, accent, gradients)
+- `src/stores/themeStore.ts` : Zustand persisté (`@declic/theme`)
+- `src/hooks/useAppColors.ts` : hook `useAppColors()` → retourne COLORS fusionné avec le thème actif
+- `src/components/profile/ThemePickerModal.tsx` : modal avec grille de swatches (gradient + point accent)
+
+**Écrans mis à jour** : `profile.tsx` (section Apparence + picker), `calories.tsx` (FAB, anneau SVG, bouton HC), `home.tsx` (LinearGradients, boutons modaux), `AddEntryModal.tsx` (tab pills, meal pills, unit buttons, bouton Ajouter), `FoodLibraryModal.tsx` (tab pills, bouton Créer)
+
+**Approche** : StyleSheet statique (non-color) + inline overrides `{ backgroundColor: C.primary }` pour les éléments sensibles au thème. LinearGradient prend les couleurs en prop → déjà dynamique.
+
+## 2026-03-20 — Correction recalcul macros bibliothèque + édition repas composés
+
+**Bug 1 — Valeurs nutritionnelles non recalculées (bibliothèque)** : Quand on sélectionnait un aliment depuis la bibliothèque perso et qu'on modifiait la quantité ou l'unité, les calories/macros ne se mettaient pas à jour. Cause : `basePer100` n'était pas défini lors du prefill via `PrefillFood`. Fix : si `prefillFood.foodItem` est présent, on définit `basePer100`, `quantity` et `unit` depuis le `defaultServing`, et on appelle `applyBase` pour le calcul initial. Tout changement de quantité/unité fonctionne désormais.
+
+**Bug 2 — Pas de possibilité de modifier un repas composé** : Seule la suppression était disponible. Fix :
+- `calorieStore.ts` : ajout de `updateComposedMeal(id, patch)`
+- `FoodLibraryModal.tsx` : `CreateMealForm` reçoit une prop `editMeal?` qui pré-remplit le formulaire (ingrédients retrouvés via `foodItemId` dans `foodLibrary`). Bouton crayon sur chaque repas composé dans la liste pour ouvrir le formulaire en mode édition. Texte du bouton adapté ("Enregistrer les modifications" vs "Créer le repas").
+
 ## 2026-03-19 — Calcul TDEE et objectifs macro personnalisés
 
 **Fonctionnalité** : Calcul automatique des besoins caloriques et macros selon les caractéristiques physiques de l'utilisateur (formule Mifflin-St Jeor), avec 3 scénarios : perte de gras, maintien, prise de muscle.

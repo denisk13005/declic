@@ -13,11 +13,15 @@ import { useCalorieStore } from '@/stores/calorieStore';
 import WeightModal from '@/components/nutrition/WeightModal';
 import PhysicalProfileModal from '@/components/profile/PhysicalProfileModal';
 import TDEECard from '@/components/profile/TDEECard';
+import ThemePickerModal from '@/components/profile/ThemePickerModal';
 import { restorePurchases } from '@/services/revenueCat';
 import { cancelAllReminders } from '@/services/notifications';
 import { computeTDEE, LIFESTYLE_LABELS, GOAL_LABELS } from '@/utils/tdee';
 import { FitnessGoal, LifestyleLevel, ExerciseFrequency, Gender } from '@/types';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
+import { useAppColors } from '@/hooks/useAppColors';
+import { useThemeStore } from '@/stores/themeStore';
+import { THEMES } from '@/constants/themes';
 
 type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -52,12 +56,15 @@ function SettingsRow({
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const C = useAppColors();
+  const { themeId } = useThemeStore();
   const { profile, setPremium, reset: resetProfile, setPhysicalData } = useProfileStore();
   const { habits } = useHabitStore();
   const { getLatestWeight, logWeight } = useWeightStore();
   const { setGoals } = useCalorieStore();
   const [weightModalVisible, setWeightModalVisible] = useState(false);
   const [physicalModalVisible, setPhysicalModalVisible] = useState(false);
+  const [themeModalVisible, setThemeModalVisible] = useState(false);
 
   const latestWeight = getLatestWeight();
 
@@ -239,6 +246,27 @@ export default function ProfileScreen() {
           </>
         )}
 
+        <Text style={styles.section}>Apparence</Text>
+        <View style={styles.card}>
+          <TouchableOpacity
+            style={styles.row}
+            onPress={() => setThemeModalVisible(true)}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.rowIcon, { backgroundColor: C.primaryGlow }]}>
+              <Ionicons name="color-palette-outline" size={20} color={C.primary} />
+            </View>
+            <View style={styles.rowText}>
+              <Text style={styles.rowLabel}>Thème de couleur</Text>
+              <Text style={styles.rowSublabel}>
+                {THEMES[themeId].emoji} {THEMES[themeId].name}
+              </Text>
+            </View>
+            <View style={[styles.themePreview, { backgroundColor: C.primary }]} />
+            <Ionicons name="chevron-forward" size={16} color={COLORS.textTertiary} />
+          </TouchableOpacity>
+        </View>
+
         <Text style={styles.section}>Abonnement</Text>
         <View style={styles.card}>
           <SettingsRow
@@ -280,6 +308,7 @@ export default function ProfileScreen() {
         </View>
       </ScrollView>
 
+      <ThemePickerModal visible={themeModalVisible} onClose={() => setThemeModalVisible(false)} />
       <WeightModal visible={weightModalVisible} onClose={() => setWeightModalVisible(false)} />
       <PhysicalProfileModal
         visible={physicalModalVisible}
@@ -373,6 +402,7 @@ const styles = StyleSheet.create({
   rowLabel: { fontSize: FONT_SIZE.md, color: COLORS.textPrimary },
   rowSublabel: { fontSize: FONT_SIZE.xs, color: COLORS.textSecondary, marginTop: 2 },
   versionText: { fontSize: FONT_SIZE.sm, color: COLORS.textTertiary },
+  themePreview: { width: 18, height: 18, borderRadius: 9, marginRight: 4 },
 
   tdeePrompt: {
     flexDirection: 'row',

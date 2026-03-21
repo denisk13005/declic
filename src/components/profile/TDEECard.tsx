@@ -27,7 +27,7 @@ export default function TDEECard({ result, activeGoal, onApply }: Props) {
       <View style={styles.infoRow}>
         <View style={styles.infoItem}>
           <Text style={styles.infoValue}>{result.bmr}</Text>
-          <Text style={styles.infoLabel}>BMR (kcal)</Text>
+          <Text style={styles.infoLabel}>Métabolisme de base</Text>
         </View>
         <View style={styles.infoDivider} />
         <View style={styles.infoItem}>

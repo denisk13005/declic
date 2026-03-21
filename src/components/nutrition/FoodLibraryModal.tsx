@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Modal,
   View,
@@ -16,6 +16,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCalorieStore } from '@/stores/calorieStore';
+import { useAppColors } from '@/hooks/useAppColors';
 import { FoodItem, ComposedMeal, ComposedMealIngredient, Macros, Serving, ServingUnit } from '@/types';
 import { PrefillFood } from './AddEntryModal';
 import { searchCiqual, CiqualResult as FoodResult } from '@/services/ciqualSearch';
@@ -155,8 +156,8 @@ function CreateFoodForm({ onCreated }: { onCreated: () => void }) {
 
 // ─── Create composed meal form ────────────────────────────────────────────────
 
-function CreateMealForm({ onCreated }: { onCreated: () => void }) {
-  const { foodLibrary, addFoodItem, addComposedMeal, computeCalories, computeMacros } = useCalorieStore();
+function CreateMealForm({ onCreated, editMeal }: { onCreated: () => void; editMeal?: ComposedMeal }) {
+  const { foodLibrary, addFoodItem, addComposedMeal, updateComposedMeal, computeCalories, computeMacros } = useCalorieStore();
   const [name, setName] = useState('');
   const [emoji, setEmoji] = useState('');
   const [ingredients, setIngredients] = useState<
@@ -169,6 +170,20 @@ function CreateMealForm({ onCreated }: { onCreated: () => void }) {
   const [isSearchingOFF, setIsSearchingOFF] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const offAbortRef = useRef<AbortController | null>(null);
+
+  // Initialisation en mode édition
+  useEffect(() => {
+    if (editMeal) {
+      setName(editMeal.name);
+      setEmoji(editMeal.emoji ?? '');
+      const ings = editMeal.ingredients.flatMap((ing) => {
+        const foodItem = foodLibrary.find((f) => f.id === ing.foodItemId);
+        if (!foodItem) return [];
+        return [{ foodItem, qty: String(ing.serving.quantity), unit: ing.serving.unit }];
+      });
+      setIngredients(ings);
+    }
+  }, [editMeal]);
 
   // Création manuelle d'un aliment introuvable
   const [creatingCustom, setCreatingCustom] = useState(false);
@@ -317,14 +332,24 @@ function CreateMealForm({ onCreated }: { onCreated: () => void }) {
       };
     });
 
-    addComposedMeal({
-      name: name.trim(),
-      emoji: emoji.trim() || undefined,
-      ingredients: mealIngredients,
-      totalCalories: totalCalories(),
-      totalMacros: totalMacros(),
-      defaultServings: 1,
-    });
+    if (editMeal) {
+      updateComposedMeal(editMeal.id, {
+        name: name.trim(),
+        emoji: emoji.trim() || undefined,
+        ingredients: mealIngredients,
+        totalCalories: totalCalories(),
+        totalMacros: totalMacros(),
+      });
+    } else {
+      addComposedMeal({
+        name: name.trim(),
+        emoji: emoji.trim() || undefined,
+        ingredients: mealIngredients,
+        totalCalories: totalCalories(),
+        totalMacros: totalMacros(),
+        defaultServings: 1,
+      });
+    }
 
     setName(''); setEmoji(''); setIngredients([]);
     onCreated();
@@ -477,7 +502,7 @@ function CreateMealForm({ onCreated }: { onCreated: () => void }) {
 
   return (
     <View style={styles.createForm}>
-      <Text style={styles.createTitle}>Créer un repas composé</Text>
+      <Text style={styles.createTitle}>{editMeal ? 'Modifier le repas' : 'Créer un repas composé'}</Text>
       <View style={styles.emojiNameRow}>
         <TextInput
           style={[styles.input, { width: 56, textAlign: 'center' }]}
@@ -549,7 +574,7 @@ function CreateMealForm({ onCreated }: { onCreated: () => void }) {
       )}
 
       <TouchableOpacity style={styles.createBtn} onPress={handleCreate} activeOpacity={0.8}>
-        <Text style={styles.createBtnText}>Créer le repas</Text>
+        <Text style={styles.createBtnText}>{editMeal ? 'Enregistrer les modifications' : 'Créer le repas'}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -558,14 +583,17 @@ function CreateMealForm({ onCreated }: { onCreated: () => void }) {
 // ─── Main modal ───────────────────────────────────────────────────────────────
 
 export default function FoodLibraryModal({ visible, onClose, onSelectFoodItem, onSelectComposedMeal }: Props) {
+  const C = useAppColors();
   const { foodLibrary, composedMeals, deleteFoodItem, deleteComposedMeal } = useCalorieStore();
   const insets = useSafeAreaInsets();
   const [tab, setTab] = useState<LibTab>('foods');
   const [search, setSearch] = useState('');
   const [creating, setCreating] = useState<'food' | 'meal' | null>(null);
+  const [editingMeal, setEditingMeal] = useState<ComposedMeal | null>(null);
 
   function handleClose() {
     setCreating(null);
+    setEditingMeal(null);
     setSearch('');
     onClose();
   }
@@ -631,8 +659,8 @@ export default function FoodLibraryModal({ visible, onClose, onSelectFoodItem, o
             {(['foods', 'meals'] as LibTab[]).map((t) => (
               <TouchableOpacity
                 key={t}
-                style={[styles.tabPill, tab === t && styles.tabPillActive]}
-                onPress={() => { setTab(t); setCreating(null); }}
+                style={[styles.tabPill, tab === t && { backgroundColor: C.primary, borderColor: C.primary }]}
+                onPress={() => { setTab(t); setCreating(null); setEditingMeal(null); }}
                 activeOpacity={0.7}
               >
                 <Text style={[styles.tabPillText, tab === t && styles.tabPillTextActive]}>
@@ -645,7 +673,7 @@ export default function FoodLibraryModal({ visible, onClose, onSelectFoodItem, o
           {/* ── Mode création ─────────────────────────────────────────────── */}
           {creating ? (
             <>
-              <TouchableOpacity style={styles.backBtn} onPress={() => setCreating(null)}>
+              <TouchableOpacity style={styles.backBtn} onPress={() => { setCreating(null); setEditingMeal(null); }}>
                 <Ionicons name="arrow-back" size={16} color={COLORS.textSecondary} />
                 <Text style={styles.backBtnText}>Retour</Text>
               </TouchableOpacity>
@@ -653,7 +681,7 @@ export default function FoodLibraryModal({ visible, onClose, onSelectFoodItem, o
                 {creating === 'food' ? (
                   <CreateFoodForm onCreated={() => setCreating(null)} />
                 ) : (
-                  <CreateMealForm onCreated={() => setCreating(null)} />
+                  <CreateMealForm onCreated={() => { setCreating(null); setEditingMeal(null); }} editMeal={editingMeal ?? undefined} />
                 )}
               </ScrollView>
             </>
@@ -721,6 +749,13 @@ export default function FoodLibraryModal({ visible, onClose, onSelectFoodItem, o
                             {meal.totalMacros ? `  ·  P:${meal.totalMacros.protein} G:${meal.totalMacros.carbs} L:${meal.totalMacros.fat}` : ''}
                           </Text>
                         </View>
+                        <TouchableOpacity
+                          onPress={() => { setEditingMeal(meal); setCreating('meal'); }}
+                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                          style={{ marginRight: SPACING.sm }}
+                        >
+                          <Ionicons name="pencil-outline" size={16} color={C.primary} />
+                        </TouchableOpacity>
                         <TouchableOpacity onPress={() => confirmDeleteMeal(meal)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                           <Ionicons name="trash-outline" size={16} color={COLORS.textTertiary} />
                         </TouchableOpacity>
@@ -732,7 +767,7 @@ export default function FoodLibraryModal({ visible, onClose, onSelectFoodItem, o
 
               {/* Bouton Créer — ancré hors de la scroll, toujours visible */}
               <TouchableOpacity
-                style={styles.createTrigger}
+                style={[styles.createTrigger, { backgroundColor: C.primary, shadowColor: C.primary }]}
                 onPress={() => setCreating(tab === 'foods' ? 'food' : 'meal')}
                 activeOpacity={0.8}
               >

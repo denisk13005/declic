@@ -20,18 +20,20 @@ import { useHabitStore } from '@/stores/habitStore';
 import { usePremium } from '@/hooks/usePremium';
 import { useHabitNotifications } from '@/hooks/useHabitNotifications';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
+import { useAppColors } from '@/hooks/useAppColors';
 import { Habit, ReminderUnit } from '@/types';
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
 const HABIT_EMOJIS = ['🏃', '📚', '💧', '🧘', '💪', '🎸', '✍️', '🥗', '😴', '🧹', '🌿', '💊'];
-const HABIT_COLORS = [
-  COLORS.primary,
-  COLORS.accent,
+// Les couleurs d'habitudes sont définies dynamiquement dans le composant (via useAppColors)
+const HABIT_COLORS_STATIC = [
   COLORS.success,
   COLORS.warning,
   '#06B6D4',
   '#F97316',
+  '#A78BFA',
+  '#34D399',
 ];
 
 function pad(n: number) {
@@ -437,6 +439,8 @@ function AddHabitModal({
   onClose: () => void;
   onAdd: (data: AddHabitData) => void;
 }) {
+  const C = useAppColors();
+  const HABIT_COLORS = [C.primary, C.accent, ...HABIT_COLORS_STATIC];
   const [name, setName] = useState('');
   const [emoji, setEmoji] = useState('🏃');
   const [color, setColor] = useState<string>(COLORS.primary);
@@ -451,7 +455,7 @@ function AddHabitModal({
   function reset() {
     setName('');
     setEmoji('🏃');
-    setColor(COLORS.primary);
+    setColor(C.primary);
     setReminderEnabled(false);
     setReminderUnit('days');
     setReminderValue(1);
@@ -557,7 +561,7 @@ function AddHabitModal({
           )}
 
           <TouchableOpacity style={styles.addBtn} onPress={handleAdd}>
-            <LinearGradient colors={COLORS.gradientPrimary} style={styles.addBtnGradient}>
+            <LinearGradient colors={C.gradientPrimary} style={styles.addBtnGradient}>
               <Text style={styles.addBtnText}>Ajouter</Text>
             </LinearGradient>
           </TouchableOpacity>
@@ -590,6 +594,8 @@ function EditHabitSheet({
   onSetReminder: (habit: Habit, hour: number, minute: number, unit: ReminderUnit, value: number, startHour?: number, endHour?: number) => void;
   onRemoveReminder: (habit: Habit) => void;
 }) {
+  const C = useAppColors();
+  const HABIT_COLORS = [C.primary, C.accent, ...HABIT_COLORS_STATIC];
   const [name, setName] = useState('');
   const [emoji, setEmoji] = useState('🏃');
   const [color, setColor] = useState<string>(COLORS.primary);
@@ -728,7 +734,7 @@ function EditHabitSheet({
           )}
 
           <TouchableOpacity style={styles.addBtn} onPress={handleSave}>
-            <LinearGradient colors={COLORS.gradientPrimary} style={styles.addBtnGradient}>
+            <LinearGradient colors={C.gradientPrimary} style={styles.addBtnGradient}>
               <Text style={styles.addBtnText}>Enregistrer</Text>
             </LinearGradient>
           </TouchableOpacity>
@@ -766,6 +772,7 @@ function EditHabitSheet({
 // ─── HomeScreen ───────────────────────────────────────────────────────────────
 
 export default function HomeScreen() {
+  const C = useAppColors();
   const router = useRouter();
   const { habits, addHabit, updateHabit, archiveHabit, deleteHabit, toggleCompletion, getTodayCompletionRate, canAddHabit } = useHabitStore();
   const { isPremium } = usePremium();
@@ -834,7 +841,7 @@ export default function HomeScreen() {
           <Text style={styles.title}>Mes habitudes</Text>
         </View>
         <TouchableOpacity onPress={handlePressAdd} style={styles.addIconBtn}>
-          <LinearGradient colors={COLORS.gradientPrimary} style={styles.addIconGradient}>
+          <LinearGradient colors={C.gradientPrimary} style={styles.addIconGradient}>
             <Ionicons name="add" size={24} color="#fff" />
           </LinearGradient>
         </TouchableOpacity>
@@ -845,7 +852,7 @@ export default function HomeScreen() {
         <View style={styles.progressTrack}>
           {completionRate > 0 && (
             <LinearGradient
-              colors={COLORS.gradientPrimary}
+              colors={C.gradientPrimary}
               style={[styles.progressFill, { flex: completionRate }]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
@@ -885,7 +892,7 @@ export default function HomeScreen() {
 
         {!isPremium && activeHabits.length >= 1 && (
           <TouchableOpacity onPress={() => router.push('/paywall')} style={styles.upgradeNudge}>
-            <LinearGradient colors={COLORS.gradientPremium} style={styles.upgradeGradient}>
+            <LinearGradient colors={C.gradientPremium} style={styles.upgradeGradient}>
               <Ionicons name="star" size={16} color="#fff" />
               <Text style={styles.upgradeText}>Passe à Premium pour des habitudes illimitées</Text>
               <Ionicons name="chevron-forward" size={16} color="#fff" />

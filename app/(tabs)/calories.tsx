@@ -24,6 +24,7 @@ import AddEntryModal from '@/components/nutrition/AddEntryModal';
 import FoodLibraryModal from '@/components/nutrition/FoodLibraryModal';
 import GoalsModal from '@/components/nutrition/GoalsModal';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
+import { useAppColors } from '@/hooks/useAppColors';
 import { useHealthConnect } from '@/hooks/useHealthConnect';
 
 function todayISO(): string {
@@ -57,6 +58,7 @@ const RADIUS_RING = (RING_SIZE - STROKE_WIDTH) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS_RING;
 
 function CalorieRing({ consumed, goal }: { consumed: number; goal: number }) {
+  const C = useAppColors();
   const pct = goal > 0 ? Math.min(consumed / goal, 1) : 0;
   const strokeDashoffset = CIRCUMFERENCE * (1 - pct);
   const exceeded = consumed > goal;
@@ -66,8 +68,8 @@ function CalorieRing({ consumed, goal }: { consumed: number; goal: number }) {
       <Svg width={RING_SIZE} height={RING_SIZE} style={{ transform: [{ rotate: '-90deg' }] }}>
         <Defs>
           <SvgGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
-            <Stop offset="0" stopColor={exceeded ? COLORS.error : COLORS.primary} />
-            <Stop offset="1" stopColor={exceeded ? COLORS.accent : COLORS.primaryLight} />
+            <Stop offset="0" stopColor={exceeded ? COLORS.error : C.primary} />
+            <Stop offset="1" stopColor={exceeded ? C.accent : C.primaryLight} />
           </SvgGradient>
         </Defs>
         <Circle cx={RING_SIZE / 2} cy={RING_SIZE / 2} r={RADIUS_RING} stroke={COLORS.bgElevated} strokeWidth={STROKE_WIDTH} fill="none" />
@@ -219,6 +221,7 @@ function BurnedCaloriesModal({
   onReset: () => void;
   onClose: () => void;
 }) {
+  const C = useAppColors();
   const [input, setInput] = useState(currentValue);
 
   React.useEffect(() => {
@@ -253,7 +256,7 @@ function BurnedCaloriesModal({
             returnKeyType="done"
             onSubmitEditing={() => onSave(input)}
           />
-          <TouchableOpacity style={burnedStyles.saveBtn} onPress={() => onSave(input)} activeOpacity={0.85}>
+          <TouchableOpacity style={[burnedStyles.saveBtn, { backgroundColor: C.primary }]} onPress={() => onSave(input)} activeOpacity={0.85}>
             <Text style={burnedStyles.saveBtnText}>Enregistrer</Text>
           </TouchableOpacity>
           {isManual && (
@@ -321,6 +324,7 @@ const burnedStyles = StyleSheet.create({
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function CaloriesScreen() {
+  const C = useAppColors();
   const {
     getEntriesForDate, getTotalsForDate, removeEntry, goals,
     manualBurnedCalories, setManualBurnedCalories, clearManualBurnedCalories,
@@ -477,7 +481,7 @@ export default function CaloriesScreen() {
                   Connecte Samsung Health pour voir tes calories brûlées et ajuster ton objectif net.
                 </Text>
                 <TouchableOpacity onPress={requestPermissions} activeOpacity={0.85} style={styles.hcBtnWrapper}>
-                  <LinearGradient colors={['#F97316', '#EA580C']} style={styles.hcBtn}>
+                  <LinearGradient colors={C.gradientPrimary} style={styles.hcBtn}>
                     <Ionicons name="heart" size={16} color="#fff" />
                     <Text style={styles.hcBtnText}>Connecter Samsung Health</Text>
                   </LinearGradient>
@@ -581,14 +585,14 @@ export default function CaloriesScreen() {
       {/* FABs */}
       <View style={styles.fabContainer}>
         <TouchableOpacity
-          style={styles.fabSecondary}
+          style={[styles.fabSecondary, { borderColor: C.primaryGlow }]}
           onPress={() => setLibraryModalVisible(true)}
           activeOpacity={0.8}
         >
-          <Ionicons name="library-outline" size={22} color={COLORS.primary} />
+          <Ionicons name="library-outline" size={22} color={C.primary} />
         </TouchableOpacity>
         <TouchableOpacity
-          style={styles.fab}
+          style={[styles.fab, { backgroundColor: C.primary, shadowColor: C.primary }]}
           onPress={() => openAddModal()}
           activeOpacity={0.8}
         >
