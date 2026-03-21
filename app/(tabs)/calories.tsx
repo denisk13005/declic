@@ -593,22 +593,29 @@ export default function CaloriesScreen() {
         ))}
       </ScrollView>
 
-      {/* FABs */}
-      <View style={styles.fabContainer}>
-        <TouchableOpacity
-          style={[styles.fabSecondary, { borderColor: C.primaryGlow }]}
-          onPress={() => setLibraryModalVisible(true)}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="library-outline" size={22} color={C.primary} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.fab, { backgroundColor: C.primary, shadowColor: C.primary }]}
-          onPress={() => openAddModal()}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="add" size={28} color="#fff" />
-        </TouchableOpacity>
+      {/* Barre d'action fixe */}
+      <View style={styles.actionBar}>
+        <View style={styles.actionBtnWrapper}>
+          <TouchableOpacity
+            style={styles.actionBtnSecondary}
+            onPress={() => setLibraryModalVisible(true)}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="library-outline" size={18} color={C.primary} />
+            <Text style={[styles.actionBtnSecondaryText, { color: C.primary }]}>Mes aliments</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.actionBtnWrapper}>
+          <TouchableOpacity
+            onPress={() => openAddModal()}
+            activeOpacity={0.85}
+            style={styles.actionBtnPrimary}
+          >
+            <LinearGradient colors={C.gradientPrimary} style={StyleSheet.absoluteFillObject} />
+            <Ionicons name="add" size={20} color="#fff" />
+            <Text style={styles.actionBtnPrimaryText}>Ajouter un aliment</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Modals */}
@@ -645,7 +652,7 @@ export default function CaloriesScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.bg },
-  content: { padding: SPACING.lg, paddingBottom: 120 },
+  content: { padding: SPACING.lg, paddingBottom: 140 },
 
   header: {
     flexDirection: 'row',
@@ -782,35 +789,55 @@ const styles = StyleSheet.create({
   entryMacros: { fontSize: FONT_SIZE.xs, color: COLORS.textTertiary, marginTop: 2 },
   entryKcal: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.semibold, color: COLORS.textSecondary },
 
-  fabContainer: {
+  actionBar: {
     position: 'absolute',
-    bottom: SPACING.xl,
-    right: SPACING.lg,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.sm,
+    paddingBottom: Platform.OS === 'ios' ? 28 : SPACING.md,
+    backgroundColor: COLORS.bg,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+
+  },
+  actionBtnWrapper: {
+    flex: 1,
+  },
+  actionBtnSecondary: {
+    width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.sm,
-  },
-  fab: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: COLORS.primary,
-    alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  fabSecondary: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: COLORS.bgCard,
+    gap: SPACING.xs,
+    paddingVertical: 14,
+    borderRadius: RADIUS.md,
     borderWidth: 1,
     borderColor: COLORS.border,
+    backgroundColor: COLORS.bgCard,
+  },
+  actionBtnSecondaryText: {
+    fontSize: FONT_SIZE.sm,
+    fontWeight: FONT_WEIGHT.semibold,
+  },
+  actionBtnPrimary: {
+    width: '100%',
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: SPACING.xs,
+    paddingVertical: 14,
+    borderRadius: RADIUS.md,
+    overflow: 'hidden',
+
+
+  },
+  actionBtnPrimaryText: {
+    fontSize: FONT_SIZE.sm,
+    fontWeight: FONT_WEIGHT.bold,
+    color: '#fff',
   },
 });
