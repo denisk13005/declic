@@ -1,5 +1,80 @@
 # Déclic — Dev Log
 
+## 2026-03-21 — Programme musculation : descriptions + lien démo YouTube
+
+**Fonctionnalité** : Chaque exercice affiche maintenant une explication technique et un lien vers une démonstration YouTube.
+
+**`src/data/exercises.ts`** : Champ `description` ajouté à l'interface `Exercise` et renseigné pour les ~70 exercices (conseil technique en français : placement, points clés, erreurs à éviter).
+
+**`ProgramCreatorModal.tsx`** : Nouveau composant `ExerciseCard` — tap sur un exercice pour dérouler :
+- Description technique (1-2 phrases)
+- Bouton "Voir une démonstration" → ouvre une recherche YouTube (`Linking.openURL`)
+
+## 2026-03-21 — Programme musculation : cohérence des exercices + mode personnalisé
+
+**Fonctionnalité 1 : Déduplication par famille de mouvement**
+- Chaque exercice a désormais un champ `family` (`src/data/exercises.ts`) : identifie le patron de mouvement
+- Exemples : `vertical_pull` (tirage poulie haute ET tractions), `horizontal_row` (rowing barre/haltère/poulie), `overhead_press`, `back_squat`, `hip_thrust`, etc.
+- `buildDay` dans `programGenerator.ts` maintenant un `Set<string>` des familles déjà utilisées
+- Si lat pulldown est sélectionné, les tractions sont automatiquement exclues de la même séance
+
+**Fonctionnalité 2 : Mode programme personnalisé**
+- Nouveau sélecteur de mode dans `ProgramCreatorModal` : Automatique | Personnalisé
+- Mode Personnalisé : étape intermédiaire "Customizer" → pour chaque séance, l'utilisateur choisit ses groupes musculaires via chips cliquables
+- `generateCustomDay()` dans `programGenerator.ts` : génère un jour à partir d'une liste de groupes musculaires
+- 1 compound + 1 isolation par groupe (avec cap à 7 exercices et déduplication famille)
+
+## 2026-03-21 — Programme musculation : niveaux + techniques d'intensification
+
+**Fonctionnalité** : Ajout du niveau de pratique (Débutant / Intermédiaire / Avancé) dans le générateur de programme, avec exercices et techniques adaptés.
+
+**Types** :
+- `PractitionerLevel = 'beginner' | 'intermediate' | 'advanced'` (dans `src/types/index.ts`)
+- `IntensificationTechnique = 'none' | 'superset' | 'biset' | 'dropset' | 'rest_pause'` (dans `programGenerator.ts`)
+- `ProgramExercise` étendu : `technique`, `supersetWith?`, `techniqueNote?`
+
+**Exercices** (`src/data/exercises.ts`) :
+- Chaque exercice a un `minLevel` : Débutant (machines, bases), Intermédiaire (barres, mouvements complexes), Avancé (techniques exigeantes)
+- ~70 exercices au total
+
+**Techniques d'intensification** par niveau :
+| Niveau | Techniques |
+|--------|------------|
+| Débutant | Séries droites uniquement |
+| Intermédiaire | Superset antagonistes (biceps+triceps, pec+épaule) |
+| Avancé | Superset + Biset + Drop set + Rest-pause |
+
+**Modal de création** (`ProgramCreatorModal.tsx`) :
+- Sélecteur de niveau visuel (3 cartes avec emoji + description)
+- Annonce des techniques incluses selon le niveau avant génération
+- Affichage des techniques dans l'aperçu : badges colorés, paire A/B pour supersets/bisets, note explicative
+
+## 2026-03-21 — Générateur de programme musculation personnalisé
+
+**Fonctionnalité** : Création automatique d'un programme de musculation adapté au nombre de séances/semaine (1-6) et à l'objectif de l'utilisateur.
+
+**Nouveaux fichiers** :
+- `src/data/exercises.ts` — base de 50 exercices (pectoraux, dos, épaules, biceps, triceps, quadriceps, ischio, fessiers, mollets, abdos), avec type compound/isolation
+- `src/utils/programGenerator.ts` — générateur de programme : split optimal par nb de séances (Full Body / PPL / Upper-Lower / PPL×2), sets/reps/repos adaptés à l'objectif
+- `src/stores/programStore.ts` — Zustand persisté (`@declic/program`)
+- `src/components/sport/ProgramCreatorModal.tsx` — modal en 2 étapes : configuration (sessions + objectif) → aperçu interactif (jours dépliables avec exercices, sets, reps, repos)
+
+**Fichiers modifiés** :
+- `app/(tabs)/sport.tsx` — section "Programme musculation" : bannière de création ou carte du programme enregistré avec liste des jours
+- `src/constants/config.ts` — clé storage `PROGRAM`
+
+**Logique des splits** :
+| Séances | Split |
+|---------|-------|
+| 1 | Full Body |
+| 2 | Full Body A/B |
+| 3 | Push/Pull/Legs |
+| 4 | Upper/Lower × 2 |
+| 5 | PPL + Upper/Lower |
+| 6 | PPL × 2 |
+
+**Paramètres par objectif** : Prise de muscle (6-10 reps, 2-3 min repos) · Maintien (8-12 reps, 90s) · Perte de gras (12-20 reps, 45s)
+
 ## 2026-03-21 — Onglet Sport + suivi calories brûlées manuel
 
 **Fonctionnalité** : Onglet dédié au suivi des activités sportives. Permet de loguer des séances sans Samsung Health ni appli tierce.

@@ -153,6 +153,8 @@ export interface WeightEntry {
 
 // ─── Workout / Sport ──────────────────────────────────────────────────────────
 
+export type PractitionerLevel = 'beginner' | 'intermediate' | 'advanced';
+
 export type WorkoutType =
   | 'marche'
   | 'course'
