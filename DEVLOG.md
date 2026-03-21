@@ -1,5 +1,47 @@
 # Déclic — Dev Log
 
+## 2026-03-21 — Suivi des séances muscu + graphique de progression
+
+**Fonctionnalité** : Cocher les exercices effectués par séance et visualiser la progression sur 7 jours.
+
+**Nouveaux fichiers** :
+- `src/stores/sessionStore.ts` — store Zustand persisté, stocke les séances avec exercices cochés
+- `src/components/sport/WorkoutSessionModal.tsx` — modal de suivi en temps réel : checkboxes par exercice, barre de progression, bouton sauvegarder
+
+**Fichiers modifiés** :
+- `src/types/index.ts` — nouveau type `WorkoutSession`
+- `src/constants/config.ts` — clé `SESSIONS` dans `STORAGE_KEYS`
+- `app/(tabs)/sport.tsx` — bouton "Démarrer" sur chaque jour du programme + graphique barres 7 jours
+
+**Comportement** :
+- Bouton "Démarrer" sur chaque ligne de jour → ouvre `WorkoutSessionModal`
+- Cocher/décocher individuellement ou "Tout cocher"
+- Barre de progression en temps réel (vert si 100%)
+- Sauvegarder enregistre la séance dans `sessionStore`
+- Le bouton passe à "X/Y" ou "Terminé ✓" une fois sauvegardé
+- Graphique barres apparaît dès la première séance enregistrée (masqué si aucune donnée)
+
+---
+
+## 2026-03-21 — Sélection manuelle des exercices dans le programme personnalisé
+
+**Fonctionnalité** : En mode "Personnalisé", l'utilisateur peut désormais choisir ses exercices un à un dans une liste plutôt que par groupes musculaires.
+
+**Nouveaux fichiers** :
+- `src/components/sport/ExercisePickerModal.tsx` — modal de sélection d'exercices avec filtre par groupe musculaire et cases à cocher
+
+**Fichiers modifiés** :
+- `src/utils/programGenerator.ts` — export de `GoalParams` (interface) et ajout de `getDefaultExerciseParams(goal, level)` pour les sets/reps par défaut
+- `src/components/sport/ProgramCreatorModal.tsx` — mode custom entièrement refondu : sélecteur d'exercices par séance (ajout/suppression) + intégration `ExercisePickerModal`
+
+**Comportement** :
+- Filtre par groupe musculaire (chips horizontaux) dans le picker
+- Les exercices déjà ajoutés à la séance sont exclus de la liste
+- Sets/reps par défaut calculés depuis `GOAL_PARAMS` selon objectif + niveau choisis
+- Suppression individuelle d'un exercice par poubelle
+
+---
+
 ## 2026-03-21 — Programme musculation : descriptions + lien démo YouTube
 
 **Fonctionnalité** : Chaque exercice affiche maintenant une explication technique et un lien vers une démonstration YouTube.

@@ -15,7 +15,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { FitnessGoal, PractitionerLevel, Gender } from '@/types';
 import {
   generateProgram,
-  generateCustomDay,
   estimateSessionMinutes,
   WorkoutProgram,
   ProgramDay,
@@ -24,9 +23,12 @@ import {
   LEVEL_INFO,
   GENDER_INFO,
   IntensificationTechnique,
+  getDefaultExerciseParams,
+  TECHNIQUE_NOTES,
 } from '@/utils/programGenerator';
-import { MuscleGroup, MUSCLE_GROUP_LABELS } from '@/data/exercises';
+import { Exercise, MUSCLE_GROUP_LABELS } from '@/data/exercises';
 import { useProgramStore } from '@/stores/programStore';
+import ExercisePickerModal from '@/components/sport/ExercisePickerModal';
 import { useProfileStore } from '@/stores/profileStore';
 import { GOAL_LABELS } from '@/utils/tdee';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
@@ -36,6 +38,14 @@ interface Props {
   visible: boolean;
   onClose: () => void;
 }
+
+const TECHNIQUE_CONFIG: { key: IntensificationTechnique; label: string; color: string }[] = [
+  { key: 'none',       label: '—',          color: COLORS.textTertiary },
+  { key: 'dropset',    label: 'Drop set',   color: '#EF4444' },
+  { key: 'rest_pause', label: 'Rest-pause', color: '#60A5FA' },
+  { key: 'superset',   label: 'Superset',   color: '#F97316' },
+  { key: 'biset',      label: 'Biset',      color: '#A78BFA' },
+];
 
 const GOAL_CONFIG: Record<FitnessGoal, { emoji: string; color: string; description: string }> = {
   lose_fat:     { emoji: '🔥', color: '#F97316', description: 'Volume élevé, récupération courte' },
@@ -204,24 +214,67 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
   const [step, setStep] = useState<'config' | 'customizer' | 'preview'>('config');
   const [expandedDay, setExpandedDay] = useState<number | null>(0);
 
-  // Groupes musculaires par jour (mode custom)
-  const [customGroups, setCustomGroups] = useState<MuscleGroup[][]>(
-    () => Array.from({ length: sessions }, () => [] as MuscleGroup[])
+  // Exercices par jour (mode custom)
+  const [customExercises, setCustomExercises] = useState<ProgramExercise[][]>(
+    () => Array.from({ length: sessions }, () => [])
   );
+  const [editingDayIdx, setEditingDayIdx] = useState<number | null>(null);
+  const [showPicker, setShowPicker] = useState(false);
 
   // Synchronise le tableau quand sessions change
-  const adjustedCustomGroups = useMemo(() => {
-    const arr = Array.from({ length: sessions }, (_, i) => customGroups[i] ?? []);
-    return arr;
-  }, [sessions, customGroups]);
+  const adjustedCustomExercises = useMemo(() => {
+    return Array.from({ length: sessions }, (_, i) => customExercises[i] ?? []);
+  }, [sessions, customExercises]);
 
-  function toggleGroup(dayIdx: number, group: MuscleGroup) {
-    setCustomGroups((prev) => {
+  function addExercisesToDay(dayIdx: number, exercises: Exercise[]) {
+    const params = getDefaultExerciseParams(goal, level);
+    setCustomExercises((prev) => {
       const next = [...prev];
-      const day = next[dayIdx] ? [...next[dayIdx]] : [];
-      const idx = day.indexOf(group);
-      if (idx === -1) day.push(group);
-      else day.splice(idx, 1);
+      const day = [...(next[dayIdx] ?? [])];
+      for (const ex of exercises) {
+        day.push({
+          exercise: ex,
+          sets: ex.isCompound ? params.compoundSets : params.isolationSets,
+          reps: ex.isCompound ? params.compoundReps : params.isolationReps,
+          rest: ex.isCompound ? params.compoundRest : params.isolationRest,
+          technique: 'none',
+        });
+      }
+      next[dayIdx] = day;
+      return next;
+    });
+  }
+
+  function removeExerciseFromDay(dayIdx: number, exIdx: number) {
+    setCustomExercises((prev) => {
+      const next = [...prev];
+      const day = [...(next[dayIdx] ?? [])];
+      day.splice(exIdx, 1);
+      next[dayIdx] = day;
+      return next;
+    });
+  }
+
+  function updateExerciseTechnique(dayIdx: number, exIdx: number, technique: IntensificationTechnique) {
+    setCustomExercises((prev) => {
+      const next = [...prev];
+      const day = [...(next[dayIdx] ?? [])];
+      const pe = { ...day[exIdx], technique, techniqueNote: TECHNIQUE_NOTES[technique] || undefined };
+      // Effacer le pair si la technique ne le nécessite plus
+      if (technique !== 'superset' && technique !== 'biset') {
+        delete pe.supersetWith;
+      }
+      day[exIdx] = pe;
+      next[dayIdx] = day;
+      return next;
+    });
+  }
+
+  function setPairForExercise(dayIdx: number, exIdx: number, paired: Exercise | undefined) {
+    setCustomExercises((prev) => {
+      const next = [...prev];
+      const day = [...(next[dayIdx] ?? [])];
+      day[exIdx] = { ...day[exIdx], supersetWith: paired };
       next[dayIdx] = day;
       return next;
     });
@@ -229,12 +282,17 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
 
   const preview = useMemo(() => {
     if (mode === 'auto') return generateProgram(sessions, goal, level, gender);
-    // Mode custom : assembler les jours manuellement
-    const days: ProgramDay[] = adjustedCustomGroups.map((groups, i) =>
-      generateCustomDay(i + 1, `Jour ${i + 1}`, groups.length > 0 ? groups : ['chest', 'back'] as MuscleGroup[], goal, level, gender)
-    );
+    // Mode custom : utiliser les exercices choisis manuellement
+    const days: ProgramDay[] = adjustedCustomExercises.map((exList, i) => ({
+      dayNumber: i + 1,
+      label: `Séance ${i + 1}`,
+      focus: exList.length > 0
+        ? [...new Set(exList.map((pe) => MUSCLE_GROUP_LABELS[pe.exercise.muscleGroup]))].join(', ')
+        : 'Aucun exercice',
+      exercises: exList,
+    }));
     return { sessionsPerWeek: sessions, goal, level, gender, splitName: 'Programme personnalisé', days };
-  }, [mode, sessions, goal, level, gender, adjustedCustomGroups]);
+  }, [mode, sessions, goal, level, gender, adjustedCustomExercises]);
 
   const totalTechniques = preview.days.reduce(
     (s, d) => s + d.exercises.filter((e) => e.technique !== 'none').length,
@@ -259,13 +317,14 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
   function handleClose() {
     setStep('config');
     setExpandedDay(0);
+    setShowPicker(false);
+    setEditingDayIdx(null);
     onClose();
   }
 
   function handleConfigNext() {
     setExpandedDay(0);
     if (mode === 'custom') {
-      setCustomGroups(Array.from({ length: sessions }, (_, i) => customGroups[i] ?? []));
       setStep('customizer');
     } else {
       setStep('preview');
@@ -293,7 +352,7 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
             )}
             <Text style={styles.title}>
               {step === 'config' ? 'Créer mon programme'
-                : step === 'customizer' ? 'Mes groupes musculaires'
+                : step === 'customizer' ? 'Mes exercices'
                 : preview.splitName}
             </Text>
           </View>
@@ -323,7 +382,7 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
                         {m === 'auto' ? 'Automatique' : 'Personnalisé'}
                       </Text>
                       <Text style={styles.modeDesc}>
-                        {m === 'auto' ? 'Programme optimisé généré par l\'app' : 'Tu choisis tes groupes par séance'}
+                        {m === 'auto' ? 'Programme optimisé généré par l\'app' : 'Tu choisis tes exercices par séance'}
                       </Text>
                     </TouchableOpacity>
                   );
@@ -451,7 +510,7 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
                 <LinearGradient colors={C.gradientPrimary} style={styles.generateBtn}>
                   <Ionicons name={mode === 'auto' ? 'sparkles' : 'arrow-forward'} size={18} color="#fff" />
                   <Text style={styles.generateBtnText}>
-                    {mode === 'auto' ? 'Générer mon programme' : 'Choisir mes groupes musculaires'}
+                    {mode === 'auto' ? 'Générer mon programme' : 'Choisir mes exercices'}
                   </Text>
                 </LinearGradient>
               </TouchableOpacity>
@@ -459,45 +518,138 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
 
           ) : step === 'customizer' ? (
             /* ── Étape personnalisation ── */
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.configContent}>
-              <Text style={styles.sectionSub}>
-                Sélectionne les groupes musculaires pour chaque séance (max. 7 exercices par séance)
-              </Text>
-              {adjustedCustomGroups.map((dayGroups, dayIdx) => (
-                <View key={dayIdx} style={styles.customizerDayCard}>
-                  <View style={styles.customizerDayHeader}>
-                    <View style={dayStyles.badge}>
-                      <Text style={dayStyles.badgeText}>J{dayIdx + 1}</Text>
+            <>
+              <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.configContent}>
+                <Text style={styles.sectionSub}>
+                  Ajoute les exercices de ton choix pour chaque séance
+                </Text>
+                {adjustedCustomExercises.map((dayExs, dayIdx) => (
+                  <View key={dayIdx} style={styles.customizerDayCard}>
+                    <View style={styles.customizerDayHeader}>
+                      <View style={dayStyles.badge}>
+                        <Text style={dayStyles.badgeText}>J{dayIdx + 1}</Text>
+                      </View>
+                      <Text style={styles.customizerDayTitle}>Séance {dayIdx + 1}</Text>
+                      <Text style={styles.customizerDayCount}>{dayExs.length} ex.</Text>
                     </View>
-                    <Text style={styles.customizerDayTitle}>Séance {dayIdx + 1}</Text>
-                    <Text style={styles.customizerDayCount}>{dayGroups.length} groupe{dayGroups.length > 1 ? 's' : ''}</Text>
+
+                    {dayExs.length > 0 && (
+                      <View style={styles.customizerExList}>
+                        {dayExs.map((pe, exIdx) => {
+                          const needsPair = pe.technique === 'superset' || pe.technique === 'biset';
+                          const otherExs = dayExs.filter((_, i) => i !== exIdx);
+                          return (
+                            <View
+                              key={`${pe.exercise.id}-${exIdx}`}
+                              style={[styles.customizerExRow, exIdx > 0 && styles.customizerExRowBorder]}
+                            >
+                              {/* Ligne nom + poubelle */}
+                              <View style={styles.customizerExHeader}>
+                                <View style={styles.customizerExInfo}>
+                                  <Text style={styles.customizerExName}>{pe.exercise.name}</Text>
+                                  <Text style={styles.customizerExMeta}>
+                                    {pe.sets} × {pe.reps}  ·  {MUSCLE_GROUP_LABELS[pe.exercise.muscleGroup]}
+                                  </Text>
+                                </View>
+                                <TouchableOpacity
+                                  onPress={() => removeExerciseFromDay(dayIdx, exIdx)}
+                                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                                >
+                                  <Ionicons name="trash-outline" size={16} color={COLORS.textTertiary} />
+                                </TouchableOpacity>
+                              </View>
+
+                              {/* Chips technique */}
+                              <View style={styles.techChipsRow}>
+                                {TECHNIQUE_CONFIG.map(({ key, label, color }) => {
+                                  const isActive = pe.technique === key;
+                                  const disabled = (key === 'superset' || key === 'biset') && otherExs.length === 0;
+                                  return (
+                                    <TouchableOpacity
+                                      key={key}
+                                      disabled={disabled}
+                                      style={[
+                                        styles.techChip,
+                                        isActive && { borderColor: color, backgroundColor: color + '22' },
+                                        disabled && { opacity: 0.3 },
+                                      ]}
+                                      onPress={() => updateExerciseTechnique(dayIdx, exIdx, key)}
+                                      activeOpacity={0.7}
+                                    >
+                                      <Text style={[styles.techChipText, isActive && { color }]}>{label}</Text>
+                                    </TouchableOpacity>
+                                  );
+                                })}
+                              </View>
+
+                              {/* Sélecteur de paire pour superset/biset */}
+                              {needsPair && otherExs.length > 0 && (
+                                <View style={styles.pairRow}>
+                                  <Text style={styles.pairLabel}>Pairer avec :</Text>
+                                  <View style={styles.pairChips}>
+                                    {otherExs.map((other) => {
+                                      const isPaired = pe.supersetWith?.id === other.exercise.id;
+                                      return (
+                                        <TouchableOpacity
+                                          key={other.exercise.id}
+                                          style={[
+                                            styles.pairChip,
+                                            isPaired && styles.pairChipActive,
+                                          ]}
+                                          onPress={() =>
+                                            setPairForExercise(
+                                              dayIdx, exIdx,
+                                              isPaired ? undefined : other.exercise
+                                            )
+                                          }
+                                          activeOpacity={0.7}
+                                        >
+                                          <Text style={[styles.pairChipText, isPaired && styles.pairChipTextActive]}>
+                                            {other.exercise.name}
+                                          </Text>
+                                          {isPaired && <Ionicons name="checkmark" size={10} color={C.primary} />}
+                                        </TouchableOpacity>
+                                      );
+                                    })}
+                                  </View>
+                                </View>
+                              )}
+                            </View>
+                          );
+                        })}
+                      </View>
+                    )}
+
+                    <TouchableOpacity
+                      style={styles.addExBtn}
+                      onPress={() => { setEditingDayIdx(dayIdx); setShowPicker(true); }}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="add" size={16} color={C.primary} />
+                      <Text style={[styles.addExBtnText, { color: C.primary }]}>Ajouter des exercices</Text>
+                    </TouchableOpacity>
                   </View>
-                  <View style={styles.groupChipsWrap}>
-                    {(Object.keys(MUSCLE_GROUP_LABELS) as MuscleGroup[]).map((g) => {
-                      const isSelected = dayGroups.includes(g);
-                      return (
-                        <TouchableOpacity
-                          key={g}
-                          style={[styles.groupChip, isSelected && { borderColor: C.primary, backgroundColor: C.primaryGlow }]}
-                          onPress={() => toggleGroup(dayIdx, g)}
-                          activeOpacity={0.7}
-                        >
-                          <Text style={[styles.groupChipText, isSelected && { color: C.primary }]}>
-                            {MUSCLE_GROUP_LABELS[g]}
-                          </Text>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </View>
-                </View>
-              ))}
-              <TouchableOpacity onPress={() => { setExpandedDay(0); setStep('preview'); }} activeOpacity={0.85}>
-                <LinearGradient colors={C.gradientPrimary} style={styles.generateBtn}>
-                  <Ionicons name="sparkles" size={18} color="#fff" />
-                  <Text style={styles.generateBtnText}>Voir mon programme</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            </ScrollView>
+                ))}
+
+                <TouchableOpacity onPress={() => { setExpandedDay(0); setStep('preview'); }} activeOpacity={0.85}>
+                  <LinearGradient colors={C.gradientPrimary} style={styles.generateBtn}>
+                    <Ionicons name="eye-outline" size={18} color="#fff" />
+                    <Text style={styles.generateBtnText}>Voir mon programme</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+              </ScrollView>
+
+              <ExercisePickerModal
+                visible={showPicker}
+                onClose={() => { setShowPicker(false); setEditingDayIdx(null); }}
+                onAdd={(exercises) => { if (editingDayIdx !== null) addExercisesToDay(editingDayIdx, exercises); }}
+                excludeIds={
+                  editingDayIdx !== null
+                    ? (adjustedCustomExercises[editingDayIdx] ?? []).map((pe) => pe.exercise.id)
+                    : []
+                }
+              />
+            </>
 
           ) : (
             /* ── Étape aperçu ── */
@@ -664,13 +816,47 @@ const styles = StyleSheet.create({
   customizerDayHeader: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
   customizerDayTitle: { flex: 1, fontSize: FONT_SIZE.md, fontWeight: FONT_WEIGHT.semibold, color: COLORS.textPrimary },
   customizerDayCount: { fontSize: FONT_SIZE.xs, color: COLORS.textTertiary },
-  groupChipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.xs },
-  groupChip: {
-    paddingHorizontal: SPACING.sm, paddingVertical: 6,
+  customizerExList: {
     borderRadius: RADIUS.sm, borderWidth: 1, borderColor: COLORS.border,
-    backgroundColor: COLORS.bgCard,
+    backgroundColor: COLORS.bgCard, overflow: 'hidden',
   },
-  groupChipText: { fontSize: FONT_SIZE.xs, color: COLORS.textSecondary, fontWeight: FONT_WEIGHT.medium },
+  customizerExRow: { padding: SPACING.sm, gap: SPACING.xs },
+  customizerExRowBorder: { borderTopWidth: 1, borderTopColor: COLORS.border + '80' },
+  customizerExHeader: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
+  customizerExInfo: { flex: 1 },
+  customizerExName: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.medium, color: COLORS.textPrimary },
+  customizerExMeta: { fontSize: FONT_SIZE.xs, color: COLORS.textTertiary, marginTop: 2 },
+
+  // Technique chips
+  techChipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 },
+  techChip: {
+    paddingHorizontal: 8, paddingVertical: 4,
+    borderRadius: RADIUS.sm, borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: COLORS.bgElevated,
+  },
+  techChipText: { fontSize: 11, fontWeight: FONT_WEIGHT.medium, color: COLORS.textTertiary },
+
+  // Pair selector
+  pairRow: { marginTop: 6, gap: 4 },
+  pairLabel: { fontSize: FONT_SIZE.xs, color: COLORS.textSecondary, fontWeight: FONT_WEIGHT.medium },
+  pairChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  pairChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: 8, paddingVertical: 4,
+    borderRadius: RADIUS.sm, borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: COLORS.bgElevated,
+  },
+  pairChipActive: { borderColor: COLORS.primary, backgroundColor: COLORS.primaryGlow },
+  pairChipText: { fontSize: 11, color: COLORS.textSecondary },
+  pairChipTextActive: { color: COLORS.primaryLight, fontWeight: FONT_WEIGHT.semibold },
+
+  addExBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 6, paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.sm, borderWidth: 1, borderColor: COLORS.primary + '60',
+    backgroundColor: COLORS.primaryGlow,
+  },
+  addExBtnText: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.semibold },
 
   // Bouton
   generateBtn: {

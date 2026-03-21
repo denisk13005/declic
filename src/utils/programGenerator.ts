@@ -46,7 +46,7 @@ export interface WorkoutProgram {
 
 // ─── Paramètres par objectif × niveau ────────────────────────────────────────
 
-interface GoalParams {
+export interface GoalParams {
   compoundSets: number;
   isolationSets: number;
   compoundReps: string;
@@ -73,9 +73,13 @@ const GOAL_PARAMS: Record<FitnessGoal, Record<PractitionerLevel, GoalParams>> = 
   },
 };
 
+export function getDefaultExerciseParams(goal: FitnessGoal, level: PractitionerLevel): GoalParams {
+  return GOAL_PARAMS[goal][level];
+}
+
 // ─── Notes de technique ───────────────────────────────────────────────────────
 
-const TECHNIQUE_NOTES: Record<IntensificationTechnique, string> = {
+export const TECHNIQUE_NOTES: Record<IntensificationTechnique, string> = {
   none:        '',
   superset:    'Enchaîner A et B sans repos · Repos après B seulement',
   biset:       'Enchaîner les 2 exercices sans repos · Repos après le 2ᵉ',

@@ -182,6 +182,17 @@ export interface WorkoutEntry {
   note?: string;
 }
 
+// ─── Séance musculation ───────────────────────────────────────────────────────
+
+export interface WorkoutSession {
+  id: string;
+  date: string;              // yyyy-MM-dd
+  programDayNumber: number;
+  programDayLabel: string;
+  completedExerciseIds: string[];
+  totalExercises: number;
+}
+
 // ─── Navigation ───────────────────────────────────────────────────────────────
 
 export type RootStackParamList = {

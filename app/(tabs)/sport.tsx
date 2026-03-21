@@ -16,12 +16,14 @@ import { fr } from 'date-fns/locale';
 import { useWorkoutStore } from '@/stores/workoutStore';
 import { useProfileStore } from '@/stores/profileStore';
 import { useProgramStore } from '@/stores/programStore';
+import { useSessionStore } from '@/stores/sessionStore';
 import { WorkoutEntry } from '@/types';
+import { ProgramDay, SPLIT_INFO } from '@/utils/programGenerator';
 import { WORKOUT_META } from '@/utils/workout';
 import { GOAL_LABELS } from '@/utils/tdee';
-import { SPLIT_INFO } from '@/utils/programGenerator';
 import AddWorkoutModal from '@/components/sport/AddWorkoutModal';
 import ProgramCreatorModal from '@/components/sport/ProgramCreatorModal';
+import WorkoutSessionModal from '@/components/sport/WorkoutSessionModal';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
 import { useAppColors } from '@/hooks/useAppColors';
 
@@ -87,10 +89,12 @@ export default function SportScreen() {
   const { profile } = useProfileStore();
 
   const { program, clearProgram } = useProgramStore();
+  const { getSessionForDate, getLastNDays } = useSessionStore();
 
   const [selectedDate, setSelectedDate] = useState(todayISO());
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [programModalVisible, setProgramModalVisible] = useState(false);
+  const [sessionDay, setSessionDay] = useState<ProgramDay | null>(null);
 
   const isToday = selectedDate === todayISO();
   const entries = getEntriesForDate(selectedDate);
@@ -213,18 +217,58 @@ export default function SportScreen() {
               </TouchableOpacity>
             </View>
 
-            {program.days.map((day) => (
-              <View key={day.dayNumber} style={styles.programDay}>
-                <View style={styles.programDayBadge}>
-                  <Text style={styles.programDayNum}>J{day.dayNumber}</Text>
+            {program.days.map((day) => {
+              const session = getSessionForDate(selectedDate);
+              const isThisDay = session?.programDayNumber === day.dayNumber;
+              const donePct = isThisDay
+                ? session!.completedExerciseIds.length / Math.max(session!.totalExercises, 1)
+                : 0;
+              return (
+                <View key={day.dayNumber} style={styles.programDay}>
+                  <View style={styles.programDayBadge}>
+                    <Text style={styles.programDayNum}>J{day.dayNumber}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.programDayLabel}>{day.label}</Text>
+                    <Text style={styles.programDayFocus} numberOfLines={1}>{day.focus}</Text>
+                    {isThisDay && (
+                      <View style={styles.dayProgressBar}>
+                        <View
+                          style={[
+                            styles.dayProgressFill,
+                            {
+                              width: `${donePct * 100}%` as any,
+                              backgroundColor: donePct === 1 ? '#10B981' : C.primary,
+                            },
+                          ]}
+                        />
+                      </View>
+                    )}
+                  </View>
+                  <TouchableOpacity
+                    style={[
+                      styles.startBtn,
+                      isThisDay && donePct === 1 && styles.startBtnDone,
+                    ]}
+                    onPress={() => setSessionDay(day)}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons
+                      name={isThisDay && donePct === 1 ? 'checkmark' : 'play'}
+                      size={12}
+                      color={isThisDay && donePct === 1 ? '#10B981' : C.primary}
+                    />
+                    <Text style={[styles.startBtnText, { color: isThisDay && donePct === 1 ? '#10B981' : C.primary }]}>
+                      {isThisDay && donePct > 0
+                        ? donePct === 1
+                          ? 'Terminé'
+                          : `${session!.completedExerciseIds.length}/${session!.totalExercises}`
+                        : 'Démarrer'}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.programDayLabel}>{day.label}</Text>
-                  <Text style={styles.programDayFocus} numberOfLines={1}>{day.focus}</Text>
-                </View>
-                <Text style={styles.programDayCount}>{day.exercises.length} ex.</Text>
-              </View>
-            ))}
+              );
+            })}
 
             <TouchableOpacity
               onPress={() => setProgramModalVisible(true)}
@@ -252,6 +296,53 @@ export default function SportScreen() {
             <Ionicons name="chevron-forward" size={20} color={C.primary} />
           </TouchableOpacity>
         )}
+
+        {/* Graphique progression musculation */}
+        {program && (() => {
+          const days7 = getLastNDays(7, todayISO());
+          const hasSomeData = days7.some((d) => d.session != null);
+          if (!hasSomeData) return null;
+          const DAY_LABELS = ['', 'L', 'M', 'M', 'J', 'V', 'S', 'D'];
+          return (
+            <View style={styles.graphCard}>
+              <Text style={styles.graphTitle}>Progression — 7 derniers jours</Text>
+              <View style={styles.graphBars}>
+                {days7.map(({ date, session }) => {
+                  const pct = session
+                    ? session.completedExerciseIds.length / Math.max(session.totalExercises, 1)
+                    : 0;
+                  const d = new Date(date + 'T12:00:00');
+                  const dayLabel = DAY_LABELS[d.getDay() === 0 ? 7 : d.getDay()];
+                  const isToday2 = date === todayISO();
+                  const color = pct === 1 ? '#10B981' : pct > 0 ? C.primary : COLORS.border;
+                  return (
+                    <View key={date} style={styles.graphCol}>
+                      {session && (
+                        <Text style={[styles.graphPct, { color }]}>
+                          {Math.round(pct * 100)}%
+                        </Text>
+                      )}
+                      <View style={styles.graphBarBg}>
+                        <View
+                          style={[
+                            styles.graphBarFill,
+                            {
+                              height: `${Math.max(pct * 100, pct > 0 ? 8 : 0)}%` as any,
+                              backgroundColor: color,
+                            },
+                          ]}
+                        />
+                      </View>
+                      <Text style={[styles.graphDayLabel, isToday2 && { color: C.primary, fontWeight: FONT_WEIGHT.bold }]}>
+                        {dayLabel}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+          );
+        })()}
 
         {/* Liste des activités */}
         <Text style={[styles.sectionTitle, { marginTop: SPACING.md }]}>
@@ -295,6 +386,13 @@ export default function SportScreen() {
       <ProgramCreatorModal
         visible={programModalVisible}
         onClose={() => setProgramModalVisible(false)}
+      />
+
+      <WorkoutSessionModal
+        visible={sessionDay !== null}
+        day={sessionDay}
+        date={selectedDate}
+        onClose={() => setSessionDay(null)}
       />
     </SafeAreaView>
   );
@@ -496,6 +594,19 @@ const styles = StyleSheet.create({
   programDayLabel: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.semibold, color: COLORS.textPrimary },
   programDayFocus: { fontSize: FONT_SIZE.xs, color: COLORS.textSecondary, marginTop: 1 },
   programDayCount: { fontSize: FONT_SIZE.xs, color: COLORS.textTertiary },
+  dayProgressBar: {
+    height: 3, borderRadius: 2, backgroundColor: COLORS.border,
+    marginTop: 4, overflow: 'hidden',
+  },
+  dayProgressFill: { height: '100%', borderRadius: 2 },
+  startBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: SPACING.sm, paddingVertical: 4,
+    borderRadius: RADIUS.sm, borderWidth: 1, borderColor: COLORS.primary + '60',
+    backgroundColor: COLORS.primaryGlow,
+  },
+  startBtnDone: { borderColor: '#10B98140', backgroundColor: '#10B98112' },
+  startBtnText: { fontSize: 11, fontWeight: FONT_WEIGHT.semibold },
   programDetailBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -517,6 +628,28 @@ const styles = StyleSheet.create({
   },
   programEmptyTitle: { fontSize: FONT_SIZE.md, fontWeight: FONT_WEIGHT.bold },
   programEmptyDesc: { fontSize: FONT_SIZE.xs, color: COLORS.textSecondary, marginTop: 2 },
+
+  // Graphique
+  graphCard: {
+    backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg,
+    borderWidth: 1, borderColor: COLORS.border,
+    padding: SPACING.md, marginBottom: SPACING.sm,
+  },
+  graphTitle: {
+    fontSize: FONT_SIZE.xs, fontWeight: FONT_WEIGHT.semibold,
+    color: COLORS.textSecondary, textTransform: 'uppercase',
+    letterSpacing: 0.8, marginBottom: SPACING.md,
+  },
+  graphBars: { flexDirection: 'row', alignItems: 'flex-end', height: 80, gap: 4 },
+  graphCol: { flex: 1, alignItems: 'center', gap: 4 },
+  graphPct: { fontSize: 9, fontWeight: FONT_WEIGHT.bold },
+  graphBarBg: {
+    flex: 1, width: '100%', borderRadius: RADIUS.xs,
+    backgroundColor: COLORS.bgElevated, overflow: 'hidden',
+    justifyContent: 'flex-end',
+  },
+  graphBarFill: { width: '100%', borderRadius: RADIUS.xs },
+  graphDayLabel: { fontSize: 10, color: COLORS.textTertiary },
 
   fab: {
     position: 'absolute',

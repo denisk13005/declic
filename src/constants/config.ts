@@ -24,5 +24,6 @@ export const CONFIG = {
     WEIGHT: '@declic/weight',
     WORKOUTS: '@declic/workouts',
     PROGRAM: '@declic/program',
+    SESSIONS: '@declic/sessions',
   },
 } as const;
