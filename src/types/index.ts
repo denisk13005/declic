@@ -151,6 +151,35 @@ export interface WeightEntry {
   createdAt: string;
 }
 
+// ─── Workout / Sport ──────────────────────────────────────────────────────────
+
+export type WorkoutType =
+  | 'marche'
+  | 'course'
+  | 'velo'
+  | 'natation'
+  | 'musculation'
+  | 'hiit'
+  | 'yoga'
+  | 'football'
+  | 'basketball'
+  | 'tennis'
+  | 'elliptique'
+  | 'randonnee'
+  | 'danse'
+  | 'escaliers'
+  | 'autre';
+
+export interface WorkoutEntry {
+  id: string;
+  date: string;      // yyyy-MM-dd
+  createdAt: string; // ISO
+  type: WorkoutType;
+  durationMinutes: number;
+  caloriesBurned: number;
+  note?: string;
+}
+
 // ─── Navigation ───────────────────────────────────────────────────────────────
 
 export type RootStackParamList = {

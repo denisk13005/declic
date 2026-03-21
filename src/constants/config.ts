@@ -22,5 +22,6 @@ export const CONFIG = {
     NOTIFICATION_PERMISSION: '@declic/notif_permission',
     CALORIES: '@declic/calories',
     WEIGHT: '@declic/weight',
+    WORKOUTS: '@declic/workouts',
   },
 } as const;

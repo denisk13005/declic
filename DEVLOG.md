@@ -1,5 +1,25 @@
 # Déclic — Dev Log
 
+## 2026-03-21 — Onglet Sport + suivi calories brûlées manuel
+
+**Fonctionnalité** : Onglet dédié au suivi des activités sportives. Permet de loguer des séances sans Samsung Health ni appli tierce.
+
+**Nouveaux fichiers** :
+- `src/types/index.ts` : types `WorkoutType` (15 sports) et `WorkoutEntry`
+- `src/utils/workout.ts` : `WORKOUT_META` (METs, labels, emojis, couleurs) + `computeWorkoutCalories(type, durée, poids)`
+- `src/stores/workoutStore.ts` : Zustand persisté (`@declic/workouts`) — `addWorkout`, `removeWorkout`, `getEntriesForDate`, `getTotalBurnedForDate`
+- `src/components/sport/AddWorkoutModal.tsx` : modal ajout séance (sélecteur type horizontal, durée, estimation calories auto via MET × poids, override manuel optionnel)
+- `app/(tabs)/sport.tsx` : écran Sport avec navigation par date, carte récap (kcal brûlées, temps total, nb activités), liste des séances, FAB orange
+
+**Fichiers modifiés** :
+- `app/(tabs)/_layout.tsx` : ajout onglet "Sport" avec icône barbell
+- `app/(tabs)/calories.tsx` : intégration `workoutStore` — priorité calories brûlées : override manuel > Health Connect > workouts loggés. Label "Brûlées 🏃" quand source = workout.
+- `src/constants/config.ts` : clé storage `WORKOUTS`
+
+**Calcul calories** : `MET × poids_kg × (durée_min / 60)`. Poids du profil utilisateur, fallback 70 kg si non renseigné.
+
+**Sports disponibles** : Marche, Course, Vélo, Natation, Musculation, HIIT, Yoga, Football, Basketball, Tennis, Elliptique, Randonnée, Danse, Escaliers, Autre.
+
 ## 2026-03-20 — Système de thèmes de couleurs
 
 **Fonctionnalité** : Sélecteur de thème de couleur (5 thèmes : Mauve, Océan, Forêt, Feu, Indigo). Thème persisté via AsyncStorage.

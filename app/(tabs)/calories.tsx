@@ -18,6 +18,7 @@ import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop } from 'react-na
 import { format, addDays, subDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useCalorieStore } from '@/stores/calorieStore';
+import { useWorkoutStore } from '@/stores/workoutStore';
 import { FoodEntry, MealType } from '@/types';
 import { PrefillFood } from '@/components/nutrition/AddEntryModal';
 import AddEntryModal from '@/components/nutrition/AddEntryModal';
@@ -345,10 +346,20 @@ export default function CaloriesScreen() {
   const remaining = goals.calories - total;
 
   const { status: hcStatus, burnedCalories: hcBurnedCalories, isLoading: hcLoading, requestPermissions, openPlayStore } = useHealthConnect(selectedDate);
+  const workoutBurned = useWorkoutStore((s) => s.getTotalBurnedForDate(selectedDate));
 
   const manualBurned = manualBurnedCalories[selectedDate];
-  const effectiveBurned = manualBurned != null ? manualBurned : hcBurnedCalories;
+  // Priorité : override manuel > Health Connect > workouts manuels
+  const effectiveBurned =
+    manualBurned != null
+      ? manualBurned
+      : hcBurnedCalories != null
+        ? hcBurnedCalories
+        : workoutBurned > 0
+          ? workoutBurned
+          : null;
   const isManualBurned = manualBurned != null;
+  const isWorkoutSource = manualBurned == null && hcBurnedCalories == null && workoutBurned > 0;
   const netCalories = effectiveBurned != null ? total - effectiveBurned : null;
 
   function handleSaveBurned(val: string) {
@@ -503,8 +514,8 @@ export default function CaloriesScreen() {
               </>
             )}
 
-            {/* Stats : visible en mode "ready" ou si valeur manuelle définie */}
-            {(hcStatus === 'ready' || isManualBurned) && (
+            {/* Stats : visible en mode "ready", valeur manuelle, ou workouts loggés */}
+            {(hcStatus === 'ready' || isManualBurned || isWorkoutSource) && (
               <View style={styles.hcStats}>
                 <TouchableOpacity style={styles.hcStat} onPress={() => setBurnedModalVisible(true)} activeOpacity={0.7}>
                   <View style={styles.hcStatValueRow}>
@@ -514,7 +525,7 @@ export default function CaloriesScreen() {
                     <Ionicons name="pencil" size={12} color={COLORS.textTertiary} style={{ marginLeft: 4, marginTop: 2 }} />
                   </View>
                   <Text style={styles.hcStatLabel}>
-                    {isManualBurned ? 'Brûlées ✎' : 'Brûlées'}
+                    {isManualBurned ? 'Brûlées ✎' : isWorkoutSource ? 'Brûlées 🏃' : 'Brûlées'}
                   </Text>
                 </TouchableOpacity>
                 <View style={[styles.hcStat, styles.hcStatMid]}>
@@ -538,7 +549,7 @@ export default function CaloriesScreen() {
             )}
 
             {/* Lien saisie manuelle quand HC non connecté/indispo */}
-            {(hcStatus === 'not_authorized' || hcStatus === 'not_installed' || hcStatus === 'unavailable') && (
+            {(hcStatus === 'not_authorized' || hcStatus === 'not_installed' || hcStatus === 'unavailable') && !isWorkoutSource && (
               <TouchableOpacity
                 style={styles.hcManualLink}
                 onPress={() => setBurnedModalVisible(true)}

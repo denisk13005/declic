@@ -71,6 +71,15 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="sport"
+        options={{
+          title: 'Sport',
+          tabBarIcon: ({ focused }) => (
+            <TabIcon name={focused ? 'barbell' : 'barbell-outline'} focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: 'Profil',
