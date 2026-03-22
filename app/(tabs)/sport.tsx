@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Alert,
   Platform,
+  Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,9 +22,11 @@ import { WorkoutEntry } from '@/types';
 import { ProgramDay, SPLIT_INFO } from '@/utils/programGenerator';
 import { WORKOUT_META } from '@/utils/workout';
 import { GOAL_LABELS } from '@/utils/tdee';
+import { formatWorkoutWeekdays } from '@/services/notifications';
 import AddWorkoutModal from '@/components/sport/AddWorkoutModal';
 import ProgramCreatorModal from '@/components/sport/ProgramCreatorModal';
 import WorkoutSessionModal from '@/components/sport/WorkoutSessionModal';
+import ExerciseStatsModal from '@/components/sport/ExerciseStatsModal';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
 import { useAppColors } from '@/hooks/useAppColors';
 
@@ -88,13 +91,21 @@ export default function SportScreen() {
   const { getEntriesForDate, getTotalBurnedForDate, removeWorkout } = useWorkoutStore();
   const { profile } = useProfileStore();
 
-  const { program, clearProgram } = useProgramStore();
+  const {
+    program, clearProgram,
+    workoutReminderHour, workoutReminderMinute,
+    setWorkoutReminder, clearWorkoutReminder,
+  } = useProgramStore();
   const { getSessionForDate, getLastNDays } = useSessionStore();
 
   const [selectedDate, setSelectedDate] = useState(todayISO());
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [programModalVisible, setProgramModalVisible] = useState(false);
   const [sessionDay, setSessionDay] = useState<ProgramDay | null>(null);
+  const [statsModalVisible, setStatsModalVisible] = useState(false);
+  const [reminderEnabled, setReminderEnabled] = useState(workoutReminderHour != null);
+  const [reminderHour, setReminderHour] = useState(workoutReminderHour ?? 18);
+  const [reminderMinute, setReminderMinute] = useState(workoutReminderMinute ?? 30);
 
   const isToday = selectedDate === todayISO();
   const entries = getEntriesForDate(selectedDate);
@@ -115,6 +126,27 @@ export default function SportScreen() {
       { text: 'Annuler', style: 'cancel' },
       { text: 'Supprimer', style: 'destructive', onPress: () => removeWorkout(entry.id) },
     ]);
+  }
+
+  async function handleReminderToggle(val: boolean) {
+    setReminderEnabled(val);
+    if (val) {
+      const ok = await setWorkoutReminder(reminderHour, reminderMinute);
+      if (!ok) {
+        setReminderEnabled(false);
+        Alert.alert('Permission refusée', 'Active les notifications dans les paramètres de ton téléphone pour recevoir des rappels.');
+      }
+    } else {
+      await clearWorkoutReminder();
+    }
+  }
+
+  async function handleReminderTimeChange(h: number, m: number) {
+    setReminderHour(h);
+    setReminderMinute(m);
+    if (reminderEnabled) {
+      await setWorkoutReminder(h, m);
+    }
   }
 
   return (
@@ -189,6 +221,7 @@ export default function SportScreen() {
 
         {program ? (
           <View style={styles.programCard}>
+            {/* Header programme */}
             <View style={styles.programHeader}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.programName}>{program.splitName}</Text>
@@ -196,6 +229,15 @@ export default function SportScreen() {
                   {program.sessionsPerWeek} séances/sem · {GOAL_LABELS[program.goal]}
                 </Text>
               </View>
+              {/* Bouton Performances — visible dans la carte */}
+              <TouchableOpacity
+                onPress={() => setStatsModalVisible(true)}
+                style={styles.perfBtn}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="stats-chart" size={13} color={COLORS.primaryLight} />
+                <Text style={styles.perfBtnText}>Perfs</Text>
+              </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => setProgramModalVisible(true)}
                 style={styles.programEditBtn}
@@ -218,6 +260,7 @@ export default function SportScreen() {
             </View>
 
             {program.days.map((day) => {
+              const hasExercises = day.exercises.length > 0;
               const session = getSessionForDate(selectedDate);
               const isThisDay = session?.programDayNumber === day.dayNumber;
               const donePct = isThisDay
@@ -225,13 +268,17 @@ export default function SportScreen() {
                 : 0;
               return (
                 <View key={day.dayNumber} style={styles.programDay}>
-                  <View style={styles.programDayBadge}>
-                    <Text style={styles.programDayNum}>J{day.dayNumber}</Text>
+                  <View style={[styles.programDayBadge, !hasExercises && styles.programDayBadgeEmpty]}>
+                    <Text style={[styles.programDayNum, !hasExercises && styles.programDayNumEmpty]}>
+                      J{day.dayNumber}
+                    </Text>
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.programDayLabel}>{day.label}</Text>
-                    <Text style={styles.programDayFocus} numberOfLines={1}>{day.focus}</Text>
-                    {isThisDay && (
+                    <Text style={styles.programDayFocus} numberOfLines={1}>
+                      {hasExercises ? day.focus : `${day.exercises.length} exercice — à configurer`}
+                    </Text>
+                    {isThisDay && hasExercises && (
                       <View style={styles.dayProgressBar}>
                         <View
                           style={[
@@ -245,27 +292,33 @@ export default function SportScreen() {
                       </View>
                     )}
                   </View>
-                  <TouchableOpacity
-                    style={[
-                      styles.startBtn,
-                      isThisDay && donePct === 1 && styles.startBtnDone,
-                    ]}
-                    onPress={() => setSessionDay(day)}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons
-                      name={isThisDay && donePct === 1 ? 'checkmark' : 'play'}
-                      size={12}
-                      color={isThisDay && donePct === 1 ? '#10B981' : C.primary}
-                    />
-                    <Text style={[styles.startBtnText, { color: isThisDay && donePct === 1 ? '#10B981' : C.primary }]}>
-                      {isThisDay && donePct > 0
-                        ? donePct === 1
-                          ? 'Terminé'
-                          : `${session!.completedExerciseIds.length}/${session!.totalExercises}`
-                        : 'Démarrer'}
-                    </Text>
-                  </TouchableOpacity>
+                  {hasExercises ? (
+                    <TouchableOpacity
+                      style={[styles.startBtn, isThisDay && donePct === 1 && styles.startBtnDone]}
+                      onPress={() => setSessionDay(day)}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons
+                        name={isThisDay && donePct === 1 ? 'checkmark' : 'play'}
+                        size={12}
+                        color={isThisDay && donePct === 1 ? '#10B981' : C.primary}
+                      />
+                      <Text style={[styles.startBtnText, { color: isThisDay && donePct === 1 ? '#10B981' : C.primary }]}>
+                        {isThisDay && donePct > 0
+                          ? donePct === 1 ? 'Terminé' : `${session!.completedExerciseIds.length}/${session!.totalExercises}`
+                          : 'Démarrer'}
+                      </Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity
+                      style={styles.configureBtn}
+                      onPress={() => setProgramModalVisible(true)}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="add" size={12} color={COLORS.textSecondary} />
+                      <Text style={styles.configureBtnText}>Configurer</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               );
             })}
@@ -344,8 +397,66 @@ export default function SportScreen() {
           );
         })()}
 
+        {/* Rappels de séance */}
+        {program && (
+          <View style={styles.reminderCard}>
+            <View style={styles.reminderRow}>
+              <Ionicons name="notifications-outline" size={16} color={C.primary} />
+              <Text style={styles.reminderTitle}>Rappels de séance</Text>
+              <Switch
+                value={reminderEnabled}
+                onValueChange={handleReminderToggle}
+                trackColor={{ false: COLORS.bgElevated, true: C.primaryGlow }}
+                thumbColor={reminderEnabled ? C.primary : COLORS.textTertiary}
+              />
+            </View>
+            {reminderEnabled && (
+              <View style={styles.reminderBody}>
+                <Text style={styles.reminderDays}>
+                  {formatWorkoutWeekdays(program.sessionsPerWeek)}
+                </Text>
+                <View style={styles.reminderTimePicker}>
+                  {/* Heure */}
+                  <View style={styles.timeUnit}>
+                    <TouchableOpacity
+                      onPress={() => handleReminderTimeChange((reminderHour + 1) % 24, reminderMinute)}
+                      hitSlop={{ top: 8, bottom: 8, left: 12, right: 12 }}
+                    >
+                      <Ionicons name="chevron-up" size={20} color={C.primary} />
+                    </TouchableOpacity>
+                    <Text style={styles.timeValue}>{String(reminderHour).padStart(2, '0')}</Text>
+                    <TouchableOpacity
+                      onPress={() => handleReminderTimeChange((reminderHour + 23) % 24, reminderMinute)}
+                      hitSlop={{ top: 8, bottom: 8, left: 12, right: 12 }}
+                    >
+                      <Ionicons name="chevron-down" size={20} color={C.primary} />
+                    </TouchableOpacity>
+                  </View>
+                  <Text style={styles.timeColon}>:</Text>
+                  {/* Minute */}
+                  <View style={styles.timeUnit}>
+                    <TouchableOpacity
+                      onPress={() => handleReminderTimeChange(reminderHour, (reminderMinute + 5) % 60)}
+                      hitSlop={{ top: 8, bottom: 8, left: 12, right: 12 }}
+                    >
+                      <Ionicons name="chevron-up" size={20} color={C.primary} />
+                    </TouchableOpacity>
+                    <Text style={styles.timeValue}>{String(reminderMinute).padStart(2, '0')}</Text>
+                    <TouchableOpacity
+                      onPress={() => handleReminderTimeChange(reminderHour, (reminderMinute + 55) % 60)}
+                      hitSlop={{ top: 8, bottom: 8, left: 12, right: 12 }}
+                    >
+                      <Ionicons name="chevron-down" size={20} color={C.primary} />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            )}
+          </View>
+        )}
+
         {/* Liste des activités */}
-        <Text style={[styles.sectionTitle, { marginTop: SPACING.md }]}>
+        <Text style={[styles.sectionTitle, { marginTop: SPACING.md, marginBottom: SPACING.sm }]}>
           Activités du jour
         </Text>
 
@@ -393,6 +504,11 @@ export default function SportScreen() {
         day={sessionDay}
         date={selectedDate}
         onClose={() => setSessionDay(null)}
+      />
+
+      <ExerciseStatsModal
+        visible={statsModalVisible}
+        onClose={() => setStatsModalVisible(false)}
       />
     </SafeAreaView>
   );
@@ -496,6 +612,26 @@ const styles = StyleSheet.create({
     marginTop: SPACING.sm,
     marginBottom: SPACING.sm,
   },
+  // Bouton Performances dans le header de la carte
+  perfBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: SPACING.sm, paddingVertical: 5,
+    borderRadius: RADIUS.sm, borderWidth: 1,
+    borderColor: COLORS.primary + '60', backgroundColor: COLORS.primaryGlow,
+    marginRight: 4,
+  },
+  perfBtnText: { fontSize: 11, color: COLORS.primaryLight, fontWeight: FONT_WEIGHT.semibold },
+  // Bouton Configurer pour les jours vides
+  configureBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: SPACING.sm, paddingVertical: 4,
+    borderRadius: RADIUS.sm, borderWidth: 1,
+    borderColor: COLORS.border, backgroundColor: COLORS.bgElevated,
+  },
+  configureBtnText: { fontSize: 11, color: COLORS.textSecondary, fontWeight: FONT_WEIGHT.medium },
+  // Badge jour vide
+  programDayBadgeEmpty: { backgroundColor: COLORS.bgElevated },
+  programDayNumEmpty: { color: COLORS.textTertiary },
 
   workoutCard: {
     flexDirection: 'row',
@@ -664,5 +800,61 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.4,
     shadowRadius: 8,
     elevation: 8,
+  },
+
+  // Rappels séance
+  reminderCard: {
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: SPACING.md,
+    marginBottom: SPACING.md,
+    gap: SPACING.sm,
+  },
+  reminderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  reminderTitle: {
+    flex: 1,
+    fontSize: FONT_SIZE.sm,
+    fontWeight: FONT_WEIGHT.semibold,
+    color: COLORS.textPrimary,
+  },
+  reminderBody: {
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  reminderDays: {
+    fontSize: FONT_SIZE.xs,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+  },
+  reminderTimePicker: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  timeUnit: {
+    alignItems: 'center',
+    gap: 4,
+  },
+  timeValue: {
+    fontSize: FONT_SIZE.xl,
+    fontWeight: FONT_WEIGHT.bold,
+    color: COLORS.textPrimary,
+    width: 52,
+    textAlign: 'center',
+    backgroundColor: COLORS.bgElevated,
+    borderRadius: RADIUS.md,
+    paddingVertical: 8,
+  },
+  timeColon: {
+    fontSize: FONT_SIZE.xl,
+    fontWeight: FONT_WEIGHT.bold,
+    color: COLORS.textPrimary,
+    marginBottom: 4,
   },
 });

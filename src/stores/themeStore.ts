@@ -16,7 +16,9 @@ export const useThemeStore = create<ThemeStore>()(
     }),
     {
       name: '@declic/theme',
+      version: 1,
       storage: createJSONStorage(() => AsyncStorage),
+      migrate: (persisted: any) => persisted,
     }
   )
 );

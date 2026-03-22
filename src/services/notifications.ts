@@ -19,6 +19,7 @@ Notifications.setNotificationHandler({
 // ─── Channel Android ──────────────────────────────────────────────────────────
 
 export const HABIT_CHANNEL_ID = 'habits';
+export const WORKOUT_CHANNEL_ID = 'workouts';
 
 /**
  * À appeler une fois au démarrage de l'app (dans _layout.tsx).
@@ -33,6 +34,22 @@ export async function initNotificationChannel(): Promise<void> {
     importance: Notifications.AndroidImportance.HIGH,
     vibrationPattern: [0, 250, 250, 250],
     lightColor: '#7C3AED',
+    enableLights: true,
+    enableVibrate: true,
+    sound: 'default',
+  });
+  await Notifications.setNotificationChannelAsync(MEAL_CHANNEL_ID, {
+    name: 'Rappels repas',
+    description: 'Notifications quotidiennes pour logger tes repas',
+    importance: Notifications.AndroidImportance.DEFAULT,
+    sound: 'default',
+  });
+  await Notifications.setNotificationChannelAsync(WORKOUT_CHANNEL_ID, {
+    name: 'Rappels de séance',
+    description: 'Rappels hebdomadaires pour tes séances de musculation',
+    importance: Notifications.AndroidImportance.HIGH,
+    vibrationPattern: [0, 250, 250, 250],
+    lightColor: '#F97316',
     enableLights: true,
     enableVibrate: true,
     sound: 'default',
@@ -165,6 +182,110 @@ export async function scheduleHourlyWindowReminders(
     ids.push(id);
   }
   return ids;
+}
+
+// ─── Meal reminders ───────────────────────────────────────────────────────────
+
+export const MEAL_CHANNEL_ID = 'meals';
+
+const MEAL_LABELS: Record<string, { title: string; body: string }> = {
+  breakfast: { title: '🌅 Petit-déjeuner', body: "N'oublie pas de logger ton petit-déjeuner !" },
+  lunch:     { title: '☀️ Déjeuner',       body: "C'est l'heure du déjeuner, pense à le logger !" },
+  dinner:    { title: '🌙 Dîner',          body: "N'oublie pas de logger ton dîner !" },
+  snack:     { title: '🍎 Collation',      body: 'Tu as grignoté ? Pense à le logger !' },
+};
+
+export async function scheduleMealReminder(
+  meal: string,
+  hour: number,
+  minute: number,
+): Promise<string> {
+  const content = MEAL_LABELS[meal] ?? { title: '🍽 Repas', body: "N'oublie pas de logger ton repas !" };
+  return Notifications.scheduleNotificationAsync({
+    content: {
+      title: content.title,
+      body: content.body,
+      sound: 'default',
+      data: { type: 'meal', meal },
+      ...(Platform.OS === 'android' ? { channelId: MEAL_CHANNEL_ID } : {}),
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DAILY,
+      hour,
+      minute,
+    },
+  });
+}
+
+export async function cancelMealReminder(id: string): Promise<void> {
+  await Notifications.cancelScheduledNotificationAsync(id).catch(() => {});
+}
+
+// ─── Workout reminders ────────────────────────────────────────────────────────
+
+/**
+ * Retourne les jours de la semaine (format Expo : 1=Dim, 2=Lun … 7=Sam)
+ * sur lesquels planifier les rappels selon le nombre de séances/semaine.
+ */
+export function getWorkoutWeekdays(sessionsPerWeek: number): number[] {
+  const presets: Record<number, number[]> = {
+    1: [2],
+    2: [2, 5],
+    3: [2, 4, 6],
+    4: [2, 3, 5, 6],
+    5: [2, 3, 4, 5, 6],
+    6: [2, 3, 4, 5, 6, 7],
+    7: [1, 2, 3, 4, 5, 6, 7],
+  };
+  return presets[Math.max(1, Math.min(7, sessionsPerWeek))] ?? [2, 4, 6];
+}
+
+/** Noms courts des jours de semaine pour l'affichage (index Expo 1-7 → libellé FR). */
+const WEEKDAY_LABELS: Record<number, string> = {
+  1: 'Dim', 2: 'Lun', 3: 'Mar', 4: 'Mer', 5: 'Jeu', 6: 'Ven', 7: 'Sam',
+};
+
+export function formatWorkoutWeekdays(sessionsPerWeek: number): string {
+  return getWorkoutWeekdays(sessionsPerWeek).map((d) => WEEKDAY_LABELS[d]).join(' · ');
+}
+
+/**
+ * Planifie N notifications hebdomadaires (une par jour d'entraînement).
+ * Retourne la liste des IDs Expo créés.
+ */
+export async function scheduleWorkoutReminders(
+  sessionsPerWeek: number,
+  hour: number,
+  minute: number,
+  splitName: string,
+): Promise<string[]> {
+  const weekdays = getWorkoutWeekdays(sessionsPerWeek);
+  const ids: string[] = [];
+  for (const weekday of weekdays) {
+    const id = await Notifications.scheduleNotificationAsync({
+      content: {
+        title: '💪 C\'est jour de séance !',
+        body: splitName,
+        sound: 'default',
+        data: { type: 'workout' },
+        ...(Platform.OS === 'android' ? { channelId: WORKOUT_CHANNEL_ID } : {}),
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
+        weekday,
+        hour,
+        minute,
+      },
+    });
+    ids.push(id);
+  }
+  return ids;
+}
+
+export async function cancelWorkoutReminders(ids: string[]): Promise<void> {
+  for (const id of ids) {
+    await Notifications.cancelScheduledNotificationAsync(id).catch(() => {});
+  }
 }
 
 export async function cancelHabitReminder(notificationId: string | string[]): Promise<void> {

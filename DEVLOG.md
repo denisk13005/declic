@@ -1,5 +1,150 @@
 # Déclic — Dev Log
 
+## 2026-03-22 — Backlog items 1-4
+
+### 1. Rappels intelligents nutrition
+- `src/services/notifications.ts` : channel `meals`, `scheduleMealReminder(meal, h, m)`, `cancelMealReminder(id)`
+- `src/stores/calorieStore.ts` : `mealReminderTimes`, `mealReminderIds`, `setMealReminder`, `clearMealReminder`
+- `app/(tabs)/profile.tsx` : composant `MealRemindersCard` — 4 repas avec Switch ON/OFF + time picker inline (↑/↓). Tap sur l'heure pour modifier.
+
+### 2. Scan code-barres FAB dédié
+- `src/components/nutrition/AddEntryModal.tsx` : prop `initialTab?: Tab`. useEffect ouvre directement l'onglet et lance le scanner si `initialTab='barcode'`.
+- `app/(tabs)/calories.tsx` : bouton icône 📷 dans la barre d'action → `openAddModal(undefined, 'barcode')`
+
+### 3. Repas récurrents — Réutiliser d'hier
+- `app/(tabs)/calories.tsx` : `MealSection` accepte `hasYesterday` + `onReuseYesterday`. Bouton "↩ Hier" affiché dans le header du repas si des entrées existent hier pour ce type. Copie toutes les entrées d'hier avec la date d'aujourd'hui.
+
+### 4. Bouton photo IA proéminent
+- `app/(tabs)/calories.tsx` : bouton icône 📸 dans la barre d'action → `openAddModal(undefined, 'photo')`
+- La barre d'action est restructurée : [📚][📷][📸] + [Ajouter un aliment]
+
+## 2026-03-22 — Rappels séance hebdomadaires
+
+**Fonctionnalité** : notifications push hebdomadaires basées sur le planning muscu.
+
+**`src/services/notifications.ts`** :
+- Nouveau channel Android `workouts` (importance HIGH, couleur orange)
+- `getWorkoutWeekdays(sessionsPerWeek)` — distribue N séances/semaine sur des jours fixes (Lun/Mer/Ven pour 3, Lun/Jeu pour 2, etc.)
+- `formatWorkoutWeekdays(sessionsPerWeek)` — labels FR pour l'affichage
+- `scheduleWorkoutReminders(sessionsPerWeek, hour, minute, splitName)` — crée N triggers WEEKLY, retourne les IDs
+- `cancelWorkoutReminders(ids)` — annule par batch
+
+**`src/stores/programStore.ts`** (v2) :
+- Nouveaux champs : `workoutReminderHour`, `workoutReminderMinute`, `workoutReminderIds`
+- `setWorkoutReminder(h, m)` — demande permission, annule anciens rappels, crée les nouveaux, sauvegarde les IDs
+- `clearWorkoutReminder()` — annule tout et nettoie l'état
+- `clearProgram` annule automatiquement les rappels avant la suppression
+
+**`app/(tabs)/sport.tsx`** :
+- Carte "Rappels de séance" affichée sous la carte programme (si programme configuré)
+- Switch ON/OFF
+- Picker heure:minute inline (↑/↓ par 1h et 5min)
+- Affiche les jours concernés (ex: "Lun · Mer · Ven")
+- Permission refusée → Switch automatiquement désactivé + Alert
+
+## 2026-03-22 — Versioning AsyncStorage (migrate) sur tous les stores Zustand
+
+Ajout de `version: 1` + fonction `migrate` sur les 7 stores persistés :
+
+| Store | Migration v0 → v1 |
+|-------|-------------------|
+| `sessionStore` | `exerciseLogs: []` ajouté aux sessions sans ce champ |
+| `habitStore` | `reminderTime.unit/value/startHour/endHour` avec valeurs par défaut si absent |
+| `calorieStore` | Migrations `serving`, `meal`, `goals`, `foodLibrary`, `composedMeals`, `manualBurnedCalories` centralisées dans `migrate` (en plus du `onRehydrateStorage` existant) |
+| `workoutStore` | Initialise `entries: []` si absent |
+| `profileStore` | Initialise `profile: {}` si absent |
+| `weightStore` | Initialise `entries: []` si absent |
+| `programStore` / `themeStore` | Version enregistrée, pas de migration de données |
+
+Avantage : toute future modification des types persistés peut être gérée proprement avec `version: 2`, `version: 3`, etc. sans casser les données existantes.
+
+## 2026-03-22 — Dashboard card dans home.tsx
+
+**`DashboardCard`** ajoutée dans `app/(tabs)/home.tsx`, affichée entre la barre de progression et la liste des habitudes :
+- **Calories du jour** : valeur consommée / objectif + mini-barre de progression (rouge si dépassé). Tapable → redirige vers l'onglet Calories.
+- **Meilleur streak** : meilleur `currentStreak` parmi les habitudes actives.
+- **Prochaine séance** (si programme configuré) : label du prochain jour du programme basé sur la dernière séance enregistrée. Tapable → redirige vers l'onglet Sport.
+- Colonne "Prochaine séance" masquée si aucun programme configuré.
+
+## 2026-03-22 — Refonte barres macros onglet Calories
+
+**Redesign `MacroBar` → `MacroCol`** dans `app/(tabs)/calories.tsx` :
+- Layout 3 colonnes côte à côte (Protéines / Glucides / Lipides) dans une carte unique
+- Chaque colonne : dot coloré + label, valeur consommée en gras colorée, objectif, barre de progression
+- Dépassement → couleur rouge sur la valeur et la barre
+- Sans objectif → barre semi-transparente (mode "suivi seul")
+- Repositionnement **avant la carte HC** (directement sous les 3 stats, bien visible dès l'ouverture)
+- Affiché dès qu'au moins un macro > 0 ou un objectif macro est défini
+
+## 2026-03-22 — Carte suivi du poids dans le profil
+
+**`WeightChartCard`** intégrée dans `app/(tabs)/profile.tsx` section "Santé" :
+- Sélecteur de période : 7j / 30j / 90j / Tout
+- 3 stats : poids actuel (coloré selon tendance), variation sur la période (+/- kg), IMC avec catégorie et couleur
+- `LineChart` (react-native-gifted-charts) : courbe lissée avec area gradient, couleur verte si perte / orange si prise
+- Historique récent : 5 dernières pesées avec icône poubelle pour supprimer
+- État vide : CTA "Logger mon poids"
+- La `SettingsRow` "Logger mon poids" est remplacée par cette carte plus complète
+
+## 2026-03-22 — Calories musculation → onglet Calories + graphes SVG détaillés
+
+**Calories brûlées** :
+- `WorkoutSession.workoutEntryId` ajouté dans les types
+- `workoutStore.addWorkout` retourne maintenant l'`id` créé
+- À chaque sauvegarde de séance : durée estimée via `estimateSessionMinutes(day)`, calcul MET musculation (`computeWorkoutCalories('musculation', duration, bodyWeight)`), ajout dans workoutStore → visible dans l'onglet Calories
+- Re-sauvegarde : supprime l'ancienne entrée avant d'en créer une nouvelle (via `workoutEntryId`)
+
+**Graphes ExerciseStatsModal** — refonte complète avec SVG :
+- `LineChart` : courbe SVG avec area gradient, axes Y (ticks), axes X (labels dates)
+- Points principaux : double cercle (halo + centre + trou)
+- **Dots semi-transparents** : chaque série individuelle en point sur le graphe (mode Charge max)
+- Toggle Charge max / Volume total
+- Légende
+- **1RM estimé** via formule Epley (`weight × (1 + reps/30)`)
+- Stat boxes : 2 lignes → séances, record charge (highlight), 1RM estimé (highlight), séries, reps, progression %, volume moyen
+- Tableau de séances détaillé : poids, reps, 1RM par série, volume par série, total séance
+- Tendance (↑↓) visible dans la liste
+
+## 2026-03-22 — Journalisation poids/reps par série + graphes de performance
+
+**Fonctionnalité** : Saisir le poids et les reps réalisées pour chaque série de chaque exercice pendant une séance, et visualiser la progression dans un modal dédié.
+
+**Nouveaux types (`src/types/index.ts`)** :
+- `SetLog` : `{ weight: number | null; reps: number }` — une série (weight=null = poids de corps)
+- `ExerciseLog` : `{ exerciseId; exerciseName; sets: SetLog[] }` — exercice complet
+- `WorkoutSession.exerciseLogs: ExerciseLog[]` — ajouté
+
+**Nouveau fichier** :
+- `src/components/sport/ExerciseStatsModal.tsx` — modal de performances
+  - Liste de tous les exercices journalisés, avec tendance (↑↓)
+  - Vue détail par exercice : stat boxes (record, séances, progression %, volume moyen)
+  - Graphe barres toggle Charge max / Volume total (jusqu'à 12 séances)
+  - Détail des séances en chips (poids × reps)
+
+**Modifié** :
+- `src/stores/sessionStore.ts` — `saveSession` accepte `exerciseLogs`, `getHistoryForExercise(exerciseId, limit)` retourne l'historique
+- `src/components/sport/WorkoutSessionModal.tsx` — refonte complète
+  - Draft par exercice : `LogDraft = Record<exerciseId, SetDraft[]>`
+  - `SetTable` : tableau série/poids/reps avec inputs numériques, ajout/suppression de série
+  - `ExerciseCard` : header cliquable avec indicateur done, support superset A+B
+  - Initialisation depuis session existante (pré-rempli si séance déjà sauvée)
+  - Done = toutes les séries attendues ont reps > 0
+- `app/(tabs)/sport.tsx` — bouton "Performances" (→ ExerciseStatsModal)
+
+## 2026-03-22 — Correctif supersets dans WorkoutSessionModal
+
+**Bug** : Lors du lancement d'une séance contenant des supersets/bisets, seul le 1er exercice (A) était affiché. Le 2e exercice (B) et le badge technique étaient invisibles.
+
+**Cause** : Le type de `pe` dans `ExerciseRow` ne contenait pas `technique` ni `supersetWith`. `allIds` n'incluait que `pe.exercise.id`, ignorant `supersetWith.id`.
+
+**Correctif** (`WorkoutSessionModal.tsx`) :
+- `ExerciseRow` reçoit maintenant `isDoneA`, `isDoneB`, `onToggleA`, `onToggleB`
+- Affichage badge coloré SUPERSET (orange) / BISET (violet) si applicable
+- Exercice B affiché avec sa propre checkbox, labels A/B
+- Note technique affichée sous la paire
+- `allIds` calculé avec `flatMap` incluant `supersetWith.id` quand présent
+- Le compteur de progression (X/Y) reflète maintenant tous les exercices réels
+
 ## 2026-03-21 — Suivi des séances muscu + graphique de progression
 
 **Fonctionnalité** : Cocher les exercices effectués par séance et visualiser la progression sur 7 jours.

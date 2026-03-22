@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
 import { useProfileStore } from '@/stores/profileStore';
 import { useHabitStore } from '@/stores/habitStore';
 import { useWeightStore } from '@/stores/weightStore';
 import { useCalorieStore } from '@/stores/calorieStore';
+import { MealType } from '@/types';
 import WeightModal from '@/components/nutrition/WeightModal';
+import WeightChartCard from '@/components/profile/WeightChartCard';
 import PhysicalProfileModal from '@/components/profile/PhysicalProfileModal';
 import TDEECard from '@/components/profile/TDEECard';
 import ThemePickerModal from '@/components/profile/ThemePickerModal';
@@ -54,6 +54,162 @@ function SettingsRow({
   );
 }
 
+const MEAL_REMINDER_CONFIG: { meal: MealType; label: string; emoji: string; defaultHour: number }[] = [
+  { meal: 'breakfast', label: 'Petit-déjeuner', emoji: '🌅', defaultHour: 8 },
+  { meal: 'lunch',     label: 'Déjeuner',       emoji: '☀️',  defaultHour: 12 },
+  { meal: 'dinner',    label: 'Dîner',           emoji: '🌙',  defaultHour: 19 },
+  { meal: 'snack',     label: 'Collation',       emoji: '🍎',  defaultHour: 16 },
+];
+
+function MealRemindersCard({
+  times,
+  onSet,
+  onClear,
+}: {
+  times: Partial<Record<MealType, { hour: number; minute: number }>>;
+  onSet: (meal: MealType, hour: number, minute: number) => Promise<boolean>;
+  onClear: (meal: MealType) => Promise<void>;
+}) {
+  const C = useAppColors();
+  const [editing, setEditing] = useState<MealType | null>(null);
+  const [editHour, setEditHour] = useState(12);
+  const [editMin, setEditMin] = useState(0);
+
+  function pad(n: number) { return String(n).padStart(2, '0'); }
+
+  async function handleToggle(meal: MealType, val: boolean) {
+    if (val) {
+      const cfg = MEAL_REMINDER_CONFIG.find((m) => m.meal === meal)!;
+      const h = times[meal]?.hour ?? cfg.defaultHour;
+      const m = times[meal]?.minute ?? 0;
+      const ok = await onSet(meal, h, m);
+      if (!ok) Alert.alert('Permission refusée', 'Active les notifications dans les paramètres.');
+    } else {
+      await onClear(meal);
+    }
+  }
+
+  async function handleSaveTime() {
+    if (!editing) return;
+    await onSet(editing, editHour, editMin);
+    setEditing(null);
+  }
+
+  return (
+    <View style={mrStyles.card}>
+      {MEAL_REMINDER_CONFIG.map(({ meal, label, emoji }) => {
+        const active = !!times[meal];
+        const t = times[meal];
+        return (
+          <View key={meal} style={mrStyles.row}>
+            <Text style={mrStyles.emoji}>{emoji}</Text>
+            <Text style={mrStyles.label}>{label}</Text>
+            {active && t && (
+              <TouchableOpacity
+                onPress={() => { setEditing(meal); setEditHour(t.hour); setEditMin(t.minute); }}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Text style={[mrStyles.time, { color: C.primary }]}>
+                  {pad(t.hour)}:{pad(t.minute)}
+                </Text>
+              </TouchableOpacity>
+            )}
+            <Switch
+              value={active}
+              onValueChange={(v) => handleToggle(meal, v)}
+              trackColor={{ false: COLORS.bgElevated, true: C.primaryGlow }}
+              thumbColor={active ? C.primary : COLORS.textTertiary}
+            />
+          </View>
+        );
+      })}
+      {editing && (
+        <View style={mrStyles.editor}>
+          <Text style={mrStyles.editorTitle}>
+            {MEAL_REMINDER_CONFIG.find((m) => m.meal === editing)?.label} — heure du rappel
+          </Text>
+          <View style={mrStyles.timePicker}>
+            <View style={mrStyles.timeUnit}>
+              <TouchableOpacity onPress={() => setEditHour((h) => (h + 1) % 24)} hitSlop={{ top: 8, bottom: 8, left: 10, right: 10 }}>
+                <Ionicons name="chevron-up" size={20} color={C.primary} />
+              </TouchableOpacity>
+              <Text style={mrStyles.timeVal}>{pad(editHour)}</Text>
+              <TouchableOpacity onPress={() => setEditHour((h) => (h + 23) % 24)} hitSlop={{ top: 8, bottom: 8, left: 10, right: 10 }}>
+                <Ionicons name="chevron-down" size={20} color={C.primary} />
+              </TouchableOpacity>
+            </View>
+            <Text style={mrStyles.colon}>:</Text>
+            <View style={mrStyles.timeUnit}>
+              <TouchableOpacity onPress={() => setEditMin((m) => (m + 5) % 60)} hitSlop={{ top: 8, bottom: 8, left: 10, right: 10 }}>
+                <Ionicons name="chevron-up" size={20} color={C.primary} />
+              </TouchableOpacity>
+              <Text style={mrStyles.timeVal}>{pad(editMin)}</Text>
+              <TouchableOpacity onPress={() => setEditMin((m) => (m + 55) % 60)} hitSlop={{ top: 8, bottom: 8, left: 10, right: 10 }}>
+                <Ionicons name="chevron-down" size={20} color={C.primary} />
+              </TouchableOpacity>
+            </View>
+          </View>
+          <View style={mrStyles.editorBtns}>
+            <TouchableOpacity onPress={() => setEditing(null)} style={mrStyles.cancelEditorBtn}>
+              <Text style={mrStyles.cancelEditorText}>Annuler</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleSaveTime} style={[mrStyles.saveEditorBtn, { backgroundColor: C.primary }]}>
+              <Text style={mrStyles.saveEditorText}>Enregistrer</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+    </View>
+  );
+}
+
+const mrStyles = StyleSheet.create({
+  card: {
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    overflow: 'hidden',
+    marginBottom: SPACING.lg,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+    gap: SPACING.sm,
+  },
+  emoji: { fontSize: 16, width: 22, textAlign: 'center' },
+  label: { flex: 1, fontSize: FONT_SIZE.sm, color: COLORS.textPrimary },
+  time: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.semibold },
+  editor: {
+    padding: SPACING.md,
+    gap: SPACING.md,
+    backgroundColor: COLORS.bgElevated,
+  },
+  editorTitle: { fontSize: FONT_SIZE.xs, color: COLORS.textSecondary, textAlign: 'center', fontWeight: FONT_WEIGHT.semibold },
+  timePicker: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.sm },
+  timeUnit: { alignItems: 'center', gap: 4 },
+  timeVal: {
+    fontSize: FONT_SIZE.xl,
+    fontWeight: FONT_WEIGHT.bold,
+    color: COLORS.textPrimary,
+    width: 52,
+    textAlign: 'center',
+    backgroundColor: COLORS.bg,
+    borderRadius: RADIUS.md,
+    paddingVertical: 8,
+  },
+  colon: { fontSize: FONT_SIZE.xl, fontWeight: FONT_WEIGHT.bold, color: COLORS.textPrimary, marginBottom: 4 },
+  editorBtns: { flexDirection: 'row', gap: SPACING.sm },
+  cancelEditorBtn: { flex: 1, paddingVertical: SPACING.sm, alignItems: 'center', borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border },
+  cancelEditorText: { fontSize: FONT_SIZE.sm, color: COLORS.textSecondary },
+  saveEditorBtn: { flex: 1, paddingVertical: SPACING.sm, alignItems: 'center', borderRadius: RADIUS.md },
+  saveEditorText: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.bold, color: '#fff' },
+});
+
 export default function ProfileScreen() {
   const router = useRouter();
   const C = useAppColors();
@@ -61,7 +217,7 @@ export default function ProfileScreen() {
   const { profile, setPremium, reset: resetProfile, setPhysicalData } = useProfileStore();
   const { habits } = useHabitStore();
   const { getLatestWeight, logWeight } = useWeightStore();
-  const { setGoals } = useCalorieStore();
+  const { setGoals, mealReminderTimes, setMealReminder, clearMealReminder } = useCalorieStore();
   const [weightModalVisible, setWeightModalVisible] = useState(false);
   const [physicalModalVisible, setPhysicalModalVisible] = useState(false);
   const [themeModalVisible, setThemeModalVisible] = useState(false);
@@ -196,18 +352,8 @@ export default function ProfileScreen() {
 
         {/* Settings */}
         <Text style={styles.section}>Santé</Text>
+        <WeightChartCard onLogWeight={() => setWeightModalVisible(true)} />
         <View style={styles.card}>
-          <SettingsRow
-            icon="scale-outline"
-            label="Logger mon poids"
-            sublabel={(() => {
-              const latest = getLatestWeight();
-              if (!latest) return 'Aucune mesure enregistrée';
-              const dateLabel = format(new Date(latest.date + 'T12:00:00'), 'd MMM yyyy', { locale: fr });
-              return `${latest.weight} kg · ${dateLabel}`;
-            })()}
-            onPress={() => setWeightModalVisible(true)}
-          />
           <SettingsRow
             icon="body-outline"
             label="Profil physique"
@@ -219,6 +365,14 @@ export default function ProfileScreen() {
             onPress={() => setPhysicalModalVisible(true)}
           />
         </View>
+
+        {/* Rappels repas */}
+        <Text style={styles.section}>Rappels repas</Text>
+        <MealRemindersCard
+          times={mealReminderTimes}
+          onSet={setMealReminder}
+          onClear={clearMealReminder}
+        />
 
         {/* TDEE / Scénarios */}
         {tdeeResult ? (

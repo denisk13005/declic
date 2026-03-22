@@ -174,7 +174,27 @@ export const useHabitStore = create<HabitStore>()(
     }),
     {
       name: CONFIG.STORAGE_KEYS.HABITS,
+      version: 1,
       storage: createJSONStorage(() => AsyncStorage),
+      migrate: (persisted: any, version: number) => {
+        if (version < 1) {
+          // v0 → v1 : reminderTime n'avait pas unit/value/startHour/endHour
+          persisted.habits = (persisted.habits ?? []).map((h: any) => {
+            if (!h.reminderTime) return h;
+            return {
+              ...h,
+              reminderTime: {
+                unit: 'days',
+                value: 1,
+                startHour: 8,
+                endHour: 22,
+                ...h.reminderTime,
+              },
+            };
+          });
+        }
+        return persisted;
+      },
     }
   )
 );

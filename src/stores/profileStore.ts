@@ -61,7 +61,12 @@ export const useProfileStore = create<ProfileStore>()(
     }),
     {
       name: CONFIG.STORAGE_KEYS.PROFILE,
+      version: 1,
       storage: createJSONStorage(() => AsyncStorage),
+      migrate: (persisted: any) => {
+        if (!persisted.profile) persisted.profile = {};
+        return persisted;
+      },
     }
   )
 );

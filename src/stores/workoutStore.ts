@@ -15,7 +15,7 @@ function todayISO(): string {
 
 interface WorkoutStore {
   entries: WorkoutEntry[];
-  addWorkout: (entry: Omit<WorkoutEntry, 'id' | 'createdAt'>) => void;
+  addWorkout: (entry: Omit<WorkoutEntry, 'id' | 'createdAt'>) => string; // retourne l'id
   removeWorkout: (id: string) => void;
   getEntriesForDate: (date: string) => WorkoutEntry[];
   getTotalBurnedForDate: (date: string) => number;
@@ -27,12 +27,14 @@ export const useWorkoutStore = create<WorkoutStore>()(
       entries: [],
 
       addWorkout: (entry) => {
+        const id = uid();
         const newEntry: WorkoutEntry = {
           ...entry,
-          id: uid(),
+          id,
           createdAt: new Date().toISOString(),
         };
         set((s) => ({ entries: [...s.entries, newEntry] }));
+        return id;
       },
 
       removeWorkout: (id) => {
@@ -51,7 +53,12 @@ export const useWorkoutStore = create<WorkoutStore>()(
     }),
     {
       name: CONFIG.STORAGE_KEYS.WORKOUTS,
+      version: 1,
       storage: createJSONStorage(() => AsyncStorage),
+      migrate: (persisted: any) => {
+        if (!persisted.entries) persisted.entries = [];
+        return persisted;
+      },
     }
   )
 );

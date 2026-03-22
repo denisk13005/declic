@@ -75,7 +75,12 @@ export const useWeightStore = create<WeightStore>()(
     }),
     {
       name: CONFIG.STORAGE_KEYS.WEIGHT,
+      version: 1,
       storage: createJSONStorage(() => AsyncStorage),
+      migrate: (persisted: any) => {
+        if (!persisted.entries) persisted.entries = [];
+        return persisted;
+      },
     }
   )
 );

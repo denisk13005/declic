@@ -4,6 +4,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { format } from 'date-fns';
 import { FoodEntry, FoodItem, ComposedMeal, NutritionGoals, Macros, Serving, MealType } from '@/types';
 import { CONFIG } from '@/constants/config';
+import {
+  scheduleMealReminder,
+  cancelMealReminder,
+  requestNotificationPermission,
+} from '@/services/notifications';
 
 function uid(): string {
   return `c_${Date.now()}_${Math.random().toString(36).slice(2)}`;
@@ -21,12 +26,16 @@ const DEFAULT_GOALS: NutritionGoals = {
   targetWeight: null,
 };
 
+interface MealReminderTime { hour: number; minute: number; }
+
 interface CalorieStore {
   entries: FoodEntry[];
   foodLibrary: FoodItem[];
   composedMeals: ComposedMeal[];
   goals: NutritionGoals;
   manualBurnedCalories: Record<string, number>;
+  mealReminderTimes: Partial<Record<MealType, MealReminderTime>>;
+  mealReminderIds: Partial<Record<MealType, string>>;
 
   addEntry: (entry: Omit<FoodEntry, 'id' | 'createdAt'>) => void;
   removeEntry: (id: string) => void;
@@ -50,6 +59,8 @@ interface CalorieStore {
   setGoals: (patch: Partial<NutritionGoals>) => void;
   setManualBurnedCalories: (date: string, kcal: number) => void;
   clearManualBurnedCalories: (date: string) => void;
+  setMealReminder: (meal: MealType, hour: number, minute: number) => Promise<boolean>;
+  clearMealReminder: (meal: MealType) => Promise<void>;
 
   computeCalories: (item: FoodItem, serving: Serving) => number;
   computeMacros: (item: FoodItem, serving: Serving) => Macros | null;
@@ -63,6 +74,8 @@ export const useCalorieStore = create<CalorieStore>()(
       composedMeals: [],
       goals: DEFAULT_GOALS,
       manualBurnedCalories: {},
+      mealReminderTimes: {},
+      mealReminderIds: {},
 
       addEntry: (entry) => {
         const newEntry: FoodEntry = {
@@ -175,6 +188,31 @@ export const useCalorieStore = create<CalorieStore>()(
         });
       },
 
+      setMealReminder: async (meal, hour, minute) => {
+        const granted = await requestNotificationPermission();
+        if (!granted) return false;
+        const oldId = get().mealReminderIds[meal];
+        if (oldId) await cancelMealReminder(oldId);
+        const id = await scheduleMealReminder(meal, hour, minute);
+        set((s) => ({
+          mealReminderTimes: { ...s.mealReminderTimes, [meal]: { hour, minute } },
+          mealReminderIds:   { ...s.mealReminderIds,   [meal]: id },
+        }));
+        return true;
+      },
+
+      clearMealReminder: async (meal) => {
+        const oldId = get().mealReminderIds[meal];
+        if (oldId) await cancelMealReminder(oldId);
+        set((s) => {
+          const times = { ...s.mealReminderTimes };
+          const ids   = { ...s.mealReminderIds };
+          delete times[meal];
+          delete ids[meal];
+          return { mealReminderTimes: times, mealReminderIds: ids };
+        });
+      },
+
       computeCalories: (item, serving) => {
         const factor =
           serving.unit === 'g' || serving.unit === 'ml'
@@ -198,7 +236,31 @@ export const useCalorieStore = create<CalorieStore>()(
     }),
     {
       name: CONFIG.STORAGE_KEYS.CALORIES,
+      version: 1,
       storage: createJSONStorage(() => AsyncStorage),
+      migrate: (persisted: any, version: number) => {
+        if (version < 1) {
+          // v0 → v1 : migrations initiales consolidées
+          persisted.entries = (persisted.entries ?? []).map((e: any) => {
+            const withServing = !e.serving
+              ? { ...e, serving: { quantity: 1, unit: 'piece' }, macros: null }
+              : e;
+            return !withServing.meal ? { ...withServing, meal: 'lunch' } : withServing;
+          });
+          if (!persisted.goals) {
+            persisted.goals = {
+              calories: persisted.dailyGoal ?? 2000,
+              protein: null, carbs: null, fat: null, targetWeight: null,
+            };
+          }
+          if (!persisted.foodLibrary) persisted.foodLibrary = [];
+          if (!persisted.composedMeals) persisted.composedMeals = [];
+          if (!persisted.manualBurnedCalories) persisted.manualBurnedCalories = {};
+          if (!persisted.mealReminderTimes) persisted.mealReminderTimes = {};
+          if (!persisted.mealReminderIds) persisted.mealReminderIds = {};
+        }
+        return persisted;
+      },
       onRehydrateStorage: () => (state) => {
         if (!state) return;
         // Migrate old FoodEntry without serving field

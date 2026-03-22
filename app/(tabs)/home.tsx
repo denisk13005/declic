@@ -17,6 +17,9 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useRouter } from 'expo-router';
 import { useHabitStore } from '@/stores/habitStore';
+import { useCalorieStore } from '@/stores/calorieStore';
+import { useSessionStore } from '@/stores/sessionStore';
+import { useProgramStore } from '@/stores/programStore';
 import { usePremium } from '@/hooks/usePremium';
 import { useHabitNotifications } from '@/hooks/useHabitNotifications';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
@@ -351,6 +354,150 @@ const tpStyles = StyleSheet.create({
     fontWeight: FONT_WEIGHT.bold,
     color: COLORS.textPrimary,
     marginBottom: 4,
+  },
+});
+
+// ─── DashboardCard ────────────────────────────────────────────────────────────
+
+function DashboardCard() {
+  const C = useAppColors();
+  const router = useRouter();
+  const { getTotalsForDate, goals } = useCalorieStore();
+  const { sessions } = useSessionStore();
+  const { program } = useProgramStore();
+  const { habits, getStats } = useHabitStore();
+
+  const today = format(new Date(), 'yyyy-MM-dd');
+  const { calories: consumed } = getTotalsForDate(today);
+  const caloriePct = goals.calories > 0 ? Math.min(consumed / goals.calories, 1) : 0;
+  const calorieExceeded = consumed > goals.calories;
+
+  // Meilleur streak actuel parmi les habitudes actives
+  const activeHabits = useMemo(
+    () => habits.filter((h) => !h.archived),
+    [habits]
+  );
+  const bestStreak = useMemo(
+    () => activeHabits.reduce((max, h) => Math.max(max, getStats(h.id).currentStreak), 0),
+    [activeHabits, getStats] // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
+  // Prochaine séance
+  const nextSessionLabel = useMemo(() => {
+    if (!program || program.days.length === 0) return null;
+    const daysWithEx = program.days.filter((d) => d.exercises.length > 0);
+    if (daysWithEx.length === 0) return null;
+
+    const sorted = [...sessions].sort((a, b) => b.date.localeCompare(a.date));
+    const last = sorted[0];
+    if (!last) return daysWithEx[0].label;
+
+    const lastIdx = program.days.findIndex((d) => d.dayNumber === last.programDayNumber);
+    const nextIdx = ((lastIdx >= 0 ? lastIdx : 0) + 1) % program.days.length;
+    const nextDay = program.days[nextIdx];
+    return nextDay.exercises.length > 0 ? nextDay.label : 'Repos';
+  }, [sessions, program]);
+
+  return (
+    <View style={dashStyles.card}>
+      {/* Calories */}
+      <TouchableOpacity
+        style={dashStyles.col}
+        onPress={() => router.push('/(tabs)/calories' as any)}
+        activeOpacity={0.7}
+      >
+        <Ionicons name="restaurant-outline" size={16} color="#60A5FA" />
+        <Text style={[dashStyles.colValue, calorieExceeded && { color: COLORS.error }]}>
+          {consumed}
+        </Text>
+        <Text style={dashStyles.colGoal}>/ {goals.calories} kcal</Text>
+        <View style={dashStyles.miniTrack}>
+          <View
+            style={[
+              dashStyles.miniFill,
+              {
+                width: `${caloriePct * 100}%` as any,
+                backgroundColor: calorieExceeded ? COLORS.error : '#60A5FA',
+              },
+            ]}
+          />
+        </View>
+      </TouchableOpacity>
+
+      <View style={dashStyles.divider} />
+
+      {/* Streak */}
+      <View style={dashStyles.col}>
+        <Text style={{ fontSize: 16 }}>🔥</Text>
+        <Text style={dashStyles.colValue}>{bestStreak}j</Text>
+        <Text style={dashStyles.colGoal}>Meilleur streak</Text>
+      </View>
+
+      {nextSessionLabel != null && (
+        <>
+          <View style={dashStyles.divider} />
+
+          {/* Prochaine séance */}
+          <TouchableOpacity
+            style={dashStyles.col}
+            onPress={() => router.push('/(tabs)/sport' as any)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="barbell-outline" size={16} color={C.primary} />
+            <Text style={[dashStyles.colValue, { color: C.primary }]} numberOfLines={1}>
+              {nextSessionLabel}
+            </Text>
+            <Text style={dashStyles.colGoal}>Prochaine séance</Text>
+          </TouchableOpacity>
+        </>
+      )}
+    </View>
+  );
+}
+
+const dashStyles = StyleSheet.create({
+  card: {
+    flexDirection: 'row',
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.sm,
+    marginHorizontal: SPACING.lg,
+    marginBottom: SPACING.md,
+  },
+  col: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 3,
+  },
+  divider: {
+    width: 1,
+    backgroundColor: COLORS.border,
+    marginVertical: 4,
+  },
+  colValue: {
+    fontSize: FONT_SIZE.md,
+    fontWeight: FONT_WEIGHT.bold,
+    color: COLORS.textPrimary,
+  },
+  colGoal: {
+    fontSize: 10,
+    color: COLORS.textTertiary,
+    textAlign: 'center',
+  },
+  miniTrack: {
+    width: '70%',
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: COLORS.bgElevated,
+    overflow: 'hidden',
+    marginTop: 2,
+  },
+  miniFill: {
+    height: '100%',
+    borderRadius: 2,
   },
 });
 
@@ -863,6 +1010,9 @@ export default function HomeScreen() {
           {Math.round(completionRate * 100)}% accompli
         </Text>
       </View>
+
+      {/* Dashboard */}
+      <DashboardCard />
 
       {/* Habit list */}
       <ScrollView

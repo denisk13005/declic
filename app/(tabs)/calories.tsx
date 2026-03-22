@@ -92,9 +92,9 @@ function CalorieRing({ consumed, goal }: { consumed: number; goal: number }) {
   );
 }
 
-// ─── Macro bar ────────────────────────────────────────────────────────────────
+// ─── Macro column ─────────────────────────────────────────────────────────────
 
-function MacroBar({
+function MacroCol({
   label,
   consumed,
   goal,
@@ -107,24 +107,39 @@ function MacroBar({
 }) {
   const pct = goal ? Math.min(consumed / goal, 1) : 0;
   const exceeded = goal != null && consumed > goal;
+  const displayColor = exceeded ? COLORS.error : color;
 
   return (
-    <View style={styles.macroBarRow}>
-      <Text style={styles.macroBarLabel}>{label}</Text>
-      <View style={styles.macroTrack}>
-        <View
-          style={[
-            styles.macroFill,
-            {
-              width: `${pct * 100}%`,
-              backgroundColor: exceeded ? COLORS.error : color,
-            },
-          ]}
-        />
+    <View style={styles.macroCol}>
+      <View style={styles.macroColHeader}>
+        <View style={[styles.macroColDot, { backgroundColor: color }]} />
+        <Text style={styles.macroColLabel}>{label}</Text>
       </View>
-      <Text style={[styles.macroBarValue, exceeded && { color: COLORS.error }]}>
-        {Math.round(consumed)}g{goal ? ` / ${goal}g` : ''}
+      <Text style={[styles.macroColValue, { color: displayColor }]}>
+        {Math.round(consumed)}g
       </Text>
+      {goal != null ? (
+        <Text style={styles.macroColGoal}>/ {goal}g</Text>
+      ) : (
+        <Text style={styles.macroColGoal}> </Text>
+      )}
+      <View style={styles.macroColTrack}>
+        {goal != null ? (
+          <View
+            style={[
+              styles.macroColFill,
+              { width: `${pct * 100}%` as any, backgroundColor: displayColor },
+            ]}
+          />
+        ) : (
+          <View
+            style={[
+              styles.macroColFill,
+              { width: '100%', backgroundColor: color, opacity: 0.25 },
+            ]}
+          />
+        )}
+      </View>
     </View>
   );
 }
@@ -165,13 +180,17 @@ function EntryRow({
 function MealSection({
   mealType,
   entries,
+  hasYesterday,
   onAdd,
   onDelete,
+  onReuseYesterday,
 }: {
   mealType: MealType;
   entries: FoodEntry[];
+  hasYesterday: boolean;
   onAdd: () => void;
   onDelete: (entry: FoodEntry) => void;
+  onReuseYesterday: () => void;
 }) {
   const meta = MEAL_META[mealType];
   const mealTotal = entries.reduce((sum, e) => sum + e.calories, 0);
@@ -184,6 +203,12 @@ function MealSection({
         <Text style={[styles.mealKcal, mealTotal > 0 && { color: COLORS.textPrimary }]}>
           {mealTotal > 0 ? `${mealTotal} kcal` : '—'}
         </Text>
+        {hasYesterday && (
+          <TouchableOpacity onPress={onReuseYesterday} style={styles.reuseBtn} activeOpacity={0.7}>
+            <Ionicons name="refresh-outline" size={13} color={COLORS.textSecondary} />
+            <Text style={styles.reuseBtnText}>Hier</Text>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity onPress={onAdd} style={styles.mealAddBtn} activeOpacity={0.7}>
           <Ionicons name="add-circle-outline" size={24} color={COLORS.primary} />
         </TouchableOpacity>
@@ -327,13 +352,14 @@ const burnedStyles = StyleSheet.create({
 export default function CaloriesScreen() {
   const C = useAppColors();
   const {
-    getEntriesForDate, getTotalsForDate, removeEntry, goals,
+    getEntriesForDate, getTotalsForDate, addEntry, removeEntry, goals,
     manualBurnedCalories, setManualBurnedCalories, clearManualBurnedCalories,
   } = useCalorieStore();
 
   const [selectedDate, setSelectedDate] = useState(todayISO());
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [initialMeal, setInitialMeal] = useState<MealType | undefined>(undefined);
+  const [initialTab, setInitialTab] = useState<'manuel' | 'barcode' | 'photo'>('manuel');
   const [libraryModalVisible, setLibraryModalVisible] = useState(false);
   const [goalsModalVisible, setGoalsModalVisible] = useState(false);
   const [prefillFood, setPrefillFood] = useState<PrefillFood | null>(null);
@@ -404,8 +430,9 @@ export default function CaloriesScreen() {
     ]);
   }
 
-  function openAddModal(meal?: MealType) {
+  function openAddModal(meal?: MealType, tab: 'manuel' | 'barcode' | 'photo' = 'manuel') {
     setInitialMeal(meal);
+    setInitialTab(tab);
     setAddModalVisible(true);
   }
 
@@ -419,6 +446,7 @@ export default function CaloriesScreen() {
     setAddModalVisible(false);
     setPrefillFood(null);
     setInitialMeal(undefined);
+    setInitialTab('manuel');
   }
 
   return (
@@ -470,6 +498,17 @@ export default function CaloriesScreen() {
             <Text style={styles.summaryLabel}>{remaining < 0 ? 'Dépassé' : 'Restantes'}</Text>
           </View>
         </View>
+
+        {/* Macros */}
+        {(hasMacroGoals || macros.protein > 0 || macros.carbs > 0 || macros.fat > 0) && (
+          <View style={styles.macrosCard}>
+            <MacroCol label="Protéines" consumed={macros.protein} goal={goals.protein} color="#60A5FA" />
+            <View style={styles.macroColDivider} />
+            <MacroCol label="Glucides" consumed={macros.carbs} goal={goals.carbs} color="#FBBF24" />
+            <View style={styles.macroColDivider} />
+            <MacroCol label="Lipides" consumed={macros.fat} goal={goals.fat} color="#F472B6" />
+          </View>
+        )}
 
         {/* Activité — Health Connect */}
         {hcStatus !== 'checking' && (
@@ -566,15 +605,6 @@ export default function CaloriesScreen() {
           </View>
         )}
 
-        {/* Macro bars */}
-        {(hasMacroGoals || macros.protein > 0 || macros.carbs > 0 || macros.fat > 0) && (
-          <View style={styles.macroBarsCard}>
-            <MacroBar label="Protéines" consumed={macros.protein} goal={goals.protein} color="#60A5FA" />
-            <MacroBar label="Glucides" consumed={macros.carbs} goal={goals.carbs} color="#FBBF24" />
-            <MacroBar label="Lipides" consumed={macros.fat} goal={goals.fat} color="#F472B6" />
-          </View>
-        )}
-
         {/* Meal sections */}
         <Text style={styles.sectionTitle}>Repas du jour</Text>
 
@@ -582,35 +612,42 @@ export default function CaloriesScreen() {
           <Text style={styles.emptyHint}>Appuie sur + à côté d'un repas pour commencer</Text>
         )}
 
-        {MEAL_ORDER.map((mealType) => (
-          <MealSection
-            key={mealType}
-            mealType={mealType}
-            entries={entriesByMeal[mealType]}
-            onAdd={() => openAddModal(mealType)}
-            onDelete={confirmDelete}
-          />
-        ))}
+        {MEAL_ORDER.map((mealType) => {
+          const yesterday = format(subDays(new Date(selectedDate + 'T12:00:00'), 1), 'yyyy-MM-dd');
+          const yEntries = getEntriesForDate(yesterday).filter((e) => (e.meal ?? 'lunch') === mealType);
+          return (
+            <MealSection
+              key={mealType}
+              mealType={mealType}
+              entries={entriesByMeal[mealType]}
+              hasYesterday={yEntries.length > 0}
+              onAdd={() => openAddModal(mealType)}
+              onDelete={confirmDelete}
+              onReuseYesterday={() => {
+                yEntries.forEach((e) => addEntry({ ...e, date: selectedDate, meal: mealType }));
+              }}
+            />
+          );
+        })}
       </ScrollView>
 
       {/* Barre d'action fixe */}
       <View style={styles.actionBar}>
-        <View style={styles.actionBtnWrapper}>
-          <TouchableOpacity
-            style={styles.actionBtnSecondary}
-            onPress={() => setLibraryModalVisible(true)}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="library-outline" size={18} color={C.primary} />
-            <Text style={[styles.actionBtnSecondaryText, { color: C.primary }]}>Mes aliments</Text>
+        {/* Icônes compacts */}
+        <View style={styles.actionIconsRow}>
+          <TouchableOpacity style={styles.actionIconBtn} onPress={() => setLibraryModalVisible(true)} activeOpacity={0.7}>
+            <Ionicons name="library-outline" size={20} color={C.primary} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionIconBtn} onPress={() => openAddModal(undefined, 'barcode')} activeOpacity={0.7}>
+            <Ionicons name="barcode-outline" size={20} color={COLORS.textSecondary} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionIconBtn} onPress={() => openAddModal(undefined, 'photo')} activeOpacity={0.7}>
+            <Ionicons name="camera-outline" size={20} color={COLORS.textSecondary} />
           </TouchableOpacity>
         </View>
-        <View style={styles.actionBtnWrapper}>
-          <TouchableOpacity
-            onPress={() => openAddModal()}
-            activeOpacity={0.85}
-            style={styles.actionBtnPrimary}
-          >
+        {/* Bouton principal */}
+        <View style={{ flex: 1 }}>
+          <TouchableOpacity onPress={() => openAddModal()} activeOpacity={0.85} style={styles.actionBtnPrimary}>
             <LinearGradient colors={C.gradientPrimary} style={StyleSheet.absoluteFillObject} />
             <Ionicons name="add" size={20} color="#fff" />
             <Text style={styles.actionBtnPrimaryText}>Ajouter un aliment</Text>
@@ -636,6 +673,7 @@ export default function CaloriesScreen() {
         date={selectedDate}
         prefillFood={prefillFood}
         initialMeal={initialMeal}
+        initialTab={initialTab}
       />
 
       <FoodLibraryModal
@@ -741,20 +779,60 @@ const styles = StyleSheet.create({
   },
   hcManualLinkText: { fontSize: FONT_SIZE.xs, color: COLORS.textSecondary },
 
-  macroBarsCard: {
+  macrosCard: {
+    flexDirection: 'row',
     backgroundColor: COLORS.bgCard,
     borderRadius: RADIUS.lg,
     borderWidth: 1,
     borderColor: COLORS.border,
     padding: SPACING.md,
     marginBottom: SPACING.lg,
-    gap: SPACING.sm,
   },
-  macroBarRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
-  macroBarLabel: { width: 72, fontSize: FONT_SIZE.xs, color: COLORS.textSecondary, fontWeight: FONT_WEIGHT.medium },
-  macroTrack: { flex: 1, height: 6, borderRadius: 3, backgroundColor: COLORS.bgElevated, overflow: 'hidden' },
-  macroFill: { height: '100%', borderRadius: 3 },
-  macroBarValue: { width: 80, fontSize: FONT_SIZE.xs, color: COLORS.textSecondary, textAlign: 'right' },
+  macroCol: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 3,
+  },
+  macroColDivider: {
+    width: 1,
+    backgroundColor: COLORS.border,
+    marginVertical: 4,
+  },
+  macroColHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  macroColDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+  },
+  macroColLabel: {
+    fontSize: 10,
+    color: COLORS.textSecondary,
+    fontWeight: FONT_WEIGHT.medium,
+  },
+  macroColValue: {
+    fontSize: FONT_SIZE.md,
+    fontWeight: FONT_WEIGHT.bold,
+  },
+  macroColGoal: {
+    fontSize: 10,
+    color: COLORS.textTertiary,
+  },
+  macroColTrack: {
+    width: '80%',
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: COLORS.bgElevated,
+    overflow: 'hidden',
+    marginTop: 1,
+  },
+  macroColFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
 
   sectionTitle: { fontSize: FONT_SIZE.lg, fontWeight: FONT_WEIGHT.semibold, color: COLORS.textPrimary, marginBottom: SPACING.sm },
   emptyHint: { fontSize: FONT_SIZE.sm, color: COLORS.textTertiary, marginBottom: SPACING.md },
@@ -789,12 +867,31 @@ const styles = StyleSheet.create({
   entryMacros: { fontSize: FONT_SIZE.xs, color: COLORS.textTertiary, marginTop: 2 },
   entryKcal: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.semibold, color: COLORS.textSecondary },
 
+  reuseBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingHorizontal: SPACING.xs,
+    paddingVertical: 3,
+    borderRadius: RADIUS.sm,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.bgElevated,
+    marginRight: 4,
+  },
+  reuseBtnText: {
+    fontSize: 10,
+    color: COLORS.textSecondary,
+    fontWeight: FONT_WEIGHT.medium,
+  },
+
   actionBar: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
     flexDirection: 'row',
+    alignItems: 'center',
     gap: SPACING.sm,
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.sm,
@@ -802,26 +899,20 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.bg,
     borderTopWidth: 1,
     borderTopColor: COLORS.border,
-
   },
-  actionBtnWrapper: {
-    flex: 1,
-  },
-  actionBtnSecondary: {
-    width: '100%',
+  actionIconsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
     gap: SPACING.xs,
-    paddingVertical: 14,
+  },
+  actionIconBtn: {
+    width: 44,
+    height: 44,
     borderRadius: RADIUS.md,
     borderWidth: 1,
     borderColor: COLORS.border,
     backgroundColor: COLORS.bgCard,
-  },
-  actionBtnSecondaryText: {
-    fontSize: FONT_SIZE.sm,
-    fontWeight: FONT_WEIGHT.semibold,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   actionBtnPrimary: {
     width: '100%',

@@ -184,6 +184,17 @@ export interface WorkoutEntry {
 
 // ─── Séance musculation ───────────────────────────────────────────────────────
 
+export interface SetLog {
+  weight: number | null;   // null = poids de corps
+  reps: number;
+}
+
+export interface ExerciseLog {
+  exerciseId: string;
+  exerciseName: string;
+  sets: SetLog[];
+}
+
 export interface WorkoutSession {
   id: string;
   date: string;              // yyyy-MM-dd
@@ -191,6 +202,8 @@ export interface WorkoutSession {
   programDayLabel: string;
   completedExerciseIds: string[];
   totalExercises: number;
+  exerciseLogs: ExerciseLog[];
+  workoutEntryId?: string;   // id dans workoutStore pour supprimer/remplacer
 }
 
 // ─── Navigation ───────────────────────────────────────────────────────────────

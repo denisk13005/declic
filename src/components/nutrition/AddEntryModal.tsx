@@ -63,6 +63,7 @@ interface Props {
   date: string; // yyyy-MM-dd
   initialMeal?: MealType;
   prefillFood?: PrefillFood | null;
+  initialTab?: Tab;
 }
 
 type Tab = 'manuel' | 'photo' | 'barcode';
@@ -174,7 +175,7 @@ function BarcodeScanner({
 
 // ─── Main modal ───────────────────────────────────────────────────────────────
 
-export default function AddEntryModal({ visible, onClose, date, initialMeal, prefillFood }: Props) {
+export default function AddEntryModal({ visible, onClose, date, initialMeal, prefillFood, initialTab }: Props) {
   const C = useAppColors();
   const { addEntry, addFoodItem, foodLibrary } = useCalorieStore();
 
@@ -242,6 +243,14 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
   useEffect(() => {
     if (visible) setMeal(initialMeal ?? defaultMeal());
   }, [visible, initialMeal]);
+
+  // Ouvre directement l'onglet demandé (barcode ou photo)
+  useEffect(() => {
+    if (visible && initialTab && initialTab !== 'manuel') {
+      setTab(initialTab);
+      if (initialTab === 'barcode') setScannerVisible(true);
+    }
+  }, [visible, initialTab]);
 
   // Apply prefill when prop changes
   useEffect(() => {
