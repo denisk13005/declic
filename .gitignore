@@ -61,7 +61,6 @@ android/keystore.properties
 
 # Large data files
 src/data/off-fr.json
-assets/food.db
 scripts/*.gz
 scripts/*.csv
 
