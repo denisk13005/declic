@@ -1,5 +1,34 @@
 # Déclic — Dev Log
 
+## 2026-03-24 — Migration SQLite FTS5 (62 000 aliments)
+
+### `src/services/foodDb.ts`
+- Fix bug copie asset Android : `asset.uri` remplacé par `await asset.downloadAsync()` + `asset.localUri` + `FileSystem.copyAsync` — fonctionne en production EAS
+
+### `app/_layout.tsx`
+- Remplace `warmupCiqual()` par `initFoodDb()` au démarrage (async, non-bloquant)
+
+### `src/components/nutrition/AddEntryModal.tsx`
+- Remplace `searchCiqual` (3 339 aliments Fuse.js) par `searchFood` SQLite FTS5 (62 000 aliments)
+- Debounce callback passé en `async` pour `await searchFood()`
+
+### `src/components/nutrition/FoodLibraryModal.tsx`
+- Même migration : `searchCiqual` → `searchFood` SQLite
+
+## 2026-03-22 — Extension base d'exercices
+
+**`src/data/exercises.ts`** : ajout de 54 exercices (110 → 164 au total)
+- **Pectoraux** : +7 (développé machine, pompes diamant, pompes pieds surélevés, écarté poulie basse, pompes anneaux, landmine press, croisé poulie milieu)
+- **Dos** : +8 (tirage poulie serrée, rowing machine, rack pull, tractions lestées, seal row, tirage bras tendus, rowing poulie uni., tractions assistées)
+- **Épaules** : +5 (élévations machine, oiseau poulie basse, lu raises, HSPU, Z-press)
+- **Biceps** : +5 (curl reverse, curl Zottman, drag curl, curl câble croisé, waiter curl)
+- **Triceps** : +5 (pushdown barre droite, extension poulie uni., kickback câble, pushdown élastique, dips banc lesté)
+- **Quadriceps** : +6 (fentes arrière, presse uni., presse pieds hauts, belt squat, split squat, presse pieds rapprochés)
+- **Ischio-jambiers** : +5 (hyperextension, SDT roumain uni., glute-ham raise, leg curl debout, good morning élastique)
+- **Fessiers** : +6 (clamshell, fire hydrant, cable pull-through, reverse hyperextension, squat sumo barre, donkey kick)
+- **Mollets** : +4 (uni., barre, sur marche, tibia raise)
+- **Abdominaux** : +8 (hollow body, toes to bar, pallof press, wood chop, crunch décliné, flutter kicks, mountain climbers, L-sit, dead bug, V-up)
+
 ## 2026-03-22 — Backlog items 1-4
 
 ### 1. Rappels intelligents nutrition

@@ -19,7 +19,7 @@ import { useCalorieStore } from '@/stores/calorieStore';
 import { useAppColors } from '@/hooks/useAppColors';
 import { FoodItem, ComposedMeal, ComposedMealIngredient, Macros, Serving, ServingUnit } from '@/types';
 import { PrefillFood } from './AddEntryModal';
-import { searchCiqual, CiqualResult as FoodResult } from '@/services/ciqualSearch';
+import { searchFood, FoodResult } from '@/services/foodDb';
 import { searchByName as searchOFF, ProductInfo } from '@/services/openFoodFacts';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
 
@@ -205,7 +205,7 @@ function CreateMealForm({ onCreated, editMeal }: { onCreated: () => void; editMe
       return;
     }
     debounceRef.current = setTimeout(async () => {
-      const local = searchCiqual(text.trim());
+      const local = await searchFood(text.trim());
       setFoodSuggestions(local);
       setOffResults([]);
       // Fallback OFF si peu de résultats locaux

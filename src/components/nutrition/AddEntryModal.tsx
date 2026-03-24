@@ -21,7 +21,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useCalorieStore } from '@/stores/calorieStore';
 import { useAppColors } from '@/hooks/useAppColors';
 import { analyzeFoodPhoto } from '@/services/gemini';
-import { searchCiqual } from '@/services/ciqualSearch';
+import { searchFood } from '@/services/foodDb';
 import { lookupPortionWeight } from '@/data/portionWeights';
 import { lookupBarcode, searchByName as searchOFF } from '@/services/openFoodFacts';
 
@@ -362,7 +362,7 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
       setSuggestions([]);
       return;
     }
-    debounceRef.current = setTimeout(() => {
+    debounceRef.current = setTimeout(async () => {
       const q = text.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
       // 1. Bibliothèque perso (prioritaire — instantané)
@@ -377,12 +377,12 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
           source: 'library' as const,
         }));
 
-      // 2. Ciqual local
-      const ciqualItems: FoodSuggestion[] = searchCiqual(text.trim())
+      // 2. SQLite local (62 000 aliments Ciqual + OFF-FR, FTS5)
+      const dbItems: FoodSuggestion[] = (await searchFood(text.trim()))
         .filter(r => !libItems.some(l => l.name.toLowerCase() === r.name.toLowerCase()))
-        .map(r => ({ name: r.name, caloriesPer100: r.caloriesPer100, macros: r.macros, source: 'ciqual' as const }));
+        .map(r => ({ name: r.name, caloriesPer100: r.caloriesPer100, macros: r.macros, brand: r.brand, source: 'ciqual' as const }));
 
-      const localItems = [...libItems, ...ciqualItems];
+      const localItems = [...libItems, ...dbItems];
       setSuggestions(localItems);
 
       // 3. Fallback OFF si peu de résultats locaux

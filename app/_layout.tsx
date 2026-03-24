@@ -6,7 +6,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StyleSheet } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { listenToAuthState } from '@/stores/authStore';
-import { warmupCiqual } from '@/services/ciqualSearch';
+import { initFoodDb } from '@/services/foodDb';
 import { initNotificationChannel } from '@/services/notifications';
 
 SplashScreen.preventAutoHideAsync();
@@ -15,7 +15,7 @@ export default function RootLayout() {
   useEffect(() => {
     const unsubscribe = listenToAuthState();
     SplashScreen.hideAsync();
-    warmupCiqual();
+    initFoodDb().catch(e => console.warn('[foodDb] init échouée :', e));
     initNotificationChannel();
     return unsubscribe;
   }, []);

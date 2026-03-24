@@ -37,13 +37,16 @@ async function copyAssetDb(): Promise<void> {
   // Supprime l'éventuel fichier corrompu/vide avant de copier
   await FileSystem.deleteAsync(DB_PATH, { idempotent: true });
 
-  // Récupère l'URI Metro de l'asset et télécharge directement vers la destination
+  // En production EAS, asset.uri est une référence bundlée (pas une URL HTTP).
+  // downloadAsync() extrait l'asset depuis l'APK vers un fichier local temporaire,
+  // puis localUri donne le chemin pour la copie.
   const asset = Asset.fromModule(require('../../assets/food.db'));
-  const result = await FileSystem.downloadAsync(asset.uri, DB_PATH);
-  if (result.status !== 200) {
-    throw new Error(`Échec téléchargement food.db : HTTP ${result.status}`);
+  await asset.downloadAsync();
+  if (!asset.localUri) {
+    throw new Error('[foodDb] asset.localUri null après downloadAsync — asset introuvable dans le bundle');
   }
-  console.log('[foodDb] DB copiée depuis les assets :', result.uri);
+  await FileSystem.copyAsync({ from: asset.localUri, to: DB_PATH });
+  console.log('[foodDb] DB copiée depuis les assets :', DB_PATH);
 }
 
 /**
