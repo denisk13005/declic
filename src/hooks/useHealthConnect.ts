@@ -60,13 +60,14 @@ export function useHealthConnect(date: string): HealthConnectData {
   const requestPermissions = useCallback(async () => {
     setIsLoading(true);
     try {
-      const granted = await requestHCPermissions();
-      if (granted) {
-        setStatus('ready');
+      await requestHCPermissions();
+      // Re-vérifie le statut réel via l'SDK plutôt que de supposer 'ready'
+      // (Samsung peut ne pas retourner les permissions accordées immédiatement)
+      const newStatus = await checkHCStatus();
+      setStatus(newStatus);
+      if (newStatus === 'ready') {
         const cal = await readBurnedCalories(date);
         setBurnedCalories(cal);
-      } else {
-        setStatus('not_authorized');
       }
     } finally {
       setIsLoading(false);

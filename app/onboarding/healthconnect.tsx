@@ -4,27 +4,56 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { checkHCStatus, requestHCPermissions, openHCPlayStore } from '@/services/healthConnect';
+import { checkHCStatus, requestHCPermissions, openHCPlayStore, openHCSettings } from '@/services/healthConnect';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
+
+type HCStep =
+  | 'idle'           // état initial
+  | 'needs_install'  // HC absent → Play Store ouvert, attente retour user
+  | 'denied';        // permissions refusées 2x → proposer Settings
 
 export default function HealthConnectScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
+  const [step, setStep] = useState<HCStep>('idle');
 
   const handleConnect = async () => {
     setLoading(true);
     try {
       const status = await checkHCStatus();
+
+      if (status === 'unavailable') {
+        // Android trop ancien ou HC définitivement non supporté — skip
+        finish();
+        return;
+      }
+
       if (status === 'not_installed') {
+        // Ouvre le Play Store, le bouton devient "J'ai installé → Réessayer"
         openHCPlayStore();
-      } else if (status === 'not_authorized' || status === 'ready') {
-        const granted = await requestHCPermissions();
-        if (granted) setDone(true);
+        setStep('needs_install');
+        return;
+      }
+
+      // HC disponible (not_authorized ou ready) : demande les permissions
+      const granted = await requestHCPermissions();
+      if (granted) {
+        setDone(true);
+        setStep('idle');
+      } else {
+        // Refusé : propose les Settings HC pour accorder manuellement
+        setStep('denied');
       }
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleOpenSettings = () => {
+    openHCSettings();
+    // Après retour des settings, l'user reprend le flux normal
+    setStep('idle');
   };
 
   const finish = () => router.push('/onboarding/notifications');
@@ -66,19 +95,37 @@ export default function HealthConnectScreen() {
       <View style={styles.footer}>
         {!done ? (
           <>
-            <TouchableOpacity
-              onPress={handleConnect}
-              style={styles.btnWrapper}
-              activeOpacity={0.9}
-              disabled={loading}
-            >
-              <LinearGradient colors={['#F97316', '#EA580C']} style={styles.btn}>
-                <Ionicons name="heart" size={20} color="#fff" />
-                <Text style={styles.btnText}>
-                  {loading ? 'Connexion…' : 'Connecter Samsung Health'}
-                </Text>
-              </LinearGradient>
-            </TouchableOpacity>
+            {step === 'denied' ? (
+              // Permissions refusées 2x → ouvrir les Settings HC
+              <TouchableOpacity
+                onPress={handleOpenSettings}
+                style={styles.btnWrapper}
+                activeOpacity={0.9}
+              >
+                <LinearGradient colors={['#F97316', '#EA580C']} style={styles.btn}>
+                  <Ionicons name="settings-outline" size={20} color="#fff" />
+                  <Text style={styles.btnText}>Ouvrir les paramètres HC</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                onPress={handleConnect}
+                style={styles.btnWrapper}
+                activeOpacity={0.9}
+                disabled={loading}
+              >
+                <LinearGradient colors={['#F97316', '#EA580C']} style={styles.btn}>
+                  <Ionicons name={step === 'needs_install' ? 'refresh-outline' : 'heart'} size={20} color="#fff" />
+                  <Text style={styles.btnText}>
+                    {loading
+                      ? 'Connexion…'
+                      : step === 'needs_install'
+                        ? 'J\'ai installé HC → Continuer'
+                        : 'Connecter Samsung Health'}
+                  </Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            )}
             <TouchableOpacity onPress={finish} style={styles.skipBtn}>
               <Text style={styles.skipText}>Pas maintenant</Text>
             </TouchableOpacity>

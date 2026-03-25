@@ -66,12 +66,15 @@ export async function checkHCStatus(): Promise<HCStatus> {
 /**
  * Demande les permissions Health Connect.
  * Ouvre l'UI système de Health Connect.
- * Retourne true si toutes les permissions sont accordées.
+ * Retourne true si TotalCaloriesBurned (lecture) est accordée.
  */
 export async function requestHCPermissions(): Promise<boolean> {
   try {
     const granted = await requestPermission(PERMISSIONS);
-    return granted.length > 0;
+    // Vérifie spécifiquement que TotalCaloriesBurned est accordée
+    return granted.some(
+      (p) => p.recordType === 'TotalCaloriesBurned' && p.accessType === 'read'
+    );
   } catch {
     return false;
   }

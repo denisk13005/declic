@@ -85,6 +85,7 @@ export async function scheduleHabitReminder(
       body: "C'est l'heure de ton habitude !",
       sound: 'default',
       data: {},
+      ...(Platform.OS === 'android' ? { channelId: HABIT_CHANNEL_ID } : {}),
     },
     trigger: {
       type: Notifications.SchedulableTriggerInputTypes.DAILY,
@@ -126,9 +127,10 @@ export async function scheduleHabitReminderFull(
     body: "C'est l'heure de ton habitude !",
     sound: 'default' as const,
     data: {},
+    ...(Platform.OS === 'android' ? { channelId: HABIT_CHANNEL_ID } : {}),
   };
 
-  // Cas exact : chaque jour à une heure fixe
+  // DAILY exact à hour:minute — le plus fiable sur Samsung One UI
   if (unit === 'days' && value === 1) {
     return Notifications.scheduleNotificationAsync({
       content,
@@ -140,7 +142,26 @@ export async function scheduleHabitReminderFull(
     });
   }
 
-  // Cas intervalle libre
+  // WEEKLY exact — fiable, survit au Doze mode
+  if (unit === 'weeks' && value === 1) {
+    // Calcule le prochain jour de la semaine correspondant à aujourd'hui
+    const today = new Date();
+    // weekday Expo : 1=Dim, 2=Lun, ..., 7=Sam  /  JS getDay : 0=Dim … 6=Sam
+    const weekday = today.getDay() + 1;
+    return Notifications.scheduleNotificationAsync({
+      content,
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
+        weekday,
+        hour,
+        minute,
+      },
+    });
+  }
+
+  // Autres intervalles (days>1, weeks>1, months) : TIME_INTERVAL
+  // Note : peut être soumis au Doze mode sur Samsung — l'exemption batterie
+  // (requestBatteryOptimizationExemption) est nécessaire pour la fiabilité.
   return Notifications.scheduleNotificationAsync({
     content,
     trigger: {
@@ -168,6 +189,7 @@ export async function scheduleHourlyWindowReminders(
     body: "C'est l'heure de ton habitude !",
     sound: 'default' as const,
     data: {},
+    ...(Platform.OS === 'android' ? { channelId: HABIT_CHANNEL_ID } : {}),
   };
   const ids: string[] = [];
   for (let h = startHour; h <= endHour; h += intervalHours) {

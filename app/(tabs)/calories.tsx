@@ -371,7 +371,7 @@ export default function CaloriesScreen() {
   const { calories: total, macros } = getTotalsForDate(selectedDate);
   const remaining = goals.calories - total;
 
-  const { status: hcStatus, burnedCalories: hcBurnedCalories, isLoading: hcLoading, requestPermissions, openPlayStore } = useHealthConnect(selectedDate);
+  const { status: hcStatus, burnedCalories: hcBurnedCalories, isLoading: hcLoading, requestPermissions, openPlayStore, openSettings: openHCSettings } = useHealthConnect(selectedDate);
   const workoutBurned = useWorkoutStore((s) => s.getTotalBurnedForDate(selectedDate));
 
   const manualBurned = manualBurnedCalories[selectedDate];
@@ -536,6 +536,10 @@ export default function CaloriesScreen() {
                     <Text style={styles.hcBtnText}>Connecter Samsung Health</Text>
                   </LinearGradient>
                 </TouchableOpacity>
+                {/* Si l'user a déjà refusé 2x, Android bloque le dialog — proposer les Settings */}
+                <TouchableOpacity onPress={openHCSettings} style={styles.hcSettingsLink}>
+                  <Text style={styles.hcSettingsText}>Permissions bloquées ? Ouvrir les paramètres HC</Text>
+                </TouchableOpacity>
               </>
             )}
 
@@ -549,6 +553,9 @@ export default function CaloriesScreen() {
                     <Ionicons name="logo-google-playstore" size={16} color="#fff" />
                     <Text style={styles.hcBtnText}>Installer Health Connect</Text>
                   </LinearGradient>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={requestPermissions} style={styles.hcSettingsLink}>
+                  <Text style={styles.hcSettingsText}>Déjà installé ? Réessayer la connexion</Text>
                 </TouchableOpacity>
               </>
             )}
@@ -771,6 +778,15 @@ const styles = StyleSheet.create({
   hcStatValueRow: { flexDirection: 'row', alignItems: 'center' },
   hcStatValue: { fontSize: FONT_SIZE.md, fontWeight: FONT_WEIGHT.bold, color: COLORS.textPrimary },
   hcStatLabel: { fontSize: FONT_SIZE.xs, color: COLORS.textSecondary },
+  hcSettingsLink: {
+    alignItems: 'center',
+    paddingTop: SPACING.xs,
+  },
+  hcSettingsText: {
+    fontSize: FONT_SIZE.xs,
+    color: COLORS.textTertiary,
+    textDecorationLine: 'underline',
+  },
   hcManualLink: {
     flexDirection: 'row',
     alignItems: 'center',
