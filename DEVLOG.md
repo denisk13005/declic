@@ -1,5 +1,57 @@
 # Déclic — Dev Log
 
+## 2026-03-25 — Galaxy Watch 4 — boutons d'action notifications
+
+### `src/services/notifications.ts`
+- Ajout constante `HABIT_REMINDER_CATEGORY_ID = 'habit_reminder'`
+- Ajout `setupHabitNotificationCategory()` : enregistre 2 boutons d'action (`✓ Fait !` → `mark_done`, `⏰ 30 min` → `snooze_30`) — mirrorés automatiquement sur la Galaxy Watch 4 via Wear OS
+- `initNotificationChannel()` appelle désormais `setupHabitNotificationCategory()` au démarrage
+- `scheduleHabitReminder`, `scheduleHabitReminderFull`, `scheduleHourlyWindowReminders` : ajout param `habitId?` → injecté dans `data: { type: 'habit', habitId }` + `categoryIdentifier`
+
+### `src/hooks/useHabitNotifications.ts`
+- Passe `habit.id` aux fonctions de scheduling pour lier les boutons à l'habitude concernée
+
+### `app/_layout.tsx`
+- Ajout `addNotificationResponseReceivedListener` : écoute les actions des boutons
+  - `mark_done` → appelle `toggleCompletion(habitId, today)` (marque l'habitude faite du jour)
+  - `snooze_30` → planifie une notification one-shot 30 min plus tard (même titre/body/data/category)
+
+## 2026-03-25 — Fix calories brûlées + couche santé iOS
+
+### `src/services/healthConnect.ts`
+- **Bug calories** : `readBurnedCalories` sommait TC en court-circuit — Samsung Health synce les séances sportives en `TotalCaloriesBurned` ET la marche passive en `ActiveCaloriesBurned` séparément ; lecture en `Promise.all` + somme des deux types pour correspondre au total Samsung Health
+- Suppression du fallback AC → TC : les deux types sont désormais complémentaires, pas alternatifs
+
+### `src/services/health.ts` (nouveau)
+- Dispatcher unifié Platform.OS → redirige vers Android (Health Connect) ou iOS (HealthKit)
+- Fonctions exportées : `checkHealthStatus`, `requestHealthPermissions`, `readBurnedCalories`, `openHealthSettings`, `openHealthStore`
+
+### `src/services/healthIos.ts` (nouveau — stub)
+- Stub HealthKit complet avec instructions d'installation (`@kingstinct/react-native-healthkit`)
+- Lit `activeEnergyBurned` + `basalEnergyBurned` (équivalent total Apple Watch / app Santé)
+- Compatible : Apple Watch, Fitbit, Garmin, Polar, Whoop, Oura, Withings
+
+### `src/hooks/useHealthConnect.ts`
+- Import migré vers `health.ts` (unifié) au lieu de `healthConnect.ts` directement
+
+## 2026-03-25 — Fix notifications + Health Connect UX
+
+### `src/services/notifications.ts`
+- **Bug majeur** : `channelId: HABIT_CHANNEL_ID` absent dans les 3 fonctions de scheduling → notifs habitudes utilisaient le channel par défaut (priorité basse) au lieu du channel HIGH
+- Trigger `weeks=1` remplacé par `WEEKLY` exact (résiste au Doze mode Samsung One UI) au lieu de `TIME_INTERVAL` non fiable
+
+### `src/services/healthConnect.ts`
+- `requestHCPermissions` : vérification stricte de `TotalCaloriesBurned` (au lieu de `granted.length > 0`)
+- `useHealthConnect.requestPermissions` : re-appelle `checkHCStatus()` après le grant au lieu de forcer `'ready'`
+
+### `app/onboarding/healthconnect.tsx`
+- État `needs_install` : bouton change en "J'ai installé HC → Continuer" après ouverture Play Store
+- État `denied` : propose l'ouverture des Settings HC si permissions refusées 2x
+
+### `app/(tabs)/calories.tsx`
+- Lien "Permissions bloquées ? Ouvrir les paramètres HC" dans la carte `not_authorized`
+- Lien "Déjà installé ? Réessayer la connexion" dans la carte `not_installed`
+
 ## 2026-03-24 — Migration SQLite FTS5 (62 000 aliments)
 
 ### `src/services/foodDb.ts`

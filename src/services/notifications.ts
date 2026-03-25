@@ -20,6 +20,28 @@ Notifications.setNotificationHandler({
 
 export const HABIT_CHANNEL_ID = 'habits';
 export const WORKOUT_CHANNEL_ID = 'workouts';
+export const HABIT_REMINDER_CATEGORY_ID = 'habit_reminder';
+
+/**
+ * Enregistre les boutons d'action affichés sur la Galaxy Watch 4 (Wear OS).
+ * Les actions sont automatiquement mirrorées si le channel a importance HIGH.
+ * - "mark_done"  → marque l'habitude comme faite
+ * - "snooze_30"  → reporte le rappel de 30 minutes
+ */
+export async function setupHabitNotificationCategory(): Promise<void> {
+  await Notifications.setNotificationCategoryAsync(HABIT_REMINDER_CATEGORY_ID, [
+    {
+      identifier: 'mark_done',
+      buttonTitle: '✓ Fait !',
+      options: { isDestructive: false, isAuthenticationRequired: false },
+    },
+    {
+      identifier: 'snooze_30',
+      buttonTitle: '⏰ 30 min',
+      options: { isDestructive: false, isAuthenticationRequired: false },
+    },
+  ]);
+}
 
 /**
  * À appeler une fois au démarrage de l'app (dans _layout.tsx).
@@ -28,6 +50,7 @@ export const WORKOUT_CHANNEL_ID = 'workouts';
  */
 export async function initNotificationChannel(): Promise<void> {
   if (Platform.OS !== 'android') return;
+  await setupHabitNotificationCategory();
   await Notifications.setNotificationChannelAsync(HABIT_CHANNEL_ID, {
     name: 'Rappels d\'habitudes',
     description: 'Notifications quotidiennes pour tes habitudes',
@@ -77,14 +100,16 @@ export async function scheduleHabitReminder(
   habitName: string,
   emoji: string,
   hour: number,
-  minute: number
+  minute: number,
+  habitId?: string,
 ): Promise<string> {
   return Notifications.scheduleNotificationAsync({
     content: {
       title: `${emoji} ${habitName}`,
       body: "C'est l'heure de ton habitude !",
       sound: 'default',
-      data: {},
+      data: { type: 'habit', habitId: habitId ?? null },
+      categoryIdentifier: HABIT_REMINDER_CATEGORY_ID,
       ...(Platform.OS === 'android' ? { channelId: HABIT_CHANNEL_ID } : {}),
     },
     trigger: {
@@ -121,12 +146,14 @@ export async function scheduleHabitReminderFull(
   value: number,
   hour: number,
   minute: number,
+  habitId?: string,
 ): Promise<string> {
   const content = {
     title: `${emoji} ${habitName}`,
     body: "C'est l'heure de ton habitude !",
     sound: 'default' as const,
-    data: {},
+    data: { type: 'habit', habitId: habitId ?? null },
+    categoryIdentifier: HABIT_REMINDER_CATEGORY_ID,
     ...(Platform.OS === 'android' ? { channelId: HABIT_CHANNEL_ID } : {}),
   };
 
@@ -183,12 +210,14 @@ export async function scheduleHourlyWindowReminders(
   intervalHours: number,
   startHour: number,
   endHour: number,
+  habitId?: string,
 ): Promise<string[]> {
   const content = {
     title: `${emoji} ${habitName}`,
     body: "C'est l'heure de ton habitude !",
     sound: 'default' as const,
-    data: {},
+    data: { type: 'habit', habitId: habitId ?? null },
+    categoryIdentifier: HABIT_REMINDER_CATEGORY_ID,
     ...(Platform.OS === 'android' ? { channelId: HABIT_CHANNEL_ID } : {}),
   };
   const ids: string[] = [];

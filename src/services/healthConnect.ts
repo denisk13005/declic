@@ -97,36 +97,33 @@ export function openHCPlayStore(): void {
 /**
  * Lit les calories brûlées pour une journée donnée (format yyyy-MM-dd).
  *
- * Retourne les calories totales (BMR + activité).
- * Retourne null si aucune donnée disponible.
+ * Samsung Health synchronise vers Health Connect de deux façons distinctes :
+ *   - Séances sportives (vélo, course…) → enregistrements TotalCaloriesBurned
+ *   - Marche passive / steps            → enregistrements ActiveCaloriesBurned
+ *
+ * Le total affiché dans Samsung Health = somme des deux types.
+ * Ne pas utiliser l'un comme fallback de l'autre : ils sont complémentaires.
  */
 export async function readBurnedCalories(date: string): Promise<number | null> {
   try {
     const day = new Date(date + 'T12:00:00');
-    const start = startOfDay(day).toISOString();
-    const end   = endOfDay(day).toISOString();
+    const timeRangeFilter = {
+      operator: 'between' as const,
+      startTime: startOfDay(day).toISOString(),
+      endTime:   endOfDay(day).toISOString(),
+    };
 
-    const { records } = await readRecords('TotalCaloriesBurned', {
-      timeRangeFilter: { operator: 'between', startTime: start, endTime: end },
-    });
+    // Lecture en parallèle des deux types de records
+    const [totalResult, activeResult] = await Promise.all([
+      readRecords('TotalCaloriesBurned',  { timeRangeFilter }),
+      readRecords('ActiveCaloriesBurned', { timeRangeFilter }),
+    ]);
 
-    // Somme TotalCaloriesBurned
-    const totalBurned = (records ?? []).reduce((sum, r) => {
-      return sum + (r.energy?.inKilocalories ?? 0);
-    }, 0);
+    const sumTotal = (totalResult.records  ?? []).reduce((s, r) => s + (r.energy?.inKilocalories ?? 0), 0);
+    const sumActive = (activeResult.records ?? []).reduce((s, r) => s + (r.energy?.inKilocalories ?? 0), 0);
 
-    if (totalBurned > 0) return Math.round(totalBurned);
-
-    // Fallback : Samsung Health peut aussi syncer en ActiveCaloriesBurned
-    const { records: activeRecords } = await readRecords('ActiveCaloriesBurned', {
-      timeRangeFilter: { operator: 'between', startTime: start, endTime: end },
-    });
-
-    const activeBurned = (activeRecords ?? []).reduce((sum, r) => {
-      return sum + (r.energy?.inKilocalories ?? 0);
-    }, 0);
-
-    return activeBurned > 0 ? Math.round(activeBurned) : null;
+    const combined = Math.round(sumTotal + sumActive);
+    return combined > 0 ? combined : null;
   } catch {
     return null;
   }

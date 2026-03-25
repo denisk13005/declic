@@ -44,7 +44,7 @@ export function useHabitNotifications() {
 
     if (unit === 'hours' && startHour !== undefined && endHour !== undefined) {
       const notificationIds = await scheduleHourlyWindowReminders(
-        habit.name, habit.emoji, value, startHour, endHour,
+        habit.name, habit.emoji, value, startHour, endHour, habit.id,
       );
       updateHabit(habit.id, {
         reminderTime: { hour: startHour, minute: 0, unit, value, startHour, endHour },
@@ -52,7 +52,7 @@ export function useHabitNotifications() {
       });
     } else {
       const notificationId = await scheduleHabitReminderFull(
-        habit.name, habit.emoji, unit, value, hour, minute,
+        habit.name, habit.emoji, unit, value, hour, minute, habit.id,
       );
       updateHabit(habit.id, {
         reminderTime: { hour, minute, unit, value },

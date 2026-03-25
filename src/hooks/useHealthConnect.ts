@@ -7,13 +7,13 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import {
-  HCStatus,
-  checkHCStatus,
-  requestHCPermissions,
+  HealthStatus as HCStatus,
+  checkHealthStatus as checkHCStatus,
+  requestHealthPermissions as requestHCPermissions,
   readBurnedCalories,
-  openHCSettings,
-  openHCPlayStore,
-} from '@/services/healthConnect';
+  openHealthSettings as openHCSettings,
+  openHealthStore as openHCPlayStore,
+} from '@/services/health';
 
 export interface HealthConnectData {
   status: HCStatus;
