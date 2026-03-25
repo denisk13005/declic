@@ -87,8 +87,9 @@ export async function initFoodDb(): Promise<void> {
 /**
  * Recherche full-text avec préfixes via FTS5.
  * "pom beu" → trouve "Pomme de Beurre", "Pommes Beurre", etc.
+ * @param offset  Position de départ pour la pagination (0 = première page)
  */
-export async function searchFood(query: string, limit = 8): Promise<FoodResult[]> {
+export async function searchFood(query: string, limit = 8, offset = 0): Promise<FoodResult[]> {
   if (!db || !query || query.trim().length < 2) return [];
 
   // Construit la requête FTS5 : chaque mot devient un préfixe ("mot*")
@@ -113,9 +114,9 @@ export async function searchFood(query: string, limit = 8): Promise<FoodResult[]
        FROM foods_fts fts
        JOIN foods f ON f.id = fts.rowid
        WHERE foods_fts MATCH ?
-       ORDER BY fts.rank
-       LIMIT ?`,
-      [terms, limit]
+       ORDER BY fts.rank, length(f.name)
+       LIMIT ? OFFSET ?`,
+      [terms, limit, offset]
     );
 
     return rows.map(row => ({

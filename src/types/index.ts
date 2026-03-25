@@ -94,10 +94,12 @@ export interface FoodItem {
   id: string;
   name: string;
   brand?: string;
-  /** Calories per 100g/ml, or per 1 unit for piece/portion */
+  /** Calories per 100g/ml. For piece/portion with gramsPerUnit set, this is the real per-100g value. */
   caloriesPer100: number;
   macrosPer100: Macros | null;
   defaultServing: Serving;
+  /** Poids en grammes d'une pièce/portion — requis pour recalculer les calories quand unit=piece/portion */
+  gramsPerUnit?: number;
   barcode?: string;
   isCustom: boolean;
   createdAt: string;

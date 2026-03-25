@@ -202,8 +202,12 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
   // Search suggestions
   const [suggestions, setSuggestions] = useState<FoodSuggestion[]>([]);
   const [offLoading, setOffLoading] = useState(false);
+  const [hasMoreDb, setHasMoreDb] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const offAbortRef = useRef<AbortController | null>(null);
+  const lastQueryRef = useRef('');
+  const dbCountRef = useRef(0); // nombre de résultats DB actuellement affichés (hors library)
 
   // Photo / barcode state
   const [photoUri, setPhotoUri] = useState<string | null>(null);
@@ -231,6 +235,10 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
     offAbortRef.current?.abort();
     offAbortRef.current = null;
     setOffLoading(false);
+    setHasMoreDb(false);
+    setLoadingMore(false);
+    lastQueryRef.current = '';
+    dbCountRef.current = 0;
     setGramsPerPiece('');
   }
 
@@ -257,18 +265,40 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
     if (visible && prefillFood) {
       setName(prefillFood.name);
       if (prefillFood.foodItem) {
-        // Aliment de la bibliothèque : on définit basePer100 pour que le recalcul fonctionne
+        const item = prefillFood.foodItem;
         const base = {
-          calories: prefillFood.foodItem.caloriesPer100,
-          macros: prefillFood.foodItem.macrosPer100 ?? null,
+          calories: item.caloriesPer100,
+          macros: item.macrosPer100 ?? null,
         };
         setBasePer100(base);
-        const defQty = prefillFood.foodItem.defaultServing.quantity;
-        const defUnit = prefillFood.foodItem.defaultServing.unit;
+        const defQty = item.defaultServing.quantity;
+        const defUnit = item.defaultServing.unit;
         setQuantity(String(defQty));
         setUnit(defUnit);
-        applyBase(base, defQty, defUnit);
-        setPerLabel('pour 100g');
+
+        const isPieceUnit = defUnit === 'piece' || defUnit === 'portion';
+
+        if (isPieceUnit && item.gramsPerUnit) {
+          // Nouveau format : caloriesPer100 est le vrai /100g, gramsPerUnit connu
+          const gpp = item.gramsPerUnit;
+          setGramsPerPiece(String(gpp));
+          setPerLabel(`1 ${defUnit === 'piece' ? 'pièce' : 'portion'} · ${gpp}g`);
+          applyBase(base, defQty, defUnit, gpp);
+        } else if (isPieceUnit) {
+          // Ancien format : caloriesPer100 = calories de la portion elle-même
+          // Affiche directement les calories sans pouvoir recalculer au gramme près
+          setCaloriesInput(String(Math.round(item.caloriesPer100 * defQty)));
+          if (item.macrosPer100) {
+            setProteinInput(String(Math.round(item.macrosPer100.protein * defQty * 10) / 10));
+            setCarbsInput(String(Math.round(item.macrosPer100.carbs * defQty * 10) / 10));
+            setFatInput(String(Math.round(item.macrosPer100.fat * defQty * 10) / 10));
+            setMacrosOpen(true);
+          }
+          setPerLabel(`pour ${defQty} ${defUnit === 'piece' ? 'pièce' : 'portion'} — entre le poids pour recalculer`);
+        } else {
+          applyBase(base, defQty, defUnit);
+          setPerLabel('pour 100g');
+        }
       } else {
         setCaloriesInput(String(prefillFood.calories));
         if (prefillFood.macros) {
@@ -364,6 +394,8 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
     }
     debounceRef.current = setTimeout(async () => {
       const q = text.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const rawQuery = text.trim();
+      lastQueryRef.current = rawQuery;
 
       // 1. Bibliothèque perso (prioritaire — instantané)
       const libItems: FoodSuggestion[] = foodLibrary
@@ -378,9 +410,17 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
         }));
 
       // 2. SQLite local (62 000 aliments Ciqual + OFF-FR, FTS5)
-      const dbItems: FoodSuggestion[] = (await searchFood(text.trim()))
+      // Fetch PAGE_SIZE+1 pour détecter s'il y a une page suivante
+      const PAGE_SIZE = 8;
+      const rawDb = await searchFood(rawQuery, PAGE_SIZE + 1, 0);
+      const moreAvailable = rawDb.length > PAGE_SIZE;
+      const dbPage = rawDb.slice(0, PAGE_SIZE);
+      const dbItems: FoodSuggestion[] = dbPage
         .filter(r => !libItems.some(l => l.name.toLowerCase() === r.name.toLowerCase()))
         .map(r => ({ name: r.name, caloriesPer100: r.caloriesPer100, macros: r.macros, brand: r.brand, source: 'ciqual' as const }));
+
+      dbCountRef.current = dbItems.length;
+      setHasMoreDb(moreAvailable);
 
       const localItems = [...libItems, ...dbItems];
       setSuggestions(localItems);
@@ -415,11 +455,39 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
     }, 200);
   }
 
+  async function loadMoreDb() {
+    const q = lastQueryRef.current;
+    if (!q || loadingMore) return;
+    const PAGE_SIZE = 8;
+    setLoadingMore(true);
+    try {
+      const offset = dbCountRef.current;
+      const rawDb = await searchFood(q, PAGE_SIZE + 1, offset);
+      const moreAvailable = rawDb.length > PAGE_SIZE;
+      const newPage = rawDb.slice(0, PAGE_SIZE);
+
+      setSuggestions(prev => {
+        const existingNames = new Set(prev.map(s => s.name.toLowerCase()));
+        const offItems = prev.filter(s => s.source === 'off');
+        const nonOff = prev.filter(s => s.source !== 'off');
+        const added: FoodSuggestion[] = newPage
+          .filter(r => !existingNames.has(r.name.toLowerCase()))
+          .map(r => ({ name: r.name, caloriesPer100: r.caloriesPer100, macros: r.macros, brand: r.brand, source: 'ciqual' as const }));
+        return [...nonOff, ...added, ...offItems];
+      });
+      dbCountRef.current = offset + Math.min(newPage.length, PAGE_SIZE);
+      setHasMoreDb(moreAvailable);
+    } finally {
+      setLoadingMore(false);
+    }
+  }
+
   function selectSuggestion(item: FoodSuggestion) {
     setSuggestions([]);
     offAbortRef.current?.abort();
     offAbortRef.current = null;
     setOffLoading(false);
+    setHasMoreDb(false);
     const base = { calories: item.caloriesPer100, macros: item.macros };
     setBasePer100(base);
     setName(item.brand ? `${item.name} (${item.brand})` : item.name);
@@ -539,17 +607,39 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
     const serving: Serving = { quantity: qty, unit };
 
     if (saveToLib && name.trim()) {
+      const gpp = parseFloat(gramsPerPiece);
+      const isPieceUnit = unit === 'piece' || unit === 'portion';
+      const hasGpp = isPieceUnit && gpp > 0;
+
+      // Pour pièce/portion avec poids connu : on stocke les vraies valeurs /100g
+      // pour pouvoir recalculer quand la quantité change depuis la bibliothèque.
+      // Sans poids (gpp inconnu) : on stocke les calories de la portion elle-même.
+      const savedCal100 = unit === 'g' || unit === 'ml'
+        ? Math.round(kcal * 100 / qty)
+        : hasGpp
+          ? Math.round(kcal * 100 / (gpp * qty))
+          : kcal;
+
+      const savedMacros100 = parsedMacros && (unit === 'g' || unit === 'ml')
+        ? {
+            protein: Math.round(parsedMacros.protein * 100 / qty * 10) / 10,
+            carbs: Math.round(parsedMacros.carbs * 100 / qty * 10) / 10,
+            fat: Math.round(parsedMacros.fat * 100 / qty * 10) / 10,
+          }
+        : parsedMacros && hasGpp
+          ? {
+              protein: Math.round(parsedMacros.protein * 100 / (gpp * qty) * 10) / 10,
+              carbs: Math.round(parsedMacros.carbs * 100 / (gpp * qty) * 10) / 10,
+              fat: Math.round(parsedMacros.fat * 100 / (gpp * qty) * 10) / 10,
+            }
+          : parsedMacros;
+
       addFoodItem({
         name: name.trim(),
-        caloriesPer100: unit === 'g' || unit === 'ml' ? Math.round(kcal * 100 / qty) : kcal,
-        macrosPer100: parsedMacros && (unit === 'g' || unit === 'ml')
-          ? {
-              protein: Math.round(parsedMacros.protein * 100 / qty * 10) / 10,
-              carbs: Math.round(parsedMacros.carbs * 100 / qty * 10) / 10,
-              fat: Math.round(parsedMacros.fat * 100 / qty * 10) / 10,
-            }
-          : parsedMacros,
+        caloriesPer100: savedCal100,
+        macrosPer100: savedMacros100,
         defaultServing: serving,
+        gramsPerUnit: hasGpp ? gpp : undefined,
         isCustom: true,
       });
     }
@@ -725,6 +815,23 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
                             </React.Fragment>
                           );
                         })}
+                        {hasMoreDb && !offLoading && (
+                          <TouchableOpacity
+                            style={styles.loadMoreBtn}
+                            onPress={loadMoreDb}
+                            disabled={loadingMore}
+                            activeOpacity={0.7}
+                          >
+                            {loadingMore ? (
+                              <ActivityIndicator size="small" color={C.primary} />
+                            ) : (
+                              <>
+                                <Ionicons name="chevron-down-outline" size={14} color={C.primary} />
+                                <Text style={[styles.loadMoreText, { color: C.primary }]}>Produits suivants</Text>
+                              </>
+                            )}
+                          </TouchableOpacity>
+                        )}
                         {offLoading && (
                           <View style={styles.offLoadingRow}>
                             <ActivityIndicator size="small" color="#6366F1" />
@@ -1019,6 +1126,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#6366F10A',
   },
   offLoadingText: { fontSize: FONT_SIZE.sm, color: '#6366F1', fontWeight: FONT_WEIGHT.medium },
+
+  loadMoreBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 11,
+    gap: 5,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  },
+  loadMoreText: {
+    fontSize: FONT_SIZE.sm,
+    fontWeight: FONT_WEIGHT.medium,
+  },
 
   input: {
     backgroundColor: COLORS.bgElevated,

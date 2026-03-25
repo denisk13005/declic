@@ -214,17 +214,21 @@ export const useCalorieStore = create<CalorieStore>()(
       },
 
       computeCalories: (item, serving) => {
-        const factor =
-          serving.unit === 'g' || serving.unit === 'ml'
+        const isPiece = serving.unit === 'piece' || serving.unit === 'portion';
+        const factor = isPiece && item.gramsPerUnit
+          ? (item.gramsPerUnit * serving.quantity) / 100  // nouveau format : cal/100g réel
+          : serving.unit === 'g' || serving.unit === 'ml'
             ? serving.quantity / 100
-            : serving.quantity;
+            : serving.quantity; // ancien format : caloriesPer100 = cal par 1 unité
         return Math.round(item.caloriesPer100 * factor);
       },
 
       computeMacros: (item, serving) => {
         if (!item.macrosPer100) return null;
-        const factor =
-          serving.unit === 'g' || serving.unit === 'ml'
+        const isPiece = serving.unit === 'piece' || serving.unit === 'portion';
+        const factor = isPiece && item.gramsPerUnit
+          ? (item.gramsPerUnit * serving.quantity) / 100
+          : serving.unit === 'g' || serving.unit === 'ml'
             ? serving.quantity / 100
             : serving.quantity;
         return {

@@ -382,6 +382,14 @@ export default function ProfileScreen() {
               result={tdeeResult}
               activeGoal={profile.fitnessGoal ?? 'maintain'}
               onApply={handleApplyGoal}
+              params={{
+                weight: profile.currentWeight!,
+                height: profile.height!,
+                age: profile.age!,
+                gender: profile.gender!,
+                lifestyleLevel: profile.lifestyleLevel!,
+                exerciseFrequency: profile.exerciseFrequency!,
+              }}
             />
           </>
         ) : (
