@@ -198,6 +198,8 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
   const [basePer100, setBasePer100] = useState<{ calories: number; macros: Macros | null } | null>(null);
   // Poids en grammes d'une pièce/portion (requis pour recalculer quand unit = piece/portion)
   const [gramsPerPiece, setGramsPerPiece] = useState('');
+  // Base pour les repas composés : calories/macros pour 1 portion
+  const [basePerPortion, setBasePerPortion] = useState<{ calories: number; macros: Macros | null } | null>(null);
 
   // Search suggestions
   const [suggestions, setSuggestions] = useState<FoodSuggestion[]>([]);
@@ -231,6 +233,7 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
     setAnalyzing(false);
     setScannerVisible(false);
     setBasePer100(null);
+    setBasePerPortion(null);
     setSuggestions([]);
     offAbortRef.current?.abort();
     offAbortRef.current = null;
@@ -300,13 +303,19 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
           setPerLabel('pour 100g');
         }
       } else {
-        setCaloriesInput(String(prefillFood.calories));
+        // Repas composé : stocker les calories/macros pour 1 portion pour permettre le recalcul
+        const base = { calories: prefillFood.calories, macros: prefillFood.macros ?? null };
+        setBasePerPortion(base);
+        setQuantity('1');
+        setUnit('portion');
+        setCaloriesInput(String(Math.round(prefillFood.calories)));
         if (prefillFood.macros) {
           setProteinInput(String(prefillFood.macros.protein));
           setCarbsInput(String(prefillFood.macros.carbs));
           setFatInput(String(prefillFood.macros.fat));
           setMacrosOpen(true);
         }
+        setPerLabel('pour 1 portion');
       }
     }
   }, [visible, prefillFood]);
@@ -336,10 +345,20 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
 
   function handleQuantityChange(text: string) {
     setQuantity(text);
-    if (!basePer100) return;
     const qty = parseFloat(text);
     if (!qty || qty <= 0) return;
-    applyBase(basePer100, qty, unit, parseFloat(gramsPerPiece) || 0);
+    if (basePer100) {
+      applyBase(basePer100, qty, unit, parseFloat(gramsPerPiece) || 0);
+    } else if (basePerPortion) {
+      // Repas composé : recalcul direct par multiplication du nombre de portions
+      setCaloriesInput(String(Math.round(basePerPortion.calories * qty)));
+      if (basePerPortion.macros) {
+        setProteinInput(String(Math.round(basePerPortion.macros.protein * qty * 10) / 10));
+        setCarbsInput(String(Math.round(basePerPortion.macros.carbs * qty * 10) / 10));
+        setFatInput(String(Math.round(basePerPortion.macros.fat * qty * 10) / 10));
+      }
+      setPerLabel(`pour ${qty} portion${qty > 1 ? 's' : ''}`);
+    }
   }
 
   function handleUnitChange(newUnit: ServingUnit) {

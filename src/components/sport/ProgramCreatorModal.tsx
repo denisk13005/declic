@@ -26,7 +26,7 @@ import {
   getDefaultExerciseParams,
   TECHNIQUE_NOTES,
 } from '@/utils/programGenerator';
-import { Exercise, MUSCLE_GROUP_LABELS } from '@/data/exercises';
+import { Exercise, MUSCLE_GROUP_LABELS, ANTAGONIST_GROUPS } from '@/data/exercises';
 import { useProgramStore } from '@/stores/programStore';
 import ExercisePickerModal from '@/components/sport/ExercisePickerModal';
 import { useProfileStore } from '@/stores/profileStore';
@@ -248,8 +248,15 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
   function removeExerciseFromDay(dayIdx: number, exIdx: number) {
     setCustomExercises((prev) => {
       const next = [...prev];
-      const day = [...(next[dayIdx] ?? [])];
+      let day = [...(next[dayIdx] ?? [])];
+      const removedExId = day[exIdx].exercise.id;
       day.splice(exIdx, 1);
+      // Si cet exercice était utilisé comme paire dans un autre, annuler ce pairing
+      day = day.map((pe) =>
+        pe.supersetWith?.id === removedExId
+          ? { ...pe, supersetWith: undefined }
+          : pe
+      );
       next[dayIdx] = day;
       return next;
     });
@@ -259,22 +266,61 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
     setCustomExercises((prev) => {
       const next = [...prev];
       const day = [...(next[dayIdx] ?? [])];
-      const pe = { ...day[exIdx], technique, techniqueNote: TECHNIQUE_NOTES[technique] || undefined };
-      // Effacer le pair si la technique ne le nécessite plus
-      if (technique !== 'superset' && technique !== 'biset') {
+      const currentPe = day[exIdx];
+      const pe = { ...currentPe, technique, techniqueNote: TECHNIQUE_NOTES[technique] || undefined };
+
+      // Si on quitte superset/biset alors qu'un exercice était pairé, le remettre dans la liste
+      if (technique !== 'superset' && technique !== 'biset' && currentPe.supersetWith) {
+        const params = getDefaultExerciseParams(goal, level);
+        const ex = currentPe.supersetWith;
+        day.push({
+          exercise: ex,
+          sets: ex.isCompound ? params.compoundSets : params.isolationSets,
+          reps: ex.isCompound ? params.compoundReps : params.isolationReps,
+          rest: ex.isCompound ? params.compoundRest : params.isolationRest,
+          technique: 'none',
+        });
         delete pe.supersetWith;
       }
+
       day[exIdx] = pe;
       next[dayIdx] = day;
       return next;
     });
   }
 
-  function setPairForExercise(dayIdx: number, exIdx: number, paired: Exercise | undefined) {
+  function setPairForExercise(
+    dayIdx: number,
+    exIdx: number,
+    paired: Exercise | undefined,
+    pairedOriginalIdx?: number
+  ) {
     setCustomExercises((prev) => {
       const next = [...prev];
-      const day = [...(next[dayIdx] ?? [])];
-      day[exIdx] = { ...day[exIdx], supersetWith: paired };
+      let day = [...(next[dayIdx] ?? [])];
+
+      if (paired === undefined) {
+        // Annuler le pairing : remettre l'exercice pairé dans la liste
+        const currentPair = day[exIdx].supersetWith;
+        if (currentPair) {
+          const params = getDefaultExerciseParams(goal, level);
+          day.push({
+            exercise: currentPair,
+            sets: currentPair.isCompound ? params.compoundSets : params.isolationSets,
+            reps: currentPair.isCompound ? params.compoundReps : params.isolationReps,
+            rest: currentPair.isCompound ? params.compoundRest : params.isolationRest,
+            technique: 'none',
+          });
+        }
+        day[exIdx] = { ...day[exIdx], supersetWith: undefined };
+      } else if (pairedOriginalIdx !== undefined) {
+        // Pairer : retirer l'exercice B de la liste et le stocker dans supersetWith de A
+        day.splice(pairedOriginalIdx, 1);
+        // Si B était avant A dans la liste, l'index de A décale de -1
+        const adjustedExIdx = pairedOriginalIdx < exIdx ? exIdx - 1 : exIdx;
+        day[adjustedExIdx] = { ...day[adjustedExIdx], supersetWith: paired };
+      }
+
       next[dayIdx] = day;
       return next;
     });
@@ -537,7 +583,24 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
                       <View style={styles.customizerExList}>
                         {dayExs.map((pe, exIdx) => {
                           const needsPair = pe.technique === 'superset' || pe.technique === 'biset';
-                          const otherExs = dayExs.filter((_, i) => i !== exIdx);
+
+                          // Autres exercices avec leur index original préservé
+                          const otherExsWithIdx = dayExs
+                            .map((p, i) => ({ pe: p, originalIdx: i }))
+                            .filter(({ originalIdx }) => originalIdx !== exIdx);
+
+                          // Filtrage selon la technique : antagoniste (superset) ou même muscle (biset)
+                          const antagonists = ANTAGONIST_GROUPS[pe.exercise.muscleGroup] ?? [];
+                          const pairCandidates = pe.technique === 'superset'
+                            ? otherExsWithIdx.filter(({ pe: o }) => antagonists.includes(o.exercise.muscleGroup))
+                            : pe.technique === 'biset'
+                              ? otherExsWithIdx.filter(({ pe: o }) => o.exercise.muscleGroup === pe.exercise.muscleGroup)
+                              : [];
+
+                          // Chips désactivés si aucun candidat valide dans la séance
+                          const hasAntagonistInDay = otherExsWithIdx.some(({ pe: o }) => antagonists.includes(o.exercise.muscleGroup));
+                          const hasSameMuscleInDay = otherExsWithIdx.some(({ pe: o }) => o.exercise.muscleGroup === pe.exercise.muscleGroup);
+
                           return (
                             <View
                               key={`${pe.exercise.id}-${exIdx}`}
@@ -563,7 +626,9 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
                               <View style={styles.techChipsRow}>
                                 {TECHNIQUE_CONFIG.map(({ key, label, color }) => {
                                   const isActive = pe.technique === key;
-                                  const disabled = (key === 'superset' || key === 'biset') && otherExs.length === 0;
+                                  const disabled =
+                                    (key === 'superset' && !hasAntagonistInDay && !pe.supersetWith) ||
+                                    (key === 'biset' && !hasSameMuscleInDay && !pe.supersetWith);
                                   return (
                                     <TouchableOpacity
                                       key={key}
@@ -583,35 +648,50 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
                               </View>
 
                               {/* Sélecteur de paire pour superset/biset */}
-                              {needsPair && otherExs.length > 0 && (
+                              {needsPair && (
                                 <View style={styles.pairRow}>
-                                  <Text style={styles.pairLabel}>Pairer avec :</Text>
-                                  <View style={styles.pairChips}>
-                                    {otherExs.map((other) => {
-                                      const isPaired = pe.supersetWith?.id === other.exercise.id;
-                                      return (
+                                  <Text style={styles.pairLabel}>
+                                    {pe.technique === 'superset' ? 'Muscle antagoniste :' : 'Même muscle :'}
+                                  </Text>
+
+                                  {pe.supersetWith ? (
+                                    // Paire déjà sélectionnée → afficher le nom + bouton retirer
+                                    <View style={styles.pairChips}>
+                                      <TouchableOpacity
+                                        style={[styles.pairChip, styles.pairChipActive]}
+                                        onPress={() => setPairForExercise(dayIdx, exIdx, undefined)}
+                                        activeOpacity={0.7}
+                                      >
+                                        <Text style={[styles.pairChipText, styles.pairChipTextActive]}>
+                                          {pe.supersetWith.name}
+                                        </Text>
+                                        <Ionicons name="close-circle" size={11} color={C.primary} />
+                                      </TouchableOpacity>
+                                    </View>
+                                  ) : pairCandidates.length > 0 ? (
+                                    // Candidats disponibles
+                                    <View style={styles.pairChips}>
+                                      {pairCandidates.map(({ pe: other, originalIdx }) => (
                                         <TouchableOpacity
                                           key={other.exercise.id}
-                                          style={[
-                                            styles.pairChip,
-                                            isPaired && styles.pairChipActive,
-                                          ]}
-                                          onPress={() =>
-                                            setPairForExercise(
-                                              dayIdx, exIdx,
-                                              isPaired ? undefined : other.exercise
-                                            )
-                                          }
+                                          style={styles.pairChip}
+                                          onPress={() => setPairForExercise(dayIdx, exIdx, other.exercise, originalIdx)}
                                           activeOpacity={0.7}
                                         >
-                                          <Text style={[styles.pairChipText, isPaired && styles.pairChipTextActive]}>
+                                          <Text style={styles.pairChipText}>
                                             {other.exercise.name}
                                           </Text>
-                                          {isPaired && <Ionicons name="checkmark" size={10} color={C.primary} />}
                                         </TouchableOpacity>
-                                      );
-                                    })}
-                                  </View>
+                                      ))}
+                                    </View>
+                                  ) : (
+                                    // Aucun candidat valide dans la séance
+                                    <Text style={styles.pairEmpty}>
+                                      {pe.technique === 'superset'
+                                        ? `Ajoute un exercice antagoniste (${antagonists.map(g => MUSCLE_GROUP_LABELS[g]).join(', ')})`
+                                        : `Ajoute un autre exercice de ${MUSCLE_GROUP_LABELS[pe.exercise.muscleGroup]}`}
+                                    </Text>
+                                  )}
                                 </View>
                               )}
                             </View>
@@ -849,6 +929,7 @@ const styles = StyleSheet.create({
   pairChipActive: { borderColor: COLORS.primary, backgroundColor: COLORS.primaryGlow },
   pairChipText: { fontSize: 11, color: COLORS.textSecondary },
   pairChipTextActive: { color: COLORS.primaryLight, fontWeight: FONT_WEIGHT.semibold },
+  pairEmpty: { fontSize: FONT_SIZE.xs, color: COLORS.textTertiary, fontStyle: 'italic', marginTop: 2 },
 
   addExBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',

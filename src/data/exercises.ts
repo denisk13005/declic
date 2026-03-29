@@ -25,6 +25,23 @@ export const MUSCLE_GROUP_LABELS: Record<MuscleGroup, string> = {
   abs:        'Abdominaux',
 };
 
+/**
+ * Groupes musculaires antagonistes pour les supersets.
+ * Un superset associe deux muscles antagonistes (ex. pectoraux ↔ dos).
+ */
+export const ANTAGONIST_GROUPS: Record<MuscleGroup, MuscleGroup[]> = {
+  chest:      ['back'],
+  back:       ['chest'],
+  biceps:     ['triceps'],
+  triceps:    ['biceps'],
+  quads:      ['hamstrings', 'glutes'],
+  hamstrings: ['quads', 'glutes'],
+  glutes:     ['quads', 'hamstrings', 'abs'],
+  shoulders:  ['back'],
+  abs:        ['back', 'glutes'],
+  calves:     [],
+};
+
 export interface Exercise {
   id: string;
   name: string;

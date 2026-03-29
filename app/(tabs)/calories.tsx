@@ -53,40 +53,51 @@ const MEAL_META: Record<MealType, { label: string; icon: string; dotColor: strin
 
 // ─── Anneau SVG ───────────────────────────────────────────────────────────────
 
-const RING_SIZE = 180;
-const STROKE_WIDTH = 16;
-const RADIUS_RING = (RING_SIZE - STROKE_WIDTH) / 2;
-const CIRCUMFERENCE = 2 * Math.PI * RADIUS_RING;
-
-function CalorieRing({ consumed, goal }: { consumed: number; goal: number }) {
+function CalorieRing({
+  consumed,
+  goal,
+  size = 180,
+  gradId = 'ringGrad',
+}: {
+  consumed: number;
+  goal: number;
+  size?: number;
+  gradId?: string;
+}) {
   const C = useAppColors();
-  const pct = goal > 0 ? Math.min(consumed / goal, 1) : 0;
-  const strokeDashoffset = CIRCUMFERENCE * (1 - pct);
+  const strokeWidth = size <= 152 ? 12 : 16;
+  const r = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * r;
+  const pct = goal > 0 ? Math.min(Math.max(consumed, 0) / goal, 1) : 0;
+  const strokeDashoffset = circumference * (1 - pct);
   const exceeded = consumed > goal;
+  const isSmall = size <= 152;
 
   return (
-    <View style={styles.ringContainer}>
-      <Svg width={RING_SIZE} height={RING_SIZE} style={{ transform: [{ rotate: '-90deg' }] }}>
+    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+      <Svg width={size} height={size} style={{ transform: [{ rotate: '-90deg' }] }}>
         <Defs>
-          <SvgGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+          <SvgGradient id={gradId} x1="0" y1="0" x2="1" y2="1">
             <Stop offset="0" stopColor={exceeded ? COLORS.error : C.primary} />
             <Stop offset="1" stopColor={exceeded ? C.accent : C.primaryLight} />
           </SvgGradient>
         </Defs>
-        <Circle cx={RING_SIZE / 2} cy={RING_SIZE / 2} r={RADIUS_RING} stroke={COLORS.bgElevated} strokeWidth={STROKE_WIDTH} fill="none" />
+        <Circle cx={size / 2} cy={size / 2} r={r} stroke={COLORS.bgElevated} strokeWidth={strokeWidth} fill="none" />
         {pct > 0 && (
           <Circle
-            cx={RING_SIZE / 2} cy={RING_SIZE / 2} r={RADIUS_RING}
-            stroke="url(#ringGrad)" strokeWidth={STROKE_WIDTH} fill="none"
-            strokeDasharray={CIRCUMFERENCE} strokeDashoffset={strokeDashoffset}
+            cx={size / 2} cy={size / 2} r={r}
+            stroke={`url(#${gradId})`} strokeWidth={strokeWidth} fill="none"
+            strokeDasharray={circumference} strokeDashoffset={strokeDashoffset}
             strokeLinecap="round"
           />
         )}
       </Svg>
       <View style={styles.ringCenter}>
-        <Text style={[styles.ringValue, exceeded && { color: COLORS.error }]}>{consumed}</Text>
-        <Text style={styles.ringUnit}>kcal</Text>
-        <Text style={styles.ringGoal}>/ {goal}</Text>
+        <Text style={[styles.ringValue, isSmall && { fontSize: FONT_SIZE.xl }, exceeded && { color: COLORS.error }]}>
+          {consumed}
+        </Text>
+        <Text style={[styles.ringUnit, isSmall && { fontSize: FONT_SIZE.xs }]}>kcal</Text>
+        <Text style={[styles.ringGoal, isSmall && { fontSize: FONT_SIZE.xs }]}>/ {goal}</Text>
       </View>
     </View>
   );
@@ -476,28 +487,77 @@ export default function CaloriesScreen() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        {/* Ring */}
-        <View style={styles.ringWrapper}>
-          <CalorieRing consumed={total} goal={goals.calories} />
-        </View>
+        {/* Ring(s) */}
+        {effectiveBurned != null ? (
+          // Deux anneaux côte à côte quand les calories brûlées sont disponibles
+          <View style={styles.dualRingWrapper}>
+            <View style={styles.dualRingCol}>
+              <Text style={styles.dualRingLabel}>Alimentation</Text>
+              <CalorieRing consumed={total} goal={goals.calories} size={148} gradId="ringGradA" />
+              <Text style={[styles.dualRingRemaining, remaining < 0 && { color: COLORS.error }]}>
+                {remaining < 0 ? `+${Math.abs(remaining)}` : remaining} restantes
+              </Text>
+            </View>
+            <View style={styles.dualRingCol}>
+              <Text style={styles.dualRingLabel}>Activité incluse</Text>
+              <CalorieRing
+                consumed={netCalories != null ? Math.max(0, netCalories) : 0}
+                goal={goals.calories}
+                size={148}
+                gradId="ringGradB"
+              />
+              {netCalories != null && (() => {
+                const netRemaining = goals.calories - netCalories;
+                return (
+                  <Text style={[styles.dualRingRemaining, netRemaining < 0 && { color: COLORS.error }]}>
+                    {netRemaining < 0 ? `+${Math.abs(netRemaining)}` : netRemaining} restantes
+                  </Text>
+                );
+              })()}
+            </View>
+          </View>
+        ) : (
+          <View style={styles.ringWrapper}>
+            <CalorieRing consumed={total} goal={goals.calories} />
+          </View>
+        )}
 
         {/* Summary cards */}
-        <View style={styles.summaryRow}>
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryValue}>{total}</Text>
-            <Text style={styles.summaryLabel}>Consommées</Text>
+        {effectiveBurned != null ? (
+          <View style={styles.summaryRow}>
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryValue}>{total}</Text>
+              <Text style={styles.summaryLabel}>Consommées</Text>
+            </View>
+            <View style={[styles.summaryCard, styles.summaryCardMid]}>
+              <Text style={[styles.summaryValue, { color: '#F97316' }]}>{effectiveBurned}</Text>
+              <Text style={styles.summaryLabel}>Brûlées</Text>
+            </View>
+            <View style={styles.summaryCard}>
+              <Text style={[styles.summaryValue, netCalories != null && netCalories < 0 && { color: COLORS.error }]}>
+                {netCalories != null ? (netCalories < 0 ? `+${Math.abs(netCalories)}` : netCalories) : '—'}
+              </Text>
+              <Text style={styles.summaryLabel}>{netCalories != null && netCalories < 0 ? 'Dépassé' : 'Nettes'}</Text>
+            </View>
           </View>
-          <View style={[styles.summaryCard, styles.summaryCardMid]}>
-            <Text style={styles.summaryValue}>{goals.calories}</Text>
-            <Text style={styles.summaryLabel}>Objectif</Text>
+        ) : (
+          <View style={styles.summaryRow}>
+            <View style={styles.summaryCard}>
+              <Text style={styles.summaryValue}>{total}</Text>
+              <Text style={styles.summaryLabel}>Consommées</Text>
+            </View>
+            <View style={[styles.summaryCard, styles.summaryCardMid]}>
+              <Text style={styles.summaryValue}>{goals.calories}</Text>
+              <Text style={styles.summaryLabel}>Objectif</Text>
+            </View>
+            <View style={styles.summaryCard}>
+              <Text style={[styles.summaryValue, remaining < 0 && { color: COLORS.error }]}>
+                {remaining < 0 ? `+${Math.abs(remaining)}` : remaining}
+              </Text>
+              <Text style={styles.summaryLabel}>{remaining < 0 ? 'Dépassé' : 'Restantes'}</Text>
+            </View>
           </View>
-          <View style={styles.summaryCard}>
-            <Text style={[styles.summaryValue, remaining < 0 && { color: COLORS.error }]}>
-              {remaining < 0 ? `+${Math.abs(remaining)}` : remaining}
-            </Text>
-            <Text style={styles.summaryLabel}>{remaining < 0 ? 'Dépassé' : 'Restantes'}</Text>
-          </View>
-        </View>
+        )}
 
         {/* Macros */}
         {(hasMacroGoals || macros.protein > 0 || macros.carbs > 0 || macros.fat > 0) && (
@@ -738,11 +798,30 @@ const styles = StyleSheet.create({
   },
 
   ringWrapper: { alignItems: 'center', marginBottom: SPACING.lg },
-  ringContainer: { width: RING_SIZE, height: RING_SIZE, alignItems: 'center', justifyContent: 'center' },
   ringCenter: { position: 'absolute', alignItems: 'center' },
   ringValue: { fontSize: FONT_SIZE.xxl, fontWeight: FONT_WEIGHT.extrabold, color: COLORS.textPrimary },
   ringUnit: { fontSize: FONT_SIZE.sm, color: COLORS.textSecondary, marginTop: -2 },
   ringGoal: { fontSize: FONT_SIZE.xs, color: COLORS.textTertiary },
+
+  dualRingWrapper: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'flex-start',
+    marginBottom: SPACING.lg,
+  },
+  dualRingCol: { alignItems: 'center', gap: SPACING.xs },
+  dualRingLabel: {
+    fontSize: FONT_SIZE.xs,
+    fontWeight: FONT_WEIGHT.semibold,
+    color: COLORS.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  dualRingRemaining: {
+    fontSize: FONT_SIZE.sm,
+    fontWeight: FONT_WEIGHT.semibold,
+    color: COLORS.textSecondary,
+  },
 
   summaryRow: { flexDirection: 'row', gap: SPACING.sm, marginBottom: SPACING.lg },
   summaryCard: { flex: 1, backgroundColor: COLORS.bgCard, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.border, padding: SPACING.md, alignItems: 'center', gap: 4 },

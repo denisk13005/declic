@@ -35,6 +35,7 @@ export type HCStatus =
 const PERMISSIONS = [
   { accessType: 'read' as const, recordType: 'TotalCaloriesBurned' as const },
   { accessType: 'read' as const, recordType: 'ActiveCaloriesBurned' as const },
+  { accessType: 'read' as const, recordType: 'Steps' as const },
 ];
 
 /**
@@ -97,12 +98,13 @@ export function openHCPlayStore(): void {
 /**
  * Lit les calories brûlées pour une journée donnée (format yyyy-MM-dd).
  *
- * Samsung Health synchronise vers Health Connect de deux façons distinctes :
- *   - Séances sportives (vélo, course…) → enregistrements TotalCaloriesBurned
- *   - Marche passive / steps            → enregistrements ActiveCaloriesBurned
+ * Samsung Health synchronise vers Health Connect de plusieurs façons :
+ *   - Séances sportives (vélo, course…) → TotalCaloriesBurned
+ *   - Marche passive / activité daily   → ActiveCaloriesBurned (parfois vide selon version SH)
+ *   - Nombre de pas                     → Steps → estimé en kcal si ActiveCaloriesBurned = 0
  *
- * Le total affiché dans Samsung Health = somme des deux types.
- * Ne pas utiliser l'un comme fallback de l'autre : ils sont complémentaires.
+ * Pour les pas : ~0.04 kcal/pas (moyenne pour 70 kg). Si ActiveCaloriesBurned renvoie
+ * une valeur cohérente, on l'utilise directement ; sinon on estime depuis les Steps.
  */
 export async function readBurnedCalories(date: string): Promise<number | null> {
   try {
@@ -113,16 +115,33 @@ export async function readBurnedCalories(date: string): Promise<number | null> {
       endTime:   endOfDay(day).toISOString(),
     };
 
-    // Lecture en parallèle des deux types de records
-    const [totalResult, activeResult] = await Promise.all([
+    // Lecture en parallèle des trois types de records
+    const [totalResult, activeResult, stepsResult] = await Promise.all([
       readRecords('TotalCaloriesBurned',  { timeRangeFilter }),
       readRecords('ActiveCaloriesBurned', { timeRangeFilter }),
+      readRecords('Steps',               { timeRangeFilter }),
     ]);
 
-    const sumTotal = (totalResult.records  ?? []).reduce((s, r) => s + (r.energy?.inKilocalories ?? 0), 0);
-    const sumActive = (activeResult.records ?? []).reduce((s, r) => s + (r.energy?.inKilocalories ?? 0), 0);
+    // Calories des séances sport
+    const sumExercise = (totalResult.records ?? []).reduce(
+      (s, r) => s + (r.energy?.inKilocalories ?? 0), 0
+    );
 
-    const combined = Math.round(sumTotal + sumActive);
+    // Calories actives (marche, activité quotidienne) — synchro Samsung Health directe
+    const sumActive = (activeResult.records ?? []).reduce(
+      (s, r) => s + (r.energy?.inKilocalories ?? 0), 0
+    );
+
+    // Estimation depuis les pas si Samsung Health n'a pas synchronisé ActiveCaloriesBurned
+    const totalSteps = (stepsResult.records ?? []).reduce(
+      (s, r) => s + ((r as any).count ?? 0), 0
+    );
+    const stepsCalories = totalSteps * 0.04; // ~0.04 kcal/pas pour 70 kg
+
+    // On prend le max entre la valeur directe et l'estimation pas pour éviter le double comptage
+    const passiveCalories = sumActive > 0 ? sumActive : stepsCalories;
+
+    const combined = Math.round(sumExercise + passiveCalories);
     return combined > 0 ? combined : null;
   } catch {
     return null;
