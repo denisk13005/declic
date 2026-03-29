@@ -23,7 +23,7 @@ export default ({ config }) => ({
   },
   android: {
     adaptiveIcon: {
-      foregroundImage: './assets/adaptive-icon.png',
+      foregroundImage: './assets/icon.png',
       backgroundColor: '#0A0A0F',
     },
     package: 'com.declic.nutrition',
