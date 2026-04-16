@@ -428,8 +428,35 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
           source: 'library' as const,
         }));
 
-      // 2. SQLite local (62 000 aliments Ciqual + OFF-FR, FTS5)
-      // Fetch PAGE_SIZE+1 pour détecter s'il y a une page suivante
+      // 2. OFF lancé en parallèle immédiatement (sans attendre les résultats locaux)
+      const ctrl = new AbortController();
+      offAbortRef.current = ctrl;
+      setOffLoading(true);
+      const timeoutId = setTimeout(() => ctrl.abort(), 10000);
+      searchOFF(text.trim(), ctrl.signal)
+        .then(offResults => {
+          if (offAbortRef.current !== ctrl) return;
+          const offItems: FoodSuggestion[] = offResults.map(p => ({
+            name: p.name,
+            caloriesPer100: p.caloriesPer100,
+            macros: p.macrosPer100,
+            brand: p.brand,
+            source: 'off' as const,
+          }));
+          // Injecte les résultats OFF sans écraser les résultats locaux déjà affichés
+          setSuggestions(prev => {
+            const existingNames = new Set(prev.map(r => r.name.toLowerCase()));
+            const newOff = offItems.filter(r => !existingNames.has(r.name.toLowerCase()));
+            return [...prev, ...newOff];
+          });
+        })
+        .catch(() => {})
+        .finally(() => {
+          clearTimeout(timeoutId);
+          if (offAbortRef.current === ctrl) setOffLoading(false);
+        });
+
+      // 3. SQLite local (62 000 aliments Ciqual + OFF-FR, FTS5)
       const PAGE_SIZE = 8;
       const rawDb = await searchFood(rawQuery, PAGE_SIZE + 1, 0);
       const moreAvailable = rawDb.length > PAGE_SIZE;
@@ -442,35 +469,13 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
       setHasMoreDb(moreAvailable);
 
       const localItems = [...libItems, ...dbItems];
-      setSuggestions(localItems);
-
-      // 3. Fallback OFF si peu de résultats locaux
-      if (localItems.length < 3) {
-        const ctrl = new AbortController();
-        offAbortRef.current = ctrl;
-        setOffLoading(true);
-        // Timeout 6s : évite de tourner indéfiniment si le réseau est lent
-        const timeoutId = setTimeout(() => ctrl.abort(), 20000);
-        searchOFF(text.trim(), ctrl.signal)
-          .then(offResults => {
-            if (offAbortRef.current !== ctrl) return;
-            const offItems: FoodSuggestion[] = offResults.map(p => ({
-              name: p.name,
-              caloriesPer100: p.caloriesPer100,
-              macros: p.macrosPer100,
-              brand: p.brand,
-              source: 'off' as const,
-            }));
-            const existingNames = new Set(localItems.map(r => r.name.toLowerCase()));
-            const newOff = offItems.filter(r => !existingNames.has(r.name.toLowerCase()));
-            setSuggestions([...localItems, ...newOff]);
-          })
-          .catch(() => {})
-          .finally(() => {
-            clearTimeout(timeoutId);
-            if (offAbortRef.current === ctrl) setOffLoading(false);
-          });
-      }
+      // Préserve les résultats OFF déjà arrivés (si réseau rapide) pour ne pas les écraser
+      setSuggestions(prev => {
+        const prevOff = prev.filter(s => s.source === 'off');
+        const localNames = new Set(localItems.map(r => r.name.toLowerCase()));
+        const deduped = prevOff.filter(r => !localNames.has(r.name.toLowerCase()));
+        return [...localItems, ...deduped];
+      });
     }, 200);
   }
 

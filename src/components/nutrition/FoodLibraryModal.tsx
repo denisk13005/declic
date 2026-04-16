@@ -205,23 +205,21 @@ function CreateMealForm({ onCreated, editMeal }: { onCreated: () => void; editMe
       return;
     }
     debounceRef.current = setTimeout(async () => {
+      // OFF lancé en parallèle immédiatement
+      setIsSearchingOFF(true);
+      const ctrl = new AbortController();
+      offAbortRef.current = ctrl;
+      searchOFF(text.trim(), ctrl.signal)
+        .then(results => {
+          if (!ctrl.signal.aborted) setOffResults(results);
+        })
+        .catch(() => {})
+        .finally(() => {
+          if (!ctrl.signal.aborted) setIsSearchingOFF(false);
+        });
+
       const local = await searchFood(text.trim());
       setFoodSuggestions(local);
-      setOffResults([]);
-      // Fallback OFF si peu de résultats locaux
-      if (local.length < 3) {
-        setIsSearchingOFF(true);
-        const ctrl = new AbortController();
-        offAbortRef.current = ctrl;
-        try {
-          const results = await searchOFF(text.trim(), ctrl.signal);
-          if (!ctrl.signal.aborted) setOffResults(results);
-        } catch {
-          // ignoré (abort ou réseau)
-        } finally {
-          if (!ctrl.signal.aborted) setIsSearchingOFF(false);
-        }
-      }
     }, 200);
   }
 

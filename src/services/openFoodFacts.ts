@@ -93,9 +93,14 @@ export function parseProduct(p: any): ProductInfo | null {
 const STOP_WORDS = new Set(['au', 'aux', 'à', 'a', 'de', 'du', 'des', 'le', 'la', 'les', 'un', 'une', 'en', 'et']);
 const NON_LATIN = /[\u0600-\u06FF\u0400-\u04FF\u4E00-\u9FFF\u3040-\u30FF]/;
 
+function normalizeStr(s: string): string {
+  return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
 function wordPrefixMatch(text: string, queryWords: string[]): boolean {
-  const textWords = text.toLowerCase().split(/[\s\-_',().%]+/).filter(Boolean);
+  const textWords = normalizeStr(text).split(/[\s\-_',().%]+/).filter(Boolean);
   // Chaque mot significatif de la requête doit avoir un mot du texte qui commence par lui
+  // Les accents sont normalisés dans les deux sens (haché ↔ hache, fraises ↔ fraise)
   return queryWords.every(qw => textWords.some(tw => tw.startsWith(qw)));
 }
 
@@ -108,7 +113,7 @@ export async function searchByName(query: string, signal?: AbortSignal): Promise
     action: 'process',
     json: '1',
     fields: 'product_name,product_name_fr,brands,nutriments,serving_size,code',
-    page_size: '30',
+    page_size: '50',
     lc: 'fr',
     sort_by: 'unique_scans_n',
   });
@@ -117,8 +122,8 @@ export async function searchByName(query: string, signal?: AbortSignal): Promise
   if (!response.ok) return [];
   const data = await response.json();
 
-  // Mots significatifs de la requête (sans mots vides, >= 2 chars)
-  const queryWords = query.toLowerCase().trim()
+  // Mots significatifs de la requête normalisés (sans accents, sans mots vides, >= 2 chars)
+  const queryWords = normalizeStr(query.trim())
     .split(/\s+/)
     .filter(w => w.length >= 2 && !STOP_WORDS.has(w));
 
@@ -136,7 +141,7 @@ export async function searchByName(query: string, signal?: AbortSignal): Promise
     })
     .map(parseProduct)
     .filter(Boolean)
-    .slice(0, 8) as ProductInfo[];
+    .slice(0, 15) as ProductInfo[];
 }
 
 export async function lookupBarcode(barcode: string): Promise<ProductInfo> {

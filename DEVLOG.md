@@ -1,5 +1,27 @@
 # Déclic — Dev Log
 
+## 2026-04-16 — Amélioration moteur de recherche alimentaire (OFF parallèle + fix accents)
+
+### Problèmes résolus
+- OFF n'était consulté qu'en fallback (< 3 résultats locaux) → produits de marque jamais trouvés si DB locale renvoyait 3+ génériques
+- `wordPrefixMatch` dans `openFoodFacts.ts` ne normalisait pas les accents → "hache" ne trouvait pas "haché", "fraise" ne trouvait pas "Fraises Danone", etc.
+
+### `src/services/openFoodFacts.ts`
+- Ajout `normalizeStr()` (NFD strip accents + lowercase) appliquée aux deux côtés de `wordPrefixMatch`
+- `queryWords` normalisés avant comparaison → "steack hache" trouve "Steak haché"
+- `page_size` OFF passé de 30 à 50 (plus de candidats bruts)
+- Limite résultats finaux 8 → 15 (plus de résultats visibles)
+
+### `src/components/nutrition/AddEntryModal.tsx`
+- OFF maintenant lancé **en parallèle immédiatement** dès le debounce (plus de condition `< 3`)
+- Résultats locaux affichés instantanément, résultats OFF injectés quand ils arrivent (~2s)
+- Timeout réduit 20s → 10s
+- `setSuggestions(prev => ...)` préserve les résultats OFF déjà arrivés si réseau ultra-rapide
+
+### `src/components/nutrition/FoodLibraryModal.tsx`
+- Même logique parallèle : OFF lancé immédiatement, plus de condition `< 3`
+- Déduplication locale/OFF préservée
+
 ## 2026-03-25 — Galaxy Watch 4 — boutons d'action notifications
 
 ### `src/services/notifications.ts`
