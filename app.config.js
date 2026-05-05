@@ -1,6 +1,6 @@
 export default ({ config }) => ({
   ...config,
-  name: 'Déclic',
+  name: 'Cairn',
   slug: 'declic',
   owner: 'dk13',
   version: '1.0.0',
@@ -18,12 +18,12 @@ export default ({ config }) => ({
     bundleIdentifier: 'com.declic.nutrition',
     infoPlist: {
       NSUserNotificationUsageDescription:
-        'Déclic uses notifications to remind you of your daily habits.',
+        'Cairn uses notifications to remind you of your daily habits.',
     },
   },
   android: {
     adaptiveIcon: {
-      foregroundImage: './assets/icon.png',
+      foregroundImage: './assets/adaptive-icon.png',
       backgroundColor: '#0A0A0F',
     },
     package: 'com.declic.nutrition',
