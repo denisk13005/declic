@@ -24,6 +24,7 @@ import { PrefillFood } from '@/components/nutrition/AddEntryModal';
 import AddEntryModal from '@/components/nutrition/AddEntryModal';
 import FoodLibraryModal from '@/components/nutrition/FoodLibraryModal';
 import GoalsModal from '@/components/nutrition/GoalsModal';
+import AddWorkoutModal from '@/components/sport/AddWorkoutModal';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
 import { useAppColors } from '@/hooks/useAppColors';
 import { useHealthConnect } from '@/hooks/useHealthConnect';
@@ -375,6 +376,7 @@ export default function CaloriesScreen() {
   const [goalsModalVisible, setGoalsModalVisible] = useState(false);
   const [prefillFood, setPrefillFood] = useState<PrefillFood | null>(null);
   const [burnedModalVisible, setBurnedModalVisible] = useState(false);
+  const [addWorkoutModalVisible, setAddWorkoutModalVisible] = useState(false);
 
   const isToday = selectedDate === todayISO();
 
@@ -386,17 +388,15 @@ export default function CaloriesScreen() {
   const workoutBurned = useWorkoutStore((s) => s.getTotalBurnedForDate(selectedDate));
 
   const manualBurned = manualBurnedCalories[selectedDate];
-  // Priorité : override manuel > Health Connect > workouts manuels
+  // Override manuel prend tout. Sinon : HC + workouts manuels sont additionnés (sources complémentaires).
   const effectiveBurned =
     manualBurned != null
       ? manualBurned
-      : hcBurnedCalories != null
-        ? hcBurnedCalories
-        : workoutBurned > 0
-          ? workoutBurned
-          : null;
+      : (hcBurnedCalories != null || workoutBurned > 0)
+        ? (hcBurnedCalories ?? 0) + workoutBurned
+        : null;
   const isManualBurned = manualBurned != null;
-  const isWorkoutSource = manualBurned == null && hcBurnedCalories == null && workoutBurned > 0;
+  const isWorkoutSource = manualBurned == null && workoutBurned > 0;
   const netCalories = effectiveBurned != null ? total - effectiveBurned : null;
 
   function handleSaveBurned(val: string) {
@@ -654,6 +654,20 @@ export default function CaloriesScreen() {
               </View>
             )}
 
+            {/* Bouton ajouter une activité — toujours visible */}
+            <TouchableOpacity
+              style={styles.hcManualLink}
+              onPress={() => setAddWorkoutModalVisible(true)}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="barbell-outline" size={14} color={COLORS.textSecondary} />
+              <Text style={styles.hcManualLinkText}>
+                {workoutBurned > 0
+                  ? `Activités manuelles : ${workoutBurned} kcal — en ajouter une`
+                  : 'Ajouter une activité physique'}
+              </Text>
+            </TouchableOpacity>
+
             {/* Lien saisie manuelle quand HC non connecté/indispo */}
             {(hcStatus === 'not_authorized' || hcStatus === 'not_installed' || hcStatus === 'unavailable') && !isWorkoutSource && (
               <TouchableOpacity
@@ -748,6 +762,12 @@ export default function CaloriesScreen() {
         onClose={() => setLibraryModalVisible(false)}
         onSelectFoodItem={handleLibrarySelect}
         onSelectComposedMeal={handleLibrarySelect}
+      />
+
+      <AddWorkoutModal
+        visible={addWorkoutModalVisible}
+        date={selectedDate}
+        onClose={() => setAddWorkoutModalVisible(false)}
       />
     </SafeAreaView>
   );
