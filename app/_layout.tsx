@@ -11,6 +11,7 @@ import { listenToAuthState } from '@/stores/authStore';
 import { useHabitStore } from '@/stores/habitStore';
 import { initFoodDb } from '@/services/foodDb';
 import { initNotificationChannel, HABIT_CHANNEL_ID, HABIT_REMINDER_CATEGORY_ID } from '@/services/notifications';
+import { initAds } from '@/services/ads';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -22,6 +23,7 @@ export default function RootLayout() {
     SplashScreen.hideAsync();
     initFoodDb().catch(e => console.warn('[foodDb] init échouée :', e));
     initNotificationChannel();
+    initAds().catch(e => console.warn('[ads] init échouée :', e));
 
     // Écoute les actions des boutons (Galaxy Watch 4 + notifications système)
     const responseSub = Notifications.addNotificationResponseReceivedListener((response) => {

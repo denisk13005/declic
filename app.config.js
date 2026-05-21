@@ -34,6 +34,16 @@ export default ({ config }) => ({
     'expo-router',
     'expo-font',
     [
+      'react-native-google-mobile-ads',
+      {
+        // TODO: remplace par ton vrai App ID AdMob (ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXXXX)
+        androidAppId: 'ca-app-pub-3940256099942544~3347511713', // ID de test Google
+        // Délai de démarrage de l'app pour charger la pub App Open (en ms)
+        delay_app_measurement_init: false,
+        user_tracking_usage_description: "Cette valeur n'est pas utilisée sur Android",
+      },
+    ],
+    [
       'expo-notifications',
       {
         icon: './assets/icon.png',
