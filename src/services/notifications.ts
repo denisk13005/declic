@@ -59,13 +59,11 @@ export async function initNotificationChannel(): Promise<void> {
     lightColor: '#7C3AED',
     enableLights: true,
     enableVibrate: true,
-    sound: 'default',
   });
   await Notifications.setNotificationChannelAsync(MEAL_CHANNEL_ID, {
     name: 'Rappels repas',
     description: 'Notifications quotidiennes pour logger tes repas',
     importance: Notifications.AndroidImportance.DEFAULT,
-    sound: 'default',
   });
   await Notifications.setNotificationChannelAsync(WORKOUT_CHANNEL_ID, {
     name: 'Rappels de séance',
@@ -75,7 +73,6 @@ export async function initNotificationChannel(): Promise<void> {
     lightColor: '#F97316',
     enableLights: true,
     enableVibrate: true,
-    sound: 'default',
   });
 }
 

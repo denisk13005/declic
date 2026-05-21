@@ -51,7 +51,7 @@ export default function NotificationsScreen() {
         {/* Notification preview */}
         <View style={styles.preview}>
           <View style={styles.previewHeader}>
-            <Text style={styles.previewApp}>⚡️ Déclic</Text>
+            <Text style={styles.previewApp}>⚡️ Cairn</Text>
             <Text style={styles.previewTime}>maintenant</Text>
           </View>
           <Text style={styles.previewTitle}>🏃 Temps pour ton habitude !</Text>
@@ -78,6 +78,7 @@ export default function NotificationsScreen() {
 
         {/* Step indicator */}
         <View style={styles.dots}>
+          <View style={styles.dot} />
           <View style={styles.dot} />
           <View style={styles.dot} />
           <View style={styles.dot} />

@@ -22,7 +22,7 @@ export default function WelcomeScreen() {
         {/* Hero */}
         <View style={styles.hero}>
           <Text style={styles.logoEmoji}>⚡️</Text>
-          <Text style={styles.appName}>Déclic</Text>
+          <Text style={styles.appName}>Cairn</Text>
           <Text style={styles.tagline}>Tes habitudes.{'\n'}Ton rythme.</Text>
         </View>
 
