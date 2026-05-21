@@ -597,12 +597,23 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
     setAnalyzing(true);
     try {
       const product = await lookupBarcode(code);
-      prefillFromAnalysis(
-        product.brand ? `${product.name} (${product.brand})` : product.name,
-        product.calories,
-        product.macros,
-        product.perLabel
-      );
+      const base = { calories: product.caloriesPer100, macros: product.macrosPer100 };
+      setBasePer100(base);
+      setName(product.brand ? `${product.name} (${product.brand})` : product.name);
+      setSaveToLib(true);
+      setTab('manuel');
+
+      if (product.portionG && product.portionG > 0) {
+        setUnit('g');
+        setQuantity(String(product.portionG));
+        setPerLabel(product.perLabel);
+        applyBase(base, product.portionG, 'g');
+      } else {
+        setUnit('g');
+        setQuantity('100');
+        setPerLabel('pour 100g');
+        applyBase(base, 100, 'g');
+      }
     } catch (err: any) {
       Alert.alert('Produit introuvable', err.message ?? 'Impossible de récupérer les infos nutritionnelles.');
       setTab('barcode');
