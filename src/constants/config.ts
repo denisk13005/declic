@@ -25,5 +25,7 @@ export const CONFIG = {
     WORKOUTS: '@declic/workouts',
     PROGRAM: '@declic/program',
     SESSIONS: '@declic/sessions',
+    LAST_APP_OPEN_AD: '@declic/last_app_open_ad',
+    LAST_INTERSTITIAL_AD: '@declic/last_interstitial_ad',
   },
 } as const;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -29,6 +29,7 @@ import WorkoutSessionModal from '@/components/sport/WorkoutSessionModal';
 import ExerciseStatsModal from '@/components/sport/ExerciseStatsModal';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
 import { useAppColors } from '@/hooks/useAppColors';
+import { useInterstitialAd } from '@/hooks/useInterstitialAd';
 
 function todayISO(): string {
   return format(new Date(), 'yyyy-MM-dd');
@@ -97,6 +98,24 @@ export default function SportScreen() {
     setWorkoutReminder, clearWorkoutReminder,
   } = useProgramStore();
   const { getSessionForDate, getLastNDays } = useSessionStore();
+
+  const { show: showInterstitial } = useInterstitialAd();
+  const workoutCountRef = useRef(useWorkoutStore.getState().entries.length);
+  const sessionCountRef = useRef(useSessionStore.getState().sessions.length);
+
+  const handleAddWorkoutClose = useCallback(() => {
+    setAddModalVisible(false);
+    const newCount = useWorkoutStore.getState().entries.length;
+    if (newCount > workoutCountRef.current) showInterstitial();
+    workoutCountRef.current = newCount;
+  }, [showInterstitial]);
+
+  const handleSessionClose = useCallback(() => {
+    setSessionDay(null);
+    const newCount = useSessionStore.getState().sessions.length;
+    if (newCount > sessionCountRef.current) showInterstitial();
+    sessionCountRef.current = newCount;
+  }, [showInterstitial]);
 
   const [selectedDate, setSelectedDate] = useState(todayISO());
   const [addModalVisible, setAddModalVisible] = useState(false);
@@ -491,7 +510,7 @@ export default function SportScreen() {
       <AddWorkoutModal
         visible={addModalVisible}
         date={selectedDate}
-        onClose={() => setAddModalVisible(false)}
+        onClose={handleAddWorkoutClose}
       />
 
       <ProgramCreatorModal
@@ -503,7 +522,7 @@ export default function SportScreen() {
         visible={sessionDay !== null}
         day={sessionDay}
         date={selectedDate}
-        onClose={() => setSessionDay(null)}
+        onClose={handleSessionClose}
       />
 
       <ExerciseStatsModal

@@ -12,11 +12,13 @@ import { useHabitStore } from '@/stores/habitStore';
 import { initFoodDb } from '@/services/foodDb';
 import { initNotificationChannel, HABIT_CHANNEL_ID, HABIT_REMINDER_CATEGORY_ID } from '@/services/notifications';
 import { initAds } from '@/services/ads';
+import { useAppOpenAd } from '@/hooks/useAppOpenAd';
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const toggleCompletion = useHabitStore((s) => s.toggleCompletion);
+  useAppOpenAd();
 
   useEffect(() => {
     const unsubscribe = listenToAuthState();

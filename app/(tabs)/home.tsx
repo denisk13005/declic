@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   TextInput,
   StyleSheet,
   Switch,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -22,7 +23,7 @@ import { useSessionStore } from '@/stores/sessionStore';
 import { useProgramStore } from '@/stores/programStore';
 import { usePremium } from '@/hooks/usePremium';
 import { useHabitNotifications } from '@/hooks/useHabitNotifications';
-import { BannerAd, BannerAdSize, AD_UNITS } from '@/services/ads';
+import { BannerAd, BannerAdSize, AD_UNITS, RewardedAd, RewardedAdEventType, AdEventType } from '@/services/ads';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
 import { useAppColors } from '@/hooks/useAppColors';
 import { Habit, ReminderUnit } from '@/types';
@@ -922,8 +923,9 @@ function EditHabitSheet({
 export default function HomeScreen() {
   const C = useAppColors();
   const router = useRouter();
-  const { habits, addHabit, updateHabit, archiveHabit, deleteHabit, toggleCompletion, getTodayCompletionRate, canAddHabit } = useHabitStore();
+  const { habits, addHabit, updateHabit, archiveHabit, deleteHabit, toggleCompletion, getTodayCompletionRate, canAddHabit, setTemporaryUnlock } = useHabitStore();
   const { isPremium } = usePremium();
+  const rewardedAdRef = useRef<RewardedAd | null>(null);
   const { setReminder, removeReminder } = useHabitNotifications();
 
   const [addModalVisible, setAddModalVisible] = useState(false);
@@ -944,9 +946,31 @@ export default function HomeScreen() {
     [addHabit, setReminder]
   );
 
+  const showRewardedAd = useCallback(() => {
+    const ad = RewardedAd.createForAdRequest(AD_UNITS.rewarded);
+    rewardedAdRef.current = ad;
+    ad.addAdEventListener(RewardedAdEventType.LOADED, () => ad.show());
+    ad.addAdEventListener(RewardedAdEventType.EARNED_REWARD, () => {
+      setTemporaryUnlock();
+      setAddModalVisible(true);
+    });
+    ad.addAdEventListener(AdEventType.ERROR, () => {
+      Alert.alert('Pub indisponible', 'Impossible de charger la pub, réessaie plus tard.');
+    });
+    ad.load();
+  }, [setTemporaryUnlock]);
+
   const handlePressAdd = () => {
     if (!canAddHabit(isPremium)) {
-      router.push('/paywall');
+      Alert.alert(
+        'Habitude supplémentaire',
+        "Tu as atteint ta limite gratuite. Regarde une courte pub pour débloquer une habitude aujourd'hui, ou passe à Premium pour des habitudes illimitées.",
+        [
+          { text: 'Regarder une pub', onPress: showRewardedAd },
+          { text: 'Passer à Premium', onPress: () => router.push('/paywall') },
+          { text: 'Annuler', style: 'cancel' },
+        ]
+      );
       return;
     }
     setAddModalVisible(true);

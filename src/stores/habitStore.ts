@@ -94,13 +94,16 @@ interface HabitStore {
   getTodayCompletionRate: () => number;
 
   // Limits
+  temporaryUnlockUntil: number | null;
   canAddHabit: (isPremium: boolean) => boolean;
+  setTemporaryUnlock: () => void;
 }
 
 export const useHabitStore = create<HabitStore>()(
   persist(
     (set, get) => ({
       habits: [],
+      temporaryUnlockUntil: null,
 
       addHabit: (habitData) => {
         const id = `habit_${Date.now()}_${Math.random().toString(36).slice(2)}`;
@@ -167,9 +170,18 @@ export const useHabitStore = create<HabitStore>()(
         return done / active.length;
       },
 
-      canAddHabit: (_isPremium) => {
-        // TODO: réactiver la limite FREE_HABIT_LIMIT après les tests
-        return true;
+      canAddHabit: (isPremium) => {
+        if (isPremium) return true;
+        const { habits, temporaryUnlockUntil } = get();
+        if (temporaryUnlockUntil && Date.now() < temporaryUnlockUntil) return true;
+        const activeCount = habits.filter((h) => !h.archived).length;
+        return activeCount < CONFIG.FREE_HABIT_LIMIT;
+      },
+
+      setTemporaryUnlock: () => {
+        const endOfDay = new Date();
+        endOfDay.setHours(23, 59, 59, 999);
+        set({ temporaryUnlockUntil: endOfDay.getTime() });
       },
     }),
     {
