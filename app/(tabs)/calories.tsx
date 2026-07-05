@@ -17,8 +17,10 @@ import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
 import { format, addDays, subDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useRouter } from 'expo-router';
 import { useCalorieStore } from '@/stores/calorieStore';
 import { useWorkoutStore } from '@/stores/workoutStore';
+import { useProfileStore } from '@/stores/profileStore';
 import { FoodEntry, MealType } from '@/types';
 import { PrefillFood } from '@/components/nutrition/AddEntryModal';
 import AddEntryModal from '@/components/nutrition/AddEntryModal';
@@ -365,7 +367,11 @@ const burnedStyles = StyleSheet.create({
 
 export default function CaloriesScreen() {
   const C = useAppColors();
+  const router = useRouter();
   const { isPremium } = usePremium();
+  const { profile } = useProfileStore();
+  const profileIncomplete = !profile.age || !profile.height || !profile.gender ||
+    !profile.lifestyleLevel || !profile.exerciseFrequency || !profile.currentWeight;
   const {
     getEntriesForDate, getTotalsForDate, addEntry, removeEntry, goals,
     manualBurnedCalories, setManualBurnedCalories, clearManualBurnedCalories,
@@ -523,6 +529,20 @@ export default function CaloriesScreen() {
           <View style={styles.ringWrapper}>
             <CalorieRing consumed={total} goal={goals.calories} />
           </View>
+        )}
+
+        {profileIncomplete && (
+          <TouchableOpacity onPress={() => router.push('/(tabs)/profile')} style={styles.profileAlert} activeOpacity={0.7}>
+            <Ionicons name="information-circle-outline" size={18} color={C.primary} />
+            <Text style={styles.profileAlertText}>
+              Objectif par défaut (2 000 kcal).{' '}
+              <Text style={{ color: C.primary, fontWeight: FONT_WEIGHT.semibold }}>
+                Renseigne ton profil
+              </Text>
+              {' '}pour un calcul personnalisé.
+            </Text>
+            <Ionicons name="chevron-forward" size={14} color={COLORS.textTertiary} />
+          </TouchableOpacity>
         )}
 
         {/* Summary cards */}
@@ -784,6 +804,19 @@ export default function CaloriesScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.bg },
+  profileAlert: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    marginBottom: SPACING.md,
+  },
+  profileAlertText: { flex: 1, fontSize: FONT_SIZE.xs, color: COLORS.textSecondary, lineHeight: 18 },
   content: { padding: SPACING.lg, paddingBottom: 140 },
 
   header: {

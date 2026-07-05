@@ -353,7 +353,7 @@ export default function ProfileScreen() {
         {/* Settings */}
         <Text style={styles.section}>Santé</Text>
         <WeightChartCard onLogWeight={() => setWeightModalVisible(true)} />
-        <View style={styles.card}>
+        <View style={[styles.card, !tdeeResult && { borderColor: C.primary, borderWidth: 1.5 }]}>
           <SettingsRow
             icon="body-outline"
             label="Profil physique"
@@ -395,15 +395,19 @@ export default function ProfileScreen() {
         ) : (
           <>
             <Text style={styles.section}>Objectifs caloriques</Text>
-            <TouchableOpacity onPress={() => setPhysicalModalVisible(true)} style={styles.tdeePrompt}>
-              <Ionicons name="calculator-outline" size={24} color={COLORS.primary} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.tdeePromptTitle}>Calcule tes besoins caloriques</Text>
-                <Text style={styles.tdeePromptSub}>
-                  Renseigne ton profil physique pour obtenir tes macros personnalisées
-                </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={16} color={COLORS.textTertiary} />
+            <TouchableOpacity onPress={() => setPhysicalModalVisible(true)} activeOpacity={0.85} style={styles.tdeePromptWrapper}>
+              <LinearGradient colors={C.gradientPrimary} style={styles.tdeePrompt} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+                <View style={styles.tdeePromptIconCircle}>
+                  <Ionicons name="calculator-outline" size={24} color="#fff" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.tdeePromptTitle}>Calcule tes besoins caloriques</Text>
+                  <Text style={styles.tdeePromptSub}>
+                    Renseigne ton profil physique pour obtenir tes macros personnalisées
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.7)" />
+              </LinearGradient>
             </TouchableOpacity>
           </>
         )}
@@ -566,17 +570,21 @@ const styles = StyleSheet.create({
   versionText: { fontSize: FONT_SIZE.sm, color: COLORS.textTertiary },
   themePreview: { width: 18, height: 18, borderRadius: 9, marginRight: 4 },
 
+  tdeePromptWrapper: { marginBottom: SPACING.lg, borderRadius: RADIUS.lg, overflow: 'hidden' },
   tdeePrompt: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.md,
-    backgroundColor: COLORS.bgCard,
-    borderRadius: RADIUS.lg,
-    borderWidth: 1,
-    borderColor: COLORS.border,
     padding: SPACING.md,
-    marginBottom: SPACING.lg,
   },
-  tdeePromptTitle: { fontSize: FONT_SIZE.md, fontWeight: FONT_WEIGHT.semibold, color: COLORS.textPrimary },
-  tdeePromptSub: { fontSize: FONT_SIZE.xs, color: COLORS.textSecondary, marginTop: 2 },
+  tdeePromptIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: RADIUS.full,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tdeePromptTitle: { fontSize: FONT_SIZE.md, fontWeight: FONT_WEIGHT.semibold, color: '#fff' },
+  tdeePromptSub: { fontSize: FONT_SIZE.xs, color: 'rgba(255,255,255,0.8)', marginTop: 2 },
 });
