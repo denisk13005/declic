@@ -1,5 +1,6 @@
 import {
   MobileAds,
+  BannerAd,
   BannerAdSize,
   TestIds,
   AppOpenAd,
@@ -37,7 +38,7 @@ export const AD_UNITS = {
     : 'ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX', // TODO: remplace
 } as const;
 
-export { BannerAdSize, AdEventType, RewardedAdEventType };
+export { BannerAd, BannerAdSize, AdEventType, RewardedAdEventType };
 export { AppOpenAd, InterstitialAd, RewardedAd };
 
 // Initialise le SDK (à appeler une fois au démarrage dans _layout.tsx)

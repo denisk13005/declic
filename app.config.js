@@ -38,6 +38,7 @@ export default ({ config }) => ({
       {
         // TODO: remplace par ton vrai App ID AdMob (ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXXXX)
         androidAppId: 'ca-app-pub-3940256099942544~3347511713', // ID de test Google
+        iosAppId: 'ca-app-pub-3940256099942544~1458002511', // ID de test iOS (app Android-only, juste pour silencer le warning)
         // Délai de démarrage de l'app pour charger la pub App Open (en ms)
         delay_app_measurement_init: false,
         user_tracking_usage_description: "Cette valeur n'est pas utilisée sur Android",

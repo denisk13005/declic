@@ -28,6 +28,8 @@ import AddWorkoutModal from '@/components/sport/AddWorkoutModal';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
 import { useAppColors } from '@/hooks/useAppColors';
 import { useHealthConnect } from '@/hooks/useHealthConnect';
+import { usePremium } from '@/hooks/usePremium';
+import { BannerAd, BannerAdSize, AD_UNITS } from '@/services/ads';
 
 function todayISO(): string {
   return format(new Date(), 'yyyy-MM-dd');
@@ -363,6 +365,7 @@ const burnedStyles = StyleSheet.create({
 
 export default function CaloriesScreen() {
   const C = useAppColors();
+  const { isPremium } = usePremium();
   const {
     getEntriesForDate, getTotalsForDate, addEntry, removeEntry, goals,
     manualBurnedCalories, setManualBurnedCalories, clearManualBurnedCalories,
@@ -712,8 +715,12 @@ export default function CaloriesScreen() {
         })}
       </ScrollView>
 
+      {!isPremium && (
+        <BannerAd unitId={AD_UNITS.banner} size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER} />
+      )}
+
       {/* Barre d'action fixe */}
-      <View style={styles.actionBar}>
+      <View style={[styles.actionBar, !isPremium && { bottom: 50 }]}>
         {/* Icônes compacts */}
         <View style={styles.actionIconsRow}>
           <TouchableOpacity style={styles.actionIconBtn} onPress={() => setLibraryModalVisible(true)} activeOpacity={0.7}>

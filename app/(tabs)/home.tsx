@@ -22,6 +22,7 @@ import { useSessionStore } from '@/stores/sessionStore';
 import { useProgramStore } from '@/stores/programStore';
 import { usePremium } from '@/hooks/usePremium';
 import { useHabitNotifications } from '@/hooks/useHabitNotifications';
+import { BannerAd, BannerAdSize, AD_UNITS } from '@/services/ads';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
 import { useAppColors } from '@/hooks/useAppColors';
 import { Habit, ReminderUnit } from '@/types';
@@ -1050,6 +1051,10 @@ export default function HomeScreen() {
           </TouchableOpacity>
         )}
       </ScrollView>
+
+      {!isPremium && (
+        <BannerAd unitId={AD_UNITS.banner} size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER} />
+      )}
 
       <AddHabitModal
         visible={addModalVisible}
