@@ -18,6 +18,7 @@ interface Props {
   onClose: () => void;
   onAdd: (exercises: Exercise[]) => void;
   excludeIds?: string[];
+  equipment?: 'gym' | 'home';
 }
 
 const MUSCLE_GROUPS = Object.keys(MUSCLE_GROUP_LABELS) as MuscleGroup[];
@@ -89,12 +90,15 @@ function ExerciseItem({
   );
 }
 
-export default function ExercisePickerModal({ visible, onClose, onAdd, excludeIds = [] }: Props) {
+export default function ExercisePickerModal({ visible, onClose, onAdd, excludeIds = [], equipment }: Props) {
   const [filter, setFilter] = useState<MuscleGroup | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const filtered = EXERCISES.filter(
-    (e) => (!filter || e.muscleGroup === filter) && !excludeIds.includes(e.id)
+    (e) =>
+      (!filter || e.muscleGroup === filter) &&
+      !excludeIds.includes(e.id) &&
+      (!equipment || e.equipment === equipment)
   );
 
   function toggle(id: string) {

@@ -81,13 +81,16 @@ export const useProgramStore = create<ProgramStore>()(
     }),
     {
       name: CONFIG.STORAGE_KEYS.PROGRAM,
-      version: 2,
+      version: 3,
       storage: createJSONStorage(() => AsyncStorage),
       migrate: (persisted: any, version: number) => {
         if (version < 2) {
           persisted.workoutReminderHour = null;
           persisted.workoutReminderMinute = null;
           persisted.workoutReminderIds = [];
+        }
+        if (version < 3 && persisted.program) {
+          persisted.program.environment = 'gym';
         }
         return persisted;
       },

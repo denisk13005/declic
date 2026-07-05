@@ -39,6 +39,7 @@ export interface WorkoutProgram {
   goal: FitnessGoal;
   level: PractitionerLevel;
   gender: Gender;
+  environment: 'gym' | 'home';
   splitName: string;
   days: ProgramDay[];
   createdAt: string;
@@ -320,15 +321,16 @@ function buildDay(
   groups: GroupSpec[],
   goal: FitnessGoal,
   level: PractitionerLevel,
-  gender: Gender
+  gender: Gender,
+  environment: 'gym' | 'home' = 'gym'
 ): ProgramDay {
   const p = GOAL_PARAMS[goal][level];
   const exercises: ProgramExercise[] = [];
   const usedFamilies = new Set<string>();
 
   for (const { group, compounds, isolations } of biasGroups(groups, gender)) {
-    const compoundList = pickUnique(getAvailableCompounds(group, level), compounds, usedFamilies);
-    const isolationList = pickUnique(getAvailableIsolations(group, level), isolations, usedFamilies);
+    const compoundList = pickUnique(getAvailableCompounds(group, level, environment), compounds, usedFamilies);
+    const isolationList = pickUnique(getAvailableIsolations(group, level, environment), isolations, usedFamilies);
 
     for (const ex of compoundList) exercises.push(makeExercise(ex, p, true));
     for (const ex of isolationList) exercises.push(makeExercise(ex, p, false));
@@ -377,7 +379,7 @@ export function generateCustomDay(
 
 // ─── Jours types ─────────────────────────────────────────────────────────────
 
-function makeFullBody(n: number, v: 'A' | 'B' | 'C', goal: FitnessGoal, level: PractitionerLevel, gender: Gender): ProgramDay {
+function makeFullBody(n: number, v: 'A' | 'B' | 'C', goal: FitnessGoal, level: PractitionerLevel, gender: Gender, environment: 'gym' | 'home' = 'gym'): ProgramDay {
   const configs = {
     A: { label: `Full Body A`, focus: gender === 'female' ? 'Fessiers · Dos · Épaules · Abdos' : 'Compound Bas + Pec · Dos · Épaules · Abdos', groups: [
       { group: 'glutes' as MuscleGroup,    compounds: gender === 'female' ? 1 : 0, isolations: gender === 'female' ? 1 : 0 },
@@ -404,10 +406,10 @@ function makeFullBody(n: number, v: 'A' | 'B' | 'C', goal: FitnessGoal, level: P
     ]},
   };
   const cfg = configs[v];
-  return buildDay(n, cfg.label, cfg.focus, cfg.groups, goal, level, gender);
+  return buildDay(n, cfg.label, cfg.focus, cfg.groups, goal, level, gender, environment);
 }
 
-function makePush(n: number, v: 'A' | 'B', goal: FitnessGoal, level: PractitionerLevel, gender: Gender): ProgramDay {
+function makePush(n: number, v: 'A' | 'B', goal: FitnessGoal, level: PractitionerLevel, gender: Gender, environment: 'gym' | 'home' = 'gym'): ProgramDay {
   const groups: GroupSpec[] = v === 'A'
     ? [
         { group: 'chest',     compounds: 2, isolations: level === 'beginner' ? 1 : 2 },
@@ -422,10 +424,10 @@ function makePush(n: number, v: 'A' | 'B', goal: FitnessGoal, level: Practitione
   const focus = gender === 'female'
     ? 'Épaules · Pectoraux · (Fessiers finisher)'
     : 'Pectoraux · Épaules · Triceps';
-  return buildDay(n, `Push ${v}`, focus, groups, goal, level, gender);
+  return buildDay(n, `Push ${v}`, focus, groups, goal, level, gender, environment);
 }
 
-function makePull(n: number, v: 'A' | 'B', goal: FitnessGoal, level: PractitionerLevel, gender: Gender): ProgramDay {
+function makePull(n: number, v: 'A' | 'B', goal: FitnessGoal, level: PractitionerLevel, gender: Gender, environment: 'gym' | 'home' = 'gym'): ProgramDay {
   const groups: GroupSpec[] = v === 'A'
     ? [
         { group: 'back',      compounds: 2, isolations: 1 },
@@ -440,10 +442,10 @@ function makePull(n: number, v: 'A' | 'B', goal: FitnessGoal, level: Practitione
   const focus = gender === 'female'
     ? 'Dos · Biceps · Ischio · Abdos'
     : 'Dos · Biceps · (Abdos)';
-  return buildDay(n, `Pull ${v}`, focus, groups, goal, level, gender);
+  return buildDay(n, `Pull ${v}`, focus, groups, goal, level, gender, environment);
 }
 
-function makeLegs(n: number, v: 'A' | 'B', goal: FitnessGoal, level: PractitionerLevel, gender: Gender): ProgramDay {
+function makeLegs(n: number, v: 'A' | 'B', goal: FitnessGoal, level: PractitionerLevel, gender: Gender, environment: 'gym' | 'home' = 'gym'): ProgramDay {
   // Femme : fessiers en priorité. Homme : quadriceps en priorité.
   const groups: GroupSpec[] = gender === 'female'
     ? v === 'A'
@@ -476,10 +478,10 @@ function makeLegs(n: number, v: 'A' | 'B', goal: FitnessGoal, level: Practitione
   const focus = gender === 'female'
     ? v === 'A' ? 'Fessiers · Ischio · Quadriceps · Mollets' : 'Fessiers · Ischio · Abdos'
     : v === 'A' ? 'Quadriceps · Ischio · Fessiers · Mollets' : 'Fessiers · Ischio · Mollets · Abdos';
-  return buildDay(n, `Legs ${v}`, focus, groups, goal, level, gender);
+  return buildDay(n, `Legs ${v}`, focus, groups, goal, level, gender, environment);
 }
 
-function makeUpper(n: number, v: 'A' | 'B', goal: FitnessGoal, level: PractitionerLevel, gender: Gender): ProgramDay {
+function makeUpper(n: number, v: 'A' | 'B', goal: FitnessGoal, level: PractitionerLevel, gender: Gender, environment: 'gym' | 'home' = 'gym'): ProgramDay {
   const groups: GroupSpec[] = v === 'A'
     ? [
         { group: 'chest',     compounds: 1, isolations: 1 },
@@ -495,10 +497,10 @@ function makeUpper(n: number, v: 'A' | 'B', goal: FitnessGoal, level: Practition
         { group: 'biceps',    compounds: 0, isolations: 1 },
         { group: 'triceps',   compounds: 1, isolations: 1 },
       ];
-  return buildDay(n, `Upper ${v}`, 'Pectoraux · Dos · Épaules · Bras', groups, goal, level, gender);
+  return buildDay(n, `Upper ${v}`, 'Pectoraux · Dos · Épaules · Bras', groups, goal, level, gender, environment);
 }
 
-function makeLower(n: number, v: 'A' | 'B', goal: FitnessGoal, level: PractitionerLevel, gender: Gender): ProgramDay {
+function makeLower(n: number, v: 'A' | 'B', goal: FitnessGoal, level: PractitionerLevel, gender: Gender, environment: 'gym' | 'home' = 'gym'): ProgramDay {
   const groups: GroupSpec[] = gender === 'female'
     ? v === 'A'
       ? [
@@ -528,7 +530,7 @@ function makeLower(n: number, v: 'A' | 'B', goal: FitnessGoal, level: Practition
   const focus = gender === 'female'
     ? v === 'A' ? 'Fessiers · Ischio · Quadriceps · Mollets' : 'Fessiers · Ischio · Abdos'
     : v === 'A' ? 'Quadriceps · Ischio · Fessiers · Mollets' : 'Fessiers · Quads · Ischio · Abdos';
-  return buildDay(n, `Lower ${v}`, focus, groups, goal, level, gender);
+  return buildDay(n, `Lower ${v}`, focus, groups, goal, level, gender, environment);
 }
 
 // ─── Générateur principal ─────────────────────────────────────────────────────
@@ -557,20 +559,22 @@ export function generateProgram(
   sessionsPerWeek: number,
   goal: FitnessGoal,
   level: PractitionerLevel,
-  gender: Gender
+  gender: Gender,
+  environment: 'gym' | 'home' = 'gym'
 ): Omit<WorkoutProgram, 'id' | 'createdAt'> {
   let days: ProgramDay[] = [];
   const g = gender;
+  const env = environment;
 
   switch (sessionsPerWeek) {
-    case 1: days = [makeFullBody(1, 'A', goal, level, g)]; break;
-    case 2: days = [makeFullBody(1, 'A', goal, level, g), makeFullBody(2, 'B', goal, level, g)]; break;
-    case 3: days = [makePush(1, 'A', goal, level, g), makePull(2, 'A', goal, level, g), makeLegs(3, 'A', goal, level, g)]; break;
-    case 4: days = [makeUpper(1, 'A', goal, level, g), makeLower(2, 'A', goal, level, g), makeUpper(3, 'B', goal, level, g), makeLower(4, 'B', goal, level, g)]; break;
-    case 5: days = [makePush(1, 'A', goal, level, g), makePull(2, 'A', goal, level, g), makeLegs(3, 'A', goal, level, g), makeUpper(4, 'A', goal, level, g), makeLower(5, 'A', goal, level, g)]; break;
-    case 6: days = [makePush(1, 'A', goal, level, g), makePull(2, 'A', goal, level, g), makeLegs(3, 'A', goal, level, g), makePush(4, 'B', goal, level, g), makePull(5, 'B', goal, level, g), makeLegs(6, 'B', goal, level, g)]; break;
-    default: days = [makeFullBody(1, 'A', goal, level, g)];
+    case 1: days = [makeFullBody(1, 'A', goal, level, g, env)]; break;
+    case 2: days = [makeFullBody(1, 'A', goal, level, g, env), makeFullBody(2, 'B', goal, level, g, env)]; break;
+    case 3: days = [makePush(1, 'A', goal, level, g, env), makePull(2, 'A', goal, level, g, env), makeLegs(3, 'A', goal, level, g, env)]; break;
+    case 4: days = [makeUpper(1, 'A', goal, level, g, env), makeLower(2, 'A', goal, level, g, env), makeUpper(3, 'B', goal, level, g, env), makeLower(4, 'B', goal, level, g, env)]; break;
+    case 5: days = [makePush(1, 'A', goal, level, g, env), makePull(2, 'A', goal, level, g, env), makeLegs(3, 'A', goal, level, g, env), makeUpper(4, 'A', goal, level, g, env), makeLower(5, 'A', goal, level, g, env)]; break;
+    case 6: days = [makePush(1, 'A', goal, level, g, env), makePull(2, 'A', goal, level, g, env), makeLegs(3, 'A', goal, level, g, env), makePush(4, 'B', goal, level, g, env), makePull(5, 'B', goal, level, g, env), makeLegs(6, 'B', goal, level, g, env)]; break;
+    default: days = [makeFullBody(1, 'A', goal, level, g, env)];
   }
 
-  return { sessionsPerWeek, goal, level, gender, splitName: SPLIT_INFO[sessionsPerWeek].name, days };
+  return { sessionsPerWeek, goal, level, gender, environment, splitName: SPLIT_INFO[sessionsPerWeek].name, days };
 }

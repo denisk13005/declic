@@ -44,8 +44,7 @@ function initSets(count: number, defaultReps: string, existing?: SetLog[]): SetD
       reps: s.reps > 0 ? String(s.reps) : '',
     }));
   }
-  const reps = parseDefaultReps(defaultReps);
-  return Array.from({ length: count }, () => ({ weight: '', reps }));
+  return Array.from({ length: count }, () => ({ weight: '', reps: '' }));
 }
 
 // ─── Tableau des séries d'un exercice ─────────────────────────────────────────

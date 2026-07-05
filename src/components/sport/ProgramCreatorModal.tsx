@@ -210,6 +210,7 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
   const [goal, setGoal] = useState<FitnessGoal>(defaultGoal);
   const [level, setLevel] = useState<PractitionerLevel>('intermediate');
   const [gender, setGender] = useState<Gender>(defaultGender);
+  const [environment, setEnvironment] = useState<'gym' | 'home'>('gym');
   const [mode, setMode] = useState<'auto' | 'custom'>('auto');
   const [step, setStep] = useState<'config' | 'customizer' | 'preview'>('config');
   const [expandedDay, setExpandedDay] = useState<number | null>(0);
@@ -327,7 +328,7 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
   }
 
   const preview = useMemo(() => {
-    if (mode === 'auto') return generateProgram(sessions, goal, level, gender);
+    if (mode === 'auto') return generateProgram(sessions, goal, level, gender, environment);
     // Mode custom : utiliser les exercices choisis manuellement
     const days: ProgramDay[] = adjustedCustomExercises.map((exList, i) => ({
       dayNumber: i + 1,
@@ -337,8 +338,8 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
         : 'Aucun exercice',
       exercises: exList,
     }));
-    return { sessionsPerWeek: sessions, goal, level, gender, splitName: 'Programme personnalisé', days };
-  }, [mode, sessions, goal, level, gender, adjustedCustomExercises]);
+    return { sessionsPerWeek: sessions, goal, level, gender, environment, splitName: 'Programme personnalisé', days };
+  }, [mode, sessions, goal, level, gender, environment, adjustedCustomExercises]);
 
   const totalTechniques = preview.days.reduce(
     (s, d) => s + d.exercises.filter((e) => e.technique !== 'none').length,
@@ -430,6 +431,34 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
                       <Text style={styles.modeDesc}>
                         {m === 'auto' ? 'Programme optimisé généré par l\'app' : 'Tu choisis tes exercices par séance'}
                       </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              {/* Environnement */}
+              <Text style={styles.sectionLabel}>Lieu d'entraînement</Text>
+              <View style={styles.envRow}>
+                {([
+                  { key: 'gym', label: 'Salle de sport', emoji: '🏋️', desc: 'Machines · câbles · barres' },
+                  { key: 'home', label: 'Maison', emoji: '🏠', desc: 'Haltères · poids de corps · élastiques' },
+                ] as const).map(({ key, label, emoji, desc }) => {
+                  const isSelected = environment === key;
+                  return (
+                    <TouchableOpacity
+                      key={key}
+                      style={[styles.envCard, isSelected && { borderColor: C.primary, backgroundColor: C.primaryGlow }]}
+                      onPress={() => setEnvironment(key)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.envEmoji}>{emoji}</Text>
+                      <Text style={[styles.envLabel, isSelected && { color: C.primary }]}>{label}</Text>
+                      <Text style={styles.envDesc}>{desc}</Text>
+                      {isSelected && (
+                        <View style={[styles.envCheck, { backgroundColor: C.primary }]}>
+                          <Ionicons name="checkmark" size={10} color="#fff" />
+                        </View>
+                      )}
                     </TouchableOpacity>
                   );
                 })}
@@ -728,6 +757,7 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
                     ? (adjustedCustomExercises[editingDayIdx] ?? []).map((pe) => pe.exercise.id)
                     : []
                 }
+                equipment={environment}
               />
             </>
 
@@ -736,7 +766,7 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.previewContent}>
               {/* Résumé */}
               <View style={styles.previewSummary}>
-                <SummaryChip value={GENDER_INFO[gender].emoji} label={GENDER_INFO[gender].label} />
+                <SummaryChip value={environment === 'gym' ? '🏋️' : '🏠'} label={environment === 'gym' ? 'Salle' : 'Maison'} />
                 <View style={styles.previewDiv} />
                 <SummaryChip value={String(sessions)} label="séances/sem" />
                 <View style={styles.previewDiv} />
@@ -887,6 +917,22 @@ const styles = StyleSheet.create({
   },
   modeLabel: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.bold, color: COLORS.textPrimary },
   modeDesc: { fontSize: 10, color: COLORS.textTertiary, textAlign: 'center', lineHeight: 14 },
+
+  // Environnement
+  envRow: { flexDirection: 'row', gap: SPACING.sm, marginTop: SPACING.xs },
+  envCard: {
+    flex: 1, alignItems: 'center', paddingVertical: SPACING.md, paddingHorizontal: SPACING.sm,
+    borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: COLORS.bgElevated, gap: 4, position: 'relative',
+  },
+  envEmoji: { fontSize: 26 },
+  envLabel: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.bold, color: COLORS.textPrimary },
+  envDesc: { fontSize: 10, color: COLORS.textTertiary, textAlign: 'center', lineHeight: 14 },
+  envCheck: {
+    position: 'absolute', top: 6, right: 6,
+    width: 16, height: 16, borderRadius: 8,
+    alignItems: 'center', justifyContent: 'center',
+  },
 
   // Customizer
   customizerDayCard: {

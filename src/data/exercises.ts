@@ -52,7 +52,11 @@ export interface Exercise {
   family: string;
   /** Conseil technique court en français */
   description: string;
+  /** Environnement requis : 'home' = haltères/poids de corps/élastiques, 'gym' = machines/câbles/barre */
+  equipment: 'gym' | 'home';
 }
+
+type RawExercise = Omit<Exercise, 'equipment'>;
 
 const LEVEL_ORDER: Record<PractitionerLevel, number> = {
   beginner: 0,
@@ -64,7 +68,7 @@ export function isAvailableForLevel(exercise: Exercise, level: PractitionerLevel
   return LEVEL_ORDER[exercise.minLevel] <= LEVEL_ORDER[level];
 }
 
-export const EXERCISES: Exercise[] = [
+const RAW_EXERCISES: RawExercise[] = [
   // ─── Pectoraux ───────────────────────────────────────────────────────────────
   { id: 'push_up',          name: 'Pompes',                       muscleGroup: 'chest',      isCompound: true,  minLevel: 'beginner',     family: 'chest_press_flat',    description: "Corps aligné de la tête aux talons, coudes à 45° du buste. Descends jusqu'à ce que la poitrine frôle le sol puis pousse explosif." },
   { id: 'pec_deck',         name: 'Pec deck (machine)',           muscleGroup: 'chest',      isCompound: false, minLevel: 'beginner',     family: 'chest_fly',           description: "Assis sur la machine, referme les bras en arc de cercle devant toi. Contrôle lentement le retour pour étirer les pectoraux." },
@@ -257,14 +261,65 @@ export const EXERCISES: Exercise[] = [
   { id: 'v_up',                  name: 'V-up',                           muscleGroup: 'abs',        isCompound: false, minLevel: 'intermediate', family: 'crunch',              description: "Simultanément, lève les jambes tendues et le buste pour former un V. Touche les orteils avec les doigts. Contracte fort les abdos en haut." },
 ];
 
-export function getAvailableExercises(group: MuscleGroup, level: PractitionerLevel): Exercise[] {
-  return EXERCISES.filter((e) => e.muscleGroup === group && isAvailableForLevel(e, level));
+// Exercices réalisables à la maison (haltères · poids de corps · élastiques · barre de traction murale)
+const HOME_EXERCISE_IDS = new Set([
+  // Pectoraux
+  'push_up', 'bench_press_db', 'incline_press', 'fly_dumbbell', 'decline_press',
+  'diamond_push_up', 'push_up_feet_elevated', 'push_up_ring',
+  // Dos
+  'pull_up', 'one_arm_row', 'chest_supported', 'chin_up', 'pullover_db', 'weighted_pull_up',
+  // Épaules
+  'lateral_raise', 'dumbbell_press', 'front_raise', 'arnold_press', 'rear_delt_fly',
+  'upright_row', 'lu_raise', 'handstand_push_up', 'z_press',
+  // Biceps
+  'dumbbell_curl', 'hammer_curl', 'incline_curl', 'concentration_curl',
+  'reverse_curl', 'zottman_curl', 'drag_curl', 'waiter_curl',
+  // Triceps
+  'overhead_ext', 'dips_triceps', 'tricep_kickback', 'tate_press',
+  'band_pushdown', 'bench_dip_weighted',
+  // Quadriceps
+  'goblet_squat', 'lunge', 'walking_lunge', 'step_up', 'bulgarian_squat',
+  'sissy_squat', 'reverse_lunge', 'split_squat',
+  // Ischio-jambiers
+  'nordic_curl', 'single_leg_rdl', 'banded_good_morning',
+  // Fessiers
+  'glute_bridge', 'sumo_squat', 'rdl_glutes', 'banded_abduction', 'single_hip_thrust',
+  'clamshell', 'fire_hydrant', 'donkey_kick',
+  // Mollets
+  'single_calf_raise', 'step_calf_raise', 'tibia_raise',
+  // Abdominaux
+  'plank', 'side_plank', 'bicycle_crunch', 'crunch', 'leg_raise',
+  'russian_twist', 'ab_wheel', 'dragon_flag', 'hanging_leg_raise',
+  'hollow_body', 'toes_to_bar', 'flutter_kicks', 'mountain_climber', 'l_sit', 'dead_bug', 'v_up',
+]);
+
+export const EXERCISES: Exercise[] = RAW_EXERCISES.map((e) => ({
+  ...e,
+  equipment: HOME_EXERCISE_IDS.has(e.id) ? 'home' : 'gym',
+}));
+
+export function getAvailableExercises(group: MuscleGroup, level: PractitionerLevel, equipment?: 'gym' | 'home'): Exercise[] {
+  return EXERCISES.filter((e) =>
+    e.muscleGroup === group &&
+    isAvailableForLevel(e, level) &&
+    (!equipment || e.equipment === equipment)
+  );
 }
 
-export function getAvailableCompounds(group: MuscleGroup, level: PractitionerLevel): Exercise[] {
-  return EXERCISES.filter((e) => e.muscleGroup === group && e.isCompound && isAvailableForLevel(e, level));
+export function getAvailableCompounds(group: MuscleGroup, level: PractitionerLevel, equipment?: 'gym' | 'home'): Exercise[] {
+  return EXERCISES.filter((e) =>
+    e.muscleGroup === group &&
+    e.isCompound &&
+    isAvailableForLevel(e, level) &&
+    (!equipment || e.equipment === equipment)
+  );
 }
 
-export function getAvailableIsolations(group: MuscleGroup, level: PractitionerLevel): Exercise[] {
-  return EXERCISES.filter((e) => e.muscleGroup === group && !e.isCompound && isAvailableForLevel(e, level));
+export function getAvailableIsolations(group: MuscleGroup, level: PractitionerLevel, equipment?: 'gym' | 'home'): Exercise[] {
+  return EXERCISES.filter((e) =>
+    e.muscleGroup === group &&
+    !e.isCompound &&
+    isAvailableForLevel(e, level) &&
+    (!equipment || e.equipment === equipment)
+  );
 }
