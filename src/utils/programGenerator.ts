@@ -559,6 +559,11 @@ export const LEVEL_INFO: Record<PractitionerLevel, { label: string; emoji: strin
   advanced:     { label: 'Avancé',        emoji: '🔥', description: '3+ ans · Techniques d\'intensification · Volume élevé',           color: '#F97316' },
 };
 
+/** Vérifie si l'équipement permet des exercices de dos (tirage vertical ou horizontal). */
+function hasPullCapability(eq: Set<EquipmentType>): boolean {
+  return eq.has('pull_up_bar') || eq.has('cables') || eq.has('barbell') || eq.has('dumbbells');
+}
+
 export function generateProgram(
   sessionsPerWeek: number,
   goal: FitnessGoal,
@@ -568,17 +573,57 @@ export function generateProgram(
 ): Omit<WorkoutProgram, 'id' | 'createdAt'> {
   const g = gender;
   const eq = new Set<EquipmentType>(availableEquipment);
+  const canPull = hasPullCapability(eq);
   let days: ProgramDay[] = [];
+  let splitName: string;
 
   switch (sessionsPerWeek) {
-    case 1: days = [makeFullBody(1, 'A', goal, level, g, eq)]; break;
-    case 2: days = [makeFullBody(1, 'A', goal, level, g, eq), makeFullBody(2, 'B', goal, level, g, eq)]; break;
-    case 3: days = [makePush(1, 'A', goal, level, g, eq), makePull(2, 'A', goal, level, g, eq), makeLegs(3, 'A', goal, level, g, eq)]; break;
-    case 4: days = [makeUpper(1, 'A', goal, level, g, eq), makeLower(2, 'A', goal, level, g, eq), makeUpper(3, 'B', goal, level, g, eq), makeLower(4, 'B', goal, level, g, eq)]; break;
-    case 5: days = [makePush(1, 'A', goal, level, g, eq), makePull(2, 'A', goal, level, g, eq), makeLegs(3, 'A', goal, level, g, eq), makeUpper(4, 'A', goal, level, g, eq), makeLower(5, 'A', goal, level, g, eq)]; break;
-    case 6: days = [makePush(1, 'A', goal, level, g, eq), makePull(2, 'A', goal, level, g, eq), makeLegs(3, 'A', goal, level, g, eq), makePush(4, 'B', goal, level, g, eq), makePull(5, 'B', goal, level, g, eq), makeLegs(6, 'B', goal, level, g, eq)]; break;
-    default: days = [makeFullBody(1, 'A', goal, level, g, eq)];
+    case 1:
+      days = [makeFullBody(1, 'A', goal, level, g, eq)];
+      splitName = SPLIT_INFO[1].name;
+      break;
+    case 2:
+      days = [makeFullBody(1, 'A', goal, level, g, eq), makeFullBody(2, 'B', goal, level, g, eq)];
+      splitName = SPLIT_INFO[2].name;
+      break;
+    case 3:
+      if (canPull) {
+        days = [makePush(1, 'A', goal, level, g, eq), makePull(2, 'A', goal, level, g, eq), makeLegs(3, 'A', goal, level, g, eq)];
+        splitName = SPLIT_INFO[3].name;
+      } else {
+        // Sans exercices de dos → Full Body A/B/C pour couvrir tous les muscles disponibles
+        days = [makeFullBody(1, 'A', goal, level, g, eq), makeFullBody(2, 'B', goal, level, g, eq), makeFullBody(3, 'C', goal, level, g, eq)];
+        splitName = 'Full Body A/B/C';
+      }
+      break;
+    case 4:
+      days = [makeUpper(1, 'A', goal, level, g, eq), makeLower(2, 'A', goal, level, g, eq), makeUpper(3, 'B', goal, level, g, eq), makeLower(4, 'B', goal, level, g, eq)];
+      splitName = SPLIT_INFO[4].name;
+      break;
+    case 5:
+      if (canPull) {
+        days = [makePush(1, 'A', goal, level, g, eq), makePull(2, 'A', goal, level, g, eq), makeLegs(3, 'A', goal, level, g, eq), makeUpper(4, 'A', goal, level, g, eq), makeLower(5, 'A', goal, level, g, eq)];
+        splitName = SPLIT_INFO[5].name;
+      } else {
+        // Upper/Lower × 2 + Full Body (remplace le Pull day manquant)
+        days = [makeUpper(1, 'A', goal, level, g, eq), makeLower(2, 'A', goal, level, g, eq), makeFullBody(3, 'A', goal, level, g, eq), makeUpper(4, 'B', goal, level, g, eq), makeLower(5, 'B', goal, level, g, eq)];
+        splitName = 'Upper/Lower + Full Body';
+      }
+      break;
+    case 6:
+      if (canPull) {
+        days = [makePush(1, 'A', goal, level, g, eq), makePull(2, 'A', goal, level, g, eq), makeLegs(3, 'A', goal, level, g, eq), makePush(4, 'B', goal, level, g, eq), makePull(5, 'B', goal, level, g, eq), makeLegs(6, 'B', goal, level, g, eq)];
+        splitName = SPLIT_INFO[6].name;
+      } else {
+        // Upper/Lower × 3 (remplace PPL×2 qui nécessite un Pull day)
+        days = [makeUpper(1, 'A', goal, level, g, eq), makeLower(2, 'A', goal, level, g, eq), makeUpper(3, 'B', goal, level, g, eq), makeLower(4, 'B', goal, level, g, eq), makeUpper(5, 'A', goal, level, g, eq), makeLower(6, 'A', goal, level, g, eq)];
+        splitName = 'Upper / Lower × 3';
+      }
+      break;
+    default:
+      days = [makeFullBody(1, 'A', goal, level, g, eq)];
+      splitName = SPLIT_INFO[1].name;
   }
 
-  return { sessionsPerWeek, goal, level, gender, availableEquipment, splitName: SPLIT_INFO[sessionsPerWeek].name, days };
+  return { sessionsPerWeek, goal, level, gender, availableEquipment, splitName, days };
 }
