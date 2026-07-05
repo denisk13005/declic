@@ -10,7 +10,7 @@ import {
   Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { EXERCISES, Exercise, MuscleGroup, MUSCLE_GROUP_LABELS } from '@/data/exercises';
+import { EXERCISES, Exercise, MuscleGroup, MUSCLE_GROUP_LABELS, EquipmentType } from '@/data/exercises';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
 
 interface Props {
@@ -18,7 +18,7 @@ interface Props {
   onClose: () => void;
   onAdd: (exercises: Exercise[]) => void;
   excludeIds?: string[];
-  equipment?: 'gym' | 'home';
+  availableEquipment?: Set<EquipmentType>;
 }
 
 const MUSCLE_GROUPS = Object.keys(MUSCLE_GROUP_LABELS) as MuscleGroup[];
@@ -90,7 +90,7 @@ function ExerciseItem({
   );
 }
 
-export default function ExercisePickerModal({ visible, onClose, onAdd, excludeIds = [], equipment }: Props) {
+export default function ExercisePickerModal({ visible, onClose, onAdd, excludeIds = [], availableEquipment }: Props) {
   const [filter, setFilter] = useState<MuscleGroup | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
@@ -98,7 +98,7 @@ export default function ExercisePickerModal({ visible, onClose, onAdd, excludeId
     (e) =>
       (!filter || e.muscleGroup === filter) &&
       !excludeIds.includes(e.id) &&
-      (!equipment || e.equipment === equipment)
+      (!availableEquipment || availableEquipment.has(e.equipment))
   );
 
   function toggle(id: string) {

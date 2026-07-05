@@ -25,8 +25,10 @@ import {
   IntensificationTechnique,
   getDefaultExerciseParams,
   TECHNIQUE_NOTES,
+  EquipmentType,
+  ALL_EQUIPMENT,
 } from '@/utils/programGenerator';
-import { Exercise, MUSCLE_GROUP_LABELS, ANTAGONIST_GROUPS } from '@/data/exercises';
+import { Exercise, MUSCLE_GROUP_LABELS, ANTAGONIST_GROUPS, EQUIPMENT_LABELS, EQUIPMENT_EMOJI } from '@/data/exercises';
 import { useProgramStore } from '@/stores/programStore';
 import ExercisePickerModal from '@/components/sport/ExercisePickerModal';
 import { useProfileStore } from '@/stores/profileStore';
@@ -210,7 +212,9 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
   const [goal, setGoal] = useState<FitnessGoal>(defaultGoal);
   const [level, setLevel] = useState<PractitionerLevel>('intermediate');
   const [gender, setGender] = useState<Gender>(defaultGender);
-  const [environment, setEnvironment] = useState<'gym' | 'home'>('gym');
+  const [availableEquipment, setAvailableEquipment] = useState<Set<EquipmentType>>(
+    () => new Set<EquipmentType>(ALL_EQUIPMENT)
+  );
   const [mode, setMode] = useState<'auto' | 'custom'>('auto');
   const [step, setStep] = useState<'config' | 'customizer' | 'preview'>('config');
   const [expandedDay, setExpandedDay] = useState<number | null>(0);
@@ -327,8 +331,13 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
     });
   }
 
+  const availableEquipmentArray = useMemo(
+    () => [...availableEquipment] as EquipmentType[],
+    [availableEquipment]
+  );
+
   const preview = useMemo(() => {
-    if (mode === 'auto') return generateProgram(sessions, goal, level, gender, environment);
+    if (mode === 'auto') return generateProgram(sessions, goal, level, gender, availableEquipmentArray);
     // Mode custom : utiliser les exercices choisis manuellement
     const days: ProgramDay[] = adjustedCustomExercises.map((exList, i) => ({
       dayNumber: i + 1,
@@ -338,8 +347,8 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
         : 'Aucun exercice',
       exercises: exList,
     }));
-    return { sessionsPerWeek: sessions, goal, level, gender, environment, splitName: 'Programme personnalisé', days };
-  }, [mode, sessions, goal, level, gender, environment, adjustedCustomExercises]);
+    return { sessionsPerWeek: sessions, goal, level, gender, availableEquipment: availableEquipmentArray, splitName: 'Programme personnalisé', days };
+  }, [mode, sessions, goal, level, gender, availableEquipmentArray, adjustedCustomExercises]);
 
   const totalTechniques = preview.days.reduce(
     (s, d) => s + d.exercises.filter((e) => e.technique !== 'none').length,
@@ -436,29 +445,47 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
                 })}
               </View>
 
-              {/* Environnement */}
-              <Text style={styles.sectionLabel}>Lieu d'entraînement</Text>
-              <View style={styles.envRow}>
+              {/* Matériel disponible */}
+              <Text style={styles.sectionLabel}>Matériel disponible</Text>
+              <View style={styles.equipPresetRow}>
                 {([
-                  { key: 'gym', label: 'Salle de sport', emoji: '🏋️', desc: 'Machines · câbles · barres' },
-                  { key: 'home', label: 'Maison', emoji: '🏠', desc: 'Haltères · poids de corps · élastiques' },
-                ] as const).map(({ key, label, emoji, desc }) => {
-                  const isSelected = environment === key;
+                  { label: 'Salle complète', eq: ALL_EQUIPMENT },
+                  { label: 'Maison équipée', eq: ['bodyweight', 'dumbbells', 'pull_up_bar', 'resistance_band'] as EquipmentType[] },
+                  { label: 'Corps uniquement', eq: ['bodyweight'] as EquipmentType[] },
+                ] as const).map(({ label, eq }) => {
+                  const isPreset = eq.length === availableEquipment.size && eq.every((e) => availableEquipment.has(e as EquipmentType));
                   return (
                     <TouchableOpacity
-                      key={key}
-                      style={[styles.envCard, isSelected && { borderColor: C.primary, backgroundColor: C.primaryGlow }]}
-                      onPress={() => setEnvironment(key)}
+                      key={label}
+                      style={[styles.presetChip, isPreset && { borderColor: C.primary, backgroundColor: C.primaryGlow }]}
+                      onPress={() => setAvailableEquipment(new Set(eq as EquipmentType[]))}
                       activeOpacity={0.7}
                     >
-                      <Text style={styles.envEmoji}>{emoji}</Text>
-                      <Text style={[styles.envLabel, isSelected && { color: C.primary }]}>{label}</Text>
-                      <Text style={styles.envDesc}>{desc}</Text>
-                      {isSelected && (
-                        <View style={[styles.envCheck, { backgroundColor: C.primary }]}>
-                          <Ionicons name="checkmark" size={10} color="#fff" />
-                        </View>
-                      )}
+                      <Text style={[styles.presetChipText, isPreset && { color: C.primary }]}>{label}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+              <View style={styles.equipGrid}>
+                {(ALL_EQUIPMENT as EquipmentType[]).map((eq) => {
+                  const isOn = availableEquipment.has(eq);
+                  return (
+                    <TouchableOpacity
+                      key={eq}
+                      style={[styles.equipChip, isOn && { borderColor: C.primary, backgroundColor: C.primaryGlow }]}
+                      onPress={() => {
+                        setAvailableEquipment((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(eq)) next.delete(eq);
+                          else next.add(eq);
+                          return next;
+                        });
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.equipEmoji}>{EQUIPMENT_EMOJI[eq]}</Text>
+                      <Text style={[styles.equipLabel, isOn && { color: C.primary }]}>{EQUIPMENT_LABELS[eq]}</Text>
+                      {isOn && <Ionicons name="checkmark-circle" size={13} color={C.primary} style={{ marginLeft: 2 }} />}
                     </TouchableOpacity>
                   );
                 })}
@@ -757,7 +784,7 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
                     ? (adjustedCustomExercises[editingDayIdx] ?? []).map((pe) => pe.exercise.id)
                     : []
                 }
-                equipment={environment}
+                availableEquipment={availableEquipment}
               />
             </>
 
@@ -766,7 +793,7 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.previewContent}>
               {/* Résumé */}
               <View style={styles.previewSummary}>
-                <SummaryChip value={environment === 'gym' ? '🏋️' : '🏠'} label={environment === 'gym' ? 'Salle' : 'Maison'} />
+                <SummaryChip value={availableEquipment.size === ALL_EQUIPMENT.length ? '🏋️' : availableEquipment.size === 1 ? '🤸' : '🏠'} label={availableEquipment.size === ALL_EQUIPMENT.length ? 'Salle' : `${availableEquipment.size} mat.`} />
                 <View style={styles.previewDiv} />
                 <SummaryChip value={String(sessions)} label="séances/sem" />
                 <View style={styles.previewDiv} />
@@ -918,21 +945,23 @@ const styles = StyleSheet.create({
   modeLabel: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.bold, color: COLORS.textPrimary },
   modeDesc: { fontSize: 10, color: COLORS.textTertiary, textAlign: 'center', lineHeight: 14 },
 
-  // Environnement
-  envRow: { flexDirection: 'row', gap: SPACING.sm, marginTop: SPACING.xs },
-  envCard: {
-    flex: 1, alignItems: 'center', paddingVertical: SPACING.md, paddingHorizontal: SPACING.sm,
+  // Matériel
+  equipPresetRow: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.xs, marginTop: SPACING.xs },
+  presetChip: {
+    paddingHorizontal: SPACING.sm, paddingVertical: 6,
+    borderRadius: RADIUS.full, borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: COLORS.bgElevated,
+  },
+  presetChipText: { fontSize: FONT_SIZE.xs, fontWeight: FONT_WEIGHT.semibold, color: COLORS.textSecondary },
+  equipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.xs, marginTop: SPACING.xs },
+  equipChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: SPACING.sm, paddingVertical: 8,
     borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border,
-    backgroundColor: COLORS.bgElevated, gap: 4, position: 'relative',
+    backgroundColor: COLORS.bgElevated,
   },
-  envEmoji: { fontSize: 26 },
-  envLabel: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.bold, color: COLORS.textPrimary },
-  envDesc: { fontSize: 10, color: COLORS.textTertiary, textAlign: 'center', lineHeight: 14 },
-  envCheck: {
-    position: 'absolute', top: 6, right: 6,
-    width: 16, height: 16, borderRadius: 8,
-    alignItems: 'center', justifyContent: 'center',
-  },
+  equipEmoji: { fontSize: 14 },
+  equipLabel: { fontSize: FONT_SIZE.xs, fontWeight: FONT_WEIGHT.medium, color: COLORS.textSecondary },
 
   // Customizer
   customizerDayCard: {

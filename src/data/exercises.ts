@@ -42,6 +42,40 @@ export const ANTAGONIST_GROUPS: Record<MuscleGroup, MuscleGroup[]> = {
   calves:     [],
 };
 
+/** Matériel requis pour réaliser l'exercice */
+export type EquipmentType =
+  | 'bodyweight'      // poids de corps, aucun matériel
+  | 'dumbbells'       // haltères (+ banc supposé)
+  | 'barbell'         // barre olympique + rack
+  | 'pull_up_bar'     // barre de traction
+  | 'resistance_band' // élastiques de résistance
+  | 'cables'          // machine à câbles / poulies
+  | 'machines';       // machines guidées (leg press, pec deck…)
+
+export const EQUIPMENT_LABELS: Record<EquipmentType, string> = {
+  bodyweight:      'Poids de corps',
+  dumbbells:       'Haltères',
+  barbell:         'Barre + rack',
+  pull_up_bar:     'Barre de traction',
+  resistance_band: 'Élastiques',
+  cables:          'Câbles / poulies',
+  machines:        'Machines',
+};
+
+export const EQUIPMENT_EMOJI: Record<EquipmentType, string> = {
+  bodyweight:      '🤸',
+  dumbbells:       '🏋️',
+  barbell:         '⚖️',
+  pull_up_bar:     '🔩',
+  resistance_band: '🎗️',
+  cables:          '🔌',
+  machines:        '⚙️',
+};
+
+export const ALL_EQUIPMENT: EquipmentType[] = [
+  'bodyweight', 'dumbbells', 'barbell', 'pull_up_bar', 'resistance_band', 'cables', 'machines',
+];
+
 export interface Exercise {
   id: string;
   name: string;
@@ -52,8 +86,8 @@ export interface Exercise {
   family: string;
   /** Conseil technique court en français */
   description: string;
-  /** Environnement requis : 'home' = haltères/poids de corps/élastiques, 'gym' = machines/câbles/barre */
-  equipment: 'gym' | 'home';
+  /** Matériel principal requis pour réaliser l'exercice */
+  equipment: EquipmentType;
 }
 
 type RawExercise = Omit<Exercise, 'equipment'>;
@@ -261,65 +295,100 @@ const RAW_EXERCISES: RawExercise[] = [
   { id: 'v_up',                  name: 'V-up',                           muscleGroup: 'abs',        isCompound: false, minLevel: 'intermediate', family: 'crunch',              description: "Simultanément, lève les jambes tendues et le buste pour former un V. Touche les orteils avec les doigts. Contracte fort les abdos en haut." },
 ];
 
-// Exercices réalisables à la maison (haltères · poids de corps · élastiques · barre de traction murale)
-const HOME_EXERCISE_IDS = new Set([
-  // Pectoraux
-  'push_up', 'bench_press_db', 'incline_press', 'fly_dumbbell', 'decline_press',
-  'diamond_push_up', 'push_up_feet_elevated', 'push_up_ring',
-  // Dos
-  'pull_up', 'one_arm_row', 'chest_supported', 'chin_up', 'pullover_db', 'weighted_pull_up',
-  // Épaules
-  'lateral_raise', 'dumbbell_press', 'front_raise', 'arnold_press', 'rear_delt_fly',
-  'upright_row', 'lu_raise', 'handstand_push_up', 'z_press',
-  // Biceps
-  'dumbbell_curl', 'hammer_curl', 'incline_curl', 'concentration_curl',
-  'reverse_curl', 'zottman_curl', 'drag_curl', 'waiter_curl',
-  // Triceps
-  'overhead_ext', 'dips_triceps', 'tricep_kickback', 'tate_press',
-  'band_pushdown', 'bench_dip_weighted',
-  // Quadriceps
-  'goblet_squat', 'lunge', 'walking_lunge', 'step_up', 'bulgarian_squat',
-  'sissy_squat', 'reverse_lunge', 'split_squat',
-  // Ischio-jambiers
-  'nordic_curl', 'single_leg_rdl', 'banded_good_morning',
-  // Fessiers
-  'glute_bridge', 'sumo_squat', 'rdl_glutes', 'banded_abduction', 'single_hip_thrust',
-  'clamshell', 'fire_hydrant', 'donkey_kick',
-  // Mollets
-  'single_calf_raise', 'step_calf_raise', 'tibia_raise',
-  // Abdominaux
-  'plank', 'side_plank', 'bicycle_crunch', 'crunch', 'leg_raise',
-  'russian_twist', 'ab_wheel', 'dragon_flag', 'hanging_leg_raise',
-  'hollow_body', 'toes_to_bar', 'flutter_kicks', 'mountain_climber', 'l_sit', 'dead_bug', 'v_up',
-]);
+// Matériel requis par exercice (défaut : 'machines' si absent)
+const EXERCISE_EQUIPMENT: Record<string, EquipmentType> = {
+  // ── Pectoraux ──
+  push_up: 'bodyweight', pec_deck: 'machines', cable_fly: 'cables',
+  bench_press_db: 'dumbbells', bench_press: 'barbell', incline_press: 'dumbbells',
+  incline_press_bb: 'barbell', dips_chest: 'bodyweight', fly_dumbbell: 'dumbbells',
+  decline_press: 'dumbbells', guillotine_press: 'barbell', machine_chest_press: 'machines',
+  diamond_push_up: 'bodyweight', push_up_feet_elevated: 'bodyweight', low_cable_fly: 'cables',
+  push_up_ring: 'bodyweight', landmine_press: 'barbell', cable_fly_mid: 'cables',
+  // ── Dos ──
+  lat_pulldown: 'cables', seated_row: 'cables', face_pull: 'cables',
+  pull_up: 'pull_up_bar', barbell_row: 'barbell', one_arm_row: 'dumbbells',
+  deadlift: 'barbell', chest_supported: 'dumbbells', chin_up: 'pull_up_bar',
+  tbar_row: 'barbell', pullover_db: 'dumbbells', pendlay_row: 'barbell',
+  meadows_row: 'barbell', narrow_lat_pulldown: 'cables', machine_row: 'machines',
+  rack_pull: 'barbell', weighted_pull_up: 'pull_up_bar', seal_row: 'dumbbells',
+  straight_arm_pulldown: 'cables', cable_row_single: 'cables', assisted_pull_up: 'machines',
+  // ── Épaules ──
+  lateral_raise: 'dumbbells', dumbbell_press: 'dumbbells', front_raise: 'dumbbells',
+  ohp: 'barbell', arnold_press: 'dumbbells', rear_delt_fly: 'dumbbells',
+  upright_row: 'dumbbells', machine_shoulder: 'machines', cable_lateral: 'cables',
+  behind_neck_press: 'barbell', machine_lateral_raise: 'machines', cable_rear_delt: 'cables',
+  lu_raise: 'dumbbells', handstand_push_up: 'bodyweight', z_press: 'dumbbells',
+  // ── Biceps ──
+  dumbbell_curl: 'dumbbells', hammer_curl: 'dumbbells', cable_curl: 'cables',
+  barbell_curl: 'barbell', incline_curl: 'dumbbells', preacher_curl: 'machines',
+  concentration_curl: 'dumbbells', spider_curl: 'dumbbells', bayesian_curl: 'cables',
+  reverse_curl: 'dumbbells', zottman_curl: 'dumbbells', drag_curl: 'barbell',
+  cross_body_cable_curl: 'cables', waiter_curl: 'dumbbells',
+  // ── Triceps ──
+  tricep_pushdown: 'cables', overhead_ext: 'dumbbells', dips_triceps: 'bodyweight',
+  skull_crusher: 'barbell', close_grip_bench: 'barbell', dips_parallel: 'bodyweight',
+  tricep_kickback: 'dumbbells', cable_overhead_t: 'cables', tate_press: 'dumbbells',
+  jm_press: 'barbell', pushdown_bar: 'cables', single_arm_cable_ext: 'cables',
+  cable_kickback_tri: 'cables', band_pushdown: 'resistance_band', bench_dip_weighted: 'bodyweight',
+  // ── Quadriceps ──
+  leg_press: 'machines', leg_extension: 'machines', goblet_squat: 'dumbbells',
+  lunge: 'bodyweight', walking_lunge: 'bodyweight', step_up: 'bodyweight',
+  squat: 'barbell', bulgarian_squat: 'dumbbells', hack_squat: 'machines',
+  front_squat: 'barbell', sissy_squat: 'bodyweight', reverse_lunge: 'bodyweight',
+  single_leg_press: 'machines', high_foot_leg_press: 'machines', belt_squat: 'machines',
+  split_squat: 'bodyweight', leg_press_close: 'machines',
+  // ── Ischio-jambiers ──
+  leg_curl: 'machines', rdl: 'barbell', good_morning: 'barbell',
+  seated_leg_curl: 'machines', nordic_curl: 'bodyweight', lying_leg_curl: 'cables',
+  hyperextension: 'machines', single_leg_rdl: 'dumbbells', glute_ham_raise: 'machines',
+  standing_leg_curl: 'machines', banded_good_morning: 'resistance_band',
+  // ── Fessiers ──
+  glute_bridge: 'bodyweight', sumo_squat: 'dumbbells', cable_kickback: 'cables',
+  hip_thrust: 'barbell', rdl_glutes: 'dumbbells', banded_abduction: 'resistance_band',
+  single_hip_thrust: 'bodyweight', clamshell: 'bodyweight', fire_hydrant: 'bodyweight',
+  cable_pull_through: 'cables', reverse_hyper: 'machines', sumo_squat_bb: 'barbell',
+  donkey_kick: 'bodyweight',
+  // ── Mollets ──
+  standing_calf: 'machines', seated_calf: 'machines', donkey_calf: 'machines',
+  single_calf_raise: 'bodyweight', barbell_calf_raise: 'barbell',
+  step_calf_raise: 'bodyweight', tibia_raise: 'bodyweight',
+  // ── Abdominaux ──
+  plank: 'bodyweight', side_plank: 'bodyweight', bicycle_crunch: 'bodyweight',
+  crunch: 'bodyweight', leg_raise: 'bodyweight', cable_crunch: 'cables',
+  russian_twist: 'bodyweight', ab_wheel: 'bodyweight', dragon_flag: 'bodyweight',
+  hanging_leg_raise: 'pull_up_bar', hollow_body: 'bodyweight', toes_to_bar: 'pull_up_bar',
+  pallof_press: 'cables', wood_chop: 'cables', decline_crunch: 'machines',
+  flutter_kicks: 'bodyweight', mountain_climber: 'bodyweight', l_sit: 'bodyweight',
+  dead_bug: 'bodyweight', v_up: 'bodyweight',
+};
 
 export const EXERCISES: Exercise[] = RAW_EXERCISES.map((e) => ({
   ...e,
-  equipment: HOME_EXERCISE_IDS.has(e.id) ? 'home' : 'gym',
+  equipment: EXERCISE_EQUIPMENT[e.id] ?? 'machines',
 }));
 
-export function getAvailableExercises(group: MuscleGroup, level: PractitionerLevel, equipment?: 'gym' | 'home'): Exercise[] {
+export function getAvailableExercises(group: MuscleGroup, level: PractitionerLevel, availableEquipment?: Set<EquipmentType>): Exercise[] {
   return EXERCISES.filter((e) =>
     e.muscleGroup === group &&
     isAvailableForLevel(e, level) &&
-    (!equipment || e.equipment === equipment)
+    (!availableEquipment || availableEquipment.has(e.equipment))
   );
 }
 
-export function getAvailableCompounds(group: MuscleGroup, level: PractitionerLevel, equipment?: 'gym' | 'home'): Exercise[] {
+export function getAvailableCompounds(group: MuscleGroup, level: PractitionerLevel, availableEquipment?: Set<EquipmentType>): Exercise[] {
   return EXERCISES.filter((e) =>
     e.muscleGroup === group &&
     e.isCompound &&
     isAvailableForLevel(e, level) &&
-    (!equipment || e.equipment === equipment)
+    (!availableEquipment || availableEquipment.has(e.equipment))
   );
 }
 
-export function getAvailableIsolations(group: MuscleGroup, level: PractitionerLevel, equipment?: 'gym' | 'home'): Exercise[] {
+export function getAvailableIsolations(group: MuscleGroup, level: PractitionerLevel, availableEquipment?: Set<EquipmentType>): Exercise[] {
   return EXERCISES.filter((e) =>
     e.muscleGroup === group &&
     !e.isCompound &&
     isAvailableForLevel(e, level) &&
-    (!equipment || e.equipment === equipment)
+    (!availableEquipment || availableEquipment.has(e.equipment))
   );
 }

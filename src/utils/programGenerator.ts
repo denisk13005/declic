@@ -1,20 +1,22 @@
-import { FitnessGoal, PractitionerLevel, Gender } from '@/types';
+﻿import { FitnessGoal, PractitionerLevel, Gender } from '@/types';
 import {
   MuscleGroup,
   Exercise,
+  EquipmentType,
+  ALL_EQUIPMENT,
   getAvailableCompounds,
   getAvailableIsolations,
   getAvailableExercises,
 } from '@/data/exercises';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export type IntensificationTechnique =
   | 'none'
-  | 'superset'    // 2 muscles antagonistes enchaînés
-  | 'biset'       // 2 exercices même muscle enchaînés
-  | 'dropset'     // réduction de charge jusqu'à l'échec
-  | 'rest_pause'; // série à l'échec → 15s → continuer
+  | 'superset'    // 2 muscles antagonistes enchaÃ®nÃ©s
+  | 'biset'       // 2 exercices mÃªme muscle enchaÃ®nÃ©s
+  | 'dropset'     // rÃ©duction de charge jusqu'Ã  l'Ã©chec
+  | 'rest_pause'; // sÃ©rie Ã  l'Ã©chec â†’ 15s â†’ continuer
 
 export interface ProgramExercise {
   exercise: Exercise;
@@ -22,7 +24,7 @@ export interface ProgramExercise {
   reps: string;
   rest: string;
   technique: IntensificationTechnique;
-  supersetWith?: Exercise;  // exercice pairé (superset/biset)
+  supersetWith?: Exercise;  // exercice pairÃ© (superset/biset)
   techniqueNote?: string;
 }
 
@@ -39,13 +41,15 @@ export interface WorkoutProgram {
   goal: FitnessGoal;
   level: PractitionerLevel;
   gender: Gender;
-  environment: 'gym' | 'home';
+  availableEquipment: EquipmentType[];
   splitName: string;
   days: ProgramDay[];
   createdAt: string;
 }
 
-// ─── Paramètres par objectif × niveau ────────────────────────────────────────
+export { EquipmentType, ALL_EQUIPMENT };
+
+// â”€â”€â”€ ParamÃ¨tres par objectif Ã— niveau â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface GoalParams {
   compoundSets: number;
@@ -78,23 +82,23 @@ export function getDefaultExerciseParams(goal: FitnessGoal, level: PractitionerL
   return GOAL_PARAMS[goal][level];
 }
 
-// ─── Notes de technique ───────────────────────────────────────────────────────
+// â”€â”€â”€ Notes de technique â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export const TECHNIQUE_NOTES: Record<IntensificationTechnique, string> = {
   none:        '',
-  superset:    'Enchaîner A et B sans repos · Repos après B seulement',
-  biset:       'Enchaîner les 2 exercices sans repos · Repos après le 2ᵉ',
-  dropset:     'Dernier set : réduire la charge de 20-30 % à chaque échec (2-3 drops)',
-  rest_pause:  "À l'échec → 15-20 s de repos → continuer jusqu'au prochain échec (2-3 mini-séries)",
+  superset:    'EnchaÃ®ner A et B sans repos Â· Repos aprÃ¨s B seulement',
+  biset:       'EnchaÃ®ner les 2 exercices sans repos Â· Repos aprÃ¨s le 2áµ‰',
+  dropset:     'Dernier set : rÃ©duire la charge de 20-30 % Ã  chaque Ã©chec (2-3 drops)',
+  rest_pause:  "Ã€ l'Ã©chec â†’ 15-20 s de repos â†’ continuer jusqu'au prochain Ã©chec (2-3 mini-sÃ©ries)",
 };
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function pick<T>(arr: T[], n: number): T[] {
   return arr.slice(0, Math.min(n, arr.length));
 }
 
-/** Convertit une chaîne de repos (ex. "2-3 min", "90 s") en secondes (moyenne si plage). */
+/** Convertit une chaÃ®ne de repos (ex. "2-3 min", "90 s") en secondes (moyenne si plage). */
 function parseRestSeconds(rest: string): number {
   const minMatch = rest.match(/(\d+)(?:-(\d+))?\s*min/);
   if (minMatch) {
@@ -111,12 +115,12 @@ function parseRestSeconds(rest: string): number {
   return 90;
 }
 
-const SET_EXECUTION_SECONDS = 40; // durée moyenne d'une série (exécution seule)
+const SET_EXECUTION_SECONDS = 40; // durÃ©e moyenne d'une sÃ©rie (exÃ©cution seule)
 
 /**
- * Estime la durée totale d'une séance en minutes.
- * Pour chaque exercice : sets × (exécution + repos).
- * Superset A+B : exécution doublée, un seul repos.
+ * Estime la durÃ©e totale d'une sÃ©ance en minutes.
+ * Pour chaque exercice : sets Ã— (exÃ©cution + repos).
+ * Superset A+B : exÃ©cution doublÃ©e, un seul repos.
  */
 export function estimateSessionMinutes(day: ProgramDay): number {
   let totalSeconds = 0;
@@ -129,8 +133,8 @@ export function estimateSessionMinutes(day: ProgramDay): number {
 }
 
 /**
- * Sélectionne jusqu'à `count` exercices en évitant les familles déjà utilisées.
- * Ajoute les familles choisies dans `usedFamilies` au fur et à mesure.
+ * SÃ©lectionne jusqu'Ã  `count` exercices en Ã©vitant les familles dÃ©jÃ  utilisÃ©es.
+ * Ajoute les familles choisies dans `usedFamilies` au fur et Ã  mesure.
  */
 function pickUnique(exercises: Exercise[], count: number, usedFamilies: Set<string>): Exercise[] {
   const result: Exercise[] = [];
@@ -162,15 +166,15 @@ function makeExercise(
   };
 }
 
-// ─── Application des techniques d'intensification ─────────────────────────────
+// â”€â”€â”€ Application des techniques d'intensification â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 /**
  * Transforme une liste d'exercices bruts en ajoutant des techniques
  * selon le niveau et l'objectif.
  *
- * - Débutant     : séries droites
- * - Intermédiaire: supersets antagonistes sur les isolations bras
- * - Avancé       : supersets + bisets + drop sets + rest-pause
+ * - DÃ©butant     : sÃ©ries droites
+ * - IntermÃ©diaire: supersets antagonistes sur les isolations bras
+ * - AvancÃ©       : supersets + bisets + drop sets + rest-pause
  */
 function applyTechniques(
   exercises: ProgramExercise[],
@@ -182,7 +186,7 @@ function applyTechniques(
   const result = [...exercises];
 
   if (level === 'intermediate') {
-    // Superset biceps + triceps si présents en isolation
+    // Superset biceps + triceps si prÃ©sents en isolation
     const biIdx = result.findIndex(
       (e) => e.exercise.muscleGroup === 'biceps' && !e.exercise.isCompound
     );
@@ -194,7 +198,7 @@ function applyTechniques(
       result.splice(triIdx, 1); // fusionne les deux en un seul bloc
     }
 
-    // Superset chest isolation + shoulder isolation si présents
+    // Superset chest isolation + shoulder isolation si prÃ©sents
     const chestIsoIdx = result.findIndex(
       (e) => e.exercise.muscleGroup === 'chest' && !e.exercise.isCompound
     );
@@ -208,7 +212,7 @@ function applyTechniques(
   }
 
   if (level === 'advanced') {
-    // Biset sur isolations du même groupe musculaire
+    // Biset sur isolations du mÃªme groupe musculaire
     const groups = ['biceps', 'triceps', 'shoulders', 'chest', 'back', 'quads', 'hamstrings', 'glutes', 'abs'] as MuscleGroup[];
 
     for (const group of groups) {
@@ -226,7 +230,7 @@ function applyTechniques(
           techniqueNote: TECHNIQUE_NOTES.biset,
         };
         result.splice(second.i, 1);
-        break; // un seul biset par séance
+        break; // un seul biset par sÃ©ance
       }
     }
 
@@ -254,7 +258,7 @@ function applyTechniques(
       }
     }
 
-    // Rest-pause sur une isolation bras (si pas déjà un superset)
+    // Rest-pause sur une isolation bras (si pas dÃ©jÃ  un superset)
     const armIsoIdx = result.findIndex(
       (e) =>
         (e.exercise.muscleGroup === 'biceps' || e.exercise.muscleGroup === 'triceps') &&
@@ -273,7 +277,7 @@ function applyTechniques(
   return result;
 }
 
-// ─── Constructeurs de blocs ───────────────────────────────────────────────────
+// â”€â”€â”€ Constructeurs de blocs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface GroupSpec {
   group: MuscleGroup;
@@ -282,14 +286,14 @@ interface GroupSpec {
 }
 
 export const GENDER_INFO: Record<Gender, { label: string; emoji: string; description: string }> = {
-  female: { label: 'Femme', emoji: '👩', description: 'Focus fessiers · ischio · abdos · bas du corps' },
-  male:   { label: 'Homme', emoji: '👨', description: 'Focus pectoraux · dos · épaules · bras' },
+  female: { label: 'Femme', emoji: 'ðŸ‘©', description: 'Focus fessiers Â· ischio Â· abdos Â· bas du corps' },
+  male:   { label: 'Homme', emoji: 'ðŸ‘¨', description: 'Focus pectoraux Â· dos Â· Ã©paules Â· bras' },
 };
 
 /**
  * Ajuste les volumes par groupe musculaire selon le genre.
  * Femme : +volume fessiers/ischio/abdos, -volume poitrine/triceps.
- * Homme : configuration par défaut (haut du corps prioritaire).
+ * Homme : configuration par dÃ©faut (haut du corps prioritaire).
  */
 function biasGroups(groups: GroupSpec[], gender: Gender): GroupSpec[] {
   if (gender === 'male') return groups;
@@ -322,15 +326,15 @@ function buildDay(
   goal: FitnessGoal,
   level: PractitionerLevel,
   gender: Gender,
-  environment: 'gym' | 'home' = 'gym'
+  equipmentSet?: Set<EquipmentType>
 ): ProgramDay {
   const p = GOAL_PARAMS[goal][level];
   const exercises: ProgramExercise[] = [];
   const usedFamilies = new Set<string>();
 
   for (const { group, compounds, isolations } of biasGroups(groups, gender)) {
-    const compoundList = pickUnique(getAvailableCompounds(group, level, environment), compounds, usedFamilies);
-    const isolationList = pickUnique(getAvailableIsolations(group, level, environment), isolations, usedFamilies);
+    const compoundList = pickUnique(getAvailableCompounds(group, level, equipmentSet), compounds, usedFamilies);
+    const isolationList = pickUnique(getAvailableIsolations(group, level, equipmentSet), isolations, usedFamilies);
 
     for (const ex of compoundList) exercises.push(makeExercise(ex, p, true));
     for (const ex of isolationList) exercises.push(makeExercise(ex, p, false));
@@ -346,7 +350,7 @@ function buildDay(
   };
 }
 
-// ─── Générateur de jour personnalisé ─────────────────────────────────────────
+// â”€â”€â”€ GÃ©nÃ©rateur de jour personnalisÃ© â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function generateCustomDay(
   dayNumber: number,
@@ -359,15 +363,15 @@ export function generateCustomDay(
   const focus = muscleGroups
     .map((g) => {
       const labels: Record<MuscleGroup, string> = {
-        chest: 'Pectoraux', back: 'Dos', shoulders: 'Épaules',
+        chest: 'Pectoraux', back: 'Dos', shoulders: 'Ã‰paules',
         biceps: 'Biceps', triceps: 'Triceps', quads: 'Quadriceps',
         hamstrings: 'Ischio', glutes: 'Fessiers', calves: 'Mollets', abs: 'Abdos',
       };
       return labels[g];
     })
-    .join(' · ');
+    .join(' Â· ');
 
-  // 1 compound + 1 isolation par groupe (ajusté pour rester dans la limite de 7)
+  // 1 compound + 1 isolation par groupe (ajustÃ© pour rester dans la limite de 7)
   const groups: GroupSpec[] = muscleGroups.map((g) => ({
     group: g,
     compounds: ['chest', 'back', 'quads', 'glutes', 'hamstrings'].includes(g) ? 1 : 0,
@@ -377,11 +381,11 @@ export function generateCustomDay(
   return buildDay(dayNumber, label, focus, groups, goal, level, gender);
 }
 
-// ─── Jours types ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ Jours types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-function makeFullBody(n: number, v: 'A' | 'B' | 'C', goal: FitnessGoal, level: PractitionerLevel, gender: Gender, environment: 'gym' | 'home' = 'gym'): ProgramDay {
+function makeFullBody(n: number, v: 'A' | 'B' | 'C', goal: FitnessGoal, level: PractitionerLevel, gender: Gender, equipmentSet?: Set<EquipmentType>): ProgramDay {
   const configs = {
-    A: { label: `Full Body A`, focus: gender === 'female' ? 'Fessiers · Dos · Épaules · Abdos' : 'Compound Bas + Pec · Dos · Épaules · Abdos', groups: [
+    A: { label: `Full Body A`, focus: gender === 'female' ? 'Fessiers Â· Dos Â· Ã‰paules Â· Abdos' : 'Compound Bas + Pec Â· Dos Â· Ã‰paules Â· Abdos', groups: [
       { group: 'glutes' as MuscleGroup,    compounds: gender === 'female' ? 1 : 0, isolations: gender === 'female' ? 1 : 0 },
       { group: 'quads' as MuscleGroup,     compounds: 1, isolations: level === 'beginner' ? 0 : 1 },
       { group: 'chest' as MuscleGroup,     compounds: 1, isolations: 1 },
@@ -389,7 +393,7 @@ function makeFullBody(n: number, v: 'A' | 'B' | 'C', goal: FitnessGoal, level: P
       { group: 'shoulders' as MuscleGroup, compounds: 0, isolations: 1 },
       { group: 'abs' as MuscleGroup,       compounds: 0, isolations: 1 },
     ]},
-    B: { label: `Full Body B`, focus: gender === 'female' ? 'Fessiers · Ischio · Dos · Abdos · Bras' : 'Fessiers · Ischio · Pec · Dos · Bras', groups: [
+    B: { label: `Full Body B`, focus: gender === 'female' ? 'Fessiers Â· Ischio Â· Dos Â· Abdos Â· Bras' : 'Fessiers Â· Ischio Â· Pec Â· Dos Â· Bras', groups: [
       { group: 'glutes' as MuscleGroup,     compounds: 1, isolations: 1 },
       { group: 'hamstrings' as MuscleGroup, compounds: 1, isolations: 0 },
       { group: 'chest' as MuscleGroup,      compounds: gender === 'female' ? 0 : 1, isolations: 1 },
@@ -397,7 +401,7 @@ function makeFullBody(n: number, v: 'A' | 'B' | 'C', goal: FitnessGoal, level: P
       { group: 'biceps' as MuscleGroup,     compounds: 0, isolations: 1 },
       { group: 'abs' as MuscleGroup,        compounds: 0, isolations: gender === 'female' ? 1 : 0 },
     ]},
-    C: { label: `Full Body C`, focus: 'Compound lourds · Force complète', groups: [
+    C: { label: `Full Body C`, focus: 'Compound lourds Â· Force complÃ¨te', groups: [
       { group: 'quads' as MuscleGroup,      compounds: 1, isolations: 1 },
       { group: 'back' as MuscleGroup,       compounds: 2, isolations: 0 },
       { group: 'chest' as MuscleGroup,      compounds: 1, isolations: 0 },
@@ -406,10 +410,10 @@ function makeFullBody(n: number, v: 'A' | 'B' | 'C', goal: FitnessGoal, level: P
     ]},
   };
   const cfg = configs[v];
-  return buildDay(n, cfg.label, cfg.focus, cfg.groups, goal, level, gender, environment);
+  return buildDay(n, cfg.label, cfg.focus, cfg.groups, goal, level, gender, equipmentSet);
 }
 
-function makePush(n: number, v: 'A' | 'B', goal: FitnessGoal, level: PractitionerLevel, gender: Gender, environment: 'gym' | 'home' = 'gym'): ProgramDay {
+function makePush(n: number, v: 'A' | 'B', goal: FitnessGoal, level: PractitionerLevel, gender: Gender, equipmentSet?: Set<EquipmentType>): ProgramDay {
   const groups: GroupSpec[] = v === 'A'
     ? [
         { group: 'chest',     compounds: 2, isolations: level === 'beginner' ? 1 : 2 },
@@ -422,12 +426,12 @@ function makePush(n: number, v: 'A' | 'B', goal: FitnessGoal, level: Practitione
         { group: 'triceps',   compounds: 0, isolations: 2 },
       ];
   const focus = gender === 'female'
-    ? 'Épaules · Pectoraux · (Fessiers finisher)'
-    : 'Pectoraux · Épaules · Triceps';
-  return buildDay(n, `Push ${v}`, focus, groups, goal, level, gender, environment);
+    ? 'Ã‰paules Â· Pectoraux Â· (Fessiers finisher)'
+    : 'Pectoraux Â· Ã‰paules Â· Triceps';
+  return buildDay(n, `Push ${v}`, focus, groups, goal, level, gender, equipmentSet);
 }
 
-function makePull(n: number, v: 'A' | 'B', goal: FitnessGoal, level: PractitionerLevel, gender: Gender, environment: 'gym' | 'home' = 'gym'): ProgramDay {
+function makePull(n: number, v: 'A' | 'B', goal: FitnessGoal, level: PractitionerLevel, gender: Gender, equipmentSet?: Set<EquipmentType>): ProgramDay {
   const groups: GroupSpec[] = v === 'A'
     ? [
         { group: 'back',      compounds: 2, isolations: 1 },
@@ -440,13 +444,13 @@ function makePull(n: number, v: 'A' | 'B', goal: FitnessGoal, level: Practitione
         { group: 'abs',       compounds: 0, isolations: 1 },
       ];
   const focus = gender === 'female'
-    ? 'Dos · Biceps · Ischio · Abdos'
-    : 'Dos · Biceps · (Abdos)';
-  return buildDay(n, `Pull ${v}`, focus, groups, goal, level, gender, environment);
+    ? 'Dos Â· Biceps Â· Ischio Â· Abdos'
+    : 'Dos Â· Biceps Â· (Abdos)';
+  return buildDay(n, `Pull ${v}`, focus, groups, goal, level, gender, equipmentSet);
 }
 
-function makeLegs(n: number, v: 'A' | 'B', goal: FitnessGoal, level: PractitionerLevel, gender: Gender, environment: 'gym' | 'home' = 'gym'): ProgramDay {
-  // Femme : fessiers en priorité. Homme : quadriceps en priorité.
+function makeLegs(n: number, v: 'A' | 'B', goal: FitnessGoal, level: PractitionerLevel, gender: Gender, equipmentSet?: Set<EquipmentType>): ProgramDay {
+  // Femme : fessiers en prioritÃ©. Homme : quadriceps en prioritÃ©.
   const groups: GroupSpec[] = gender === 'female'
     ? v === 'A'
       ? [
@@ -476,12 +480,12 @@ function makeLegs(n: number, v: 'A' | 'B', goal: FitnessGoal, level: Practitione
           { group: 'abs',        compounds: 0, isolations: 1 },
         ];
   const focus = gender === 'female'
-    ? v === 'A' ? 'Fessiers · Ischio · Quadriceps · Mollets' : 'Fessiers · Ischio · Abdos'
-    : v === 'A' ? 'Quadriceps · Ischio · Fessiers · Mollets' : 'Fessiers · Ischio · Mollets · Abdos';
-  return buildDay(n, `Legs ${v}`, focus, groups, goal, level, gender, environment);
+    ? v === 'A' ? 'Fessiers Â· Ischio Â· Quadriceps Â· Mollets' : 'Fessiers Â· Ischio Â· Abdos'
+    : v === 'A' ? 'Quadriceps Â· Ischio Â· Fessiers Â· Mollets' : 'Fessiers Â· Ischio Â· Mollets Â· Abdos';
+  return buildDay(n, `Legs ${v}`, focus, groups, goal, level, gender, equipmentSet);
 }
 
-function makeUpper(n: number, v: 'A' | 'B', goal: FitnessGoal, level: PractitionerLevel, gender: Gender, environment: 'gym' | 'home' = 'gym'): ProgramDay {
+function makeUpper(n: number, v: 'A' | 'B', goal: FitnessGoal, level: PractitionerLevel, gender: Gender, equipmentSet?: Set<EquipmentType>): ProgramDay {
   const groups: GroupSpec[] = v === 'A'
     ? [
         { group: 'chest',     compounds: 1, isolations: 1 },
@@ -497,10 +501,10 @@ function makeUpper(n: number, v: 'A' | 'B', goal: FitnessGoal, level: Practition
         { group: 'biceps',    compounds: 0, isolations: 1 },
         { group: 'triceps',   compounds: 1, isolations: 1 },
       ];
-  return buildDay(n, `Upper ${v}`, 'Pectoraux · Dos · Épaules · Bras', groups, goal, level, gender, environment);
+  return buildDay(n, `Upper ${v}`, 'Pectoraux Â· Dos Â· Ã‰paules Â· Bras', groups, goal, level, gender, equipmentSet);
 }
 
-function makeLower(n: number, v: 'A' | 'B', goal: FitnessGoal, level: PractitionerLevel, gender: Gender, environment: 'gym' | 'home' = 'gym'): ProgramDay {
+function makeLower(n: number, v: 'A' | 'B', goal: FitnessGoal, level: PractitionerLevel, gender: Gender, equipmentSet?: Set<EquipmentType>): ProgramDay {
   const groups: GroupSpec[] = gender === 'female'
     ? v === 'A'
       ? [
@@ -528,12 +532,12 @@ function makeLower(n: number, v: 'A' | 'B', goal: FitnessGoal, level: Practition
           { group: 'abs',        compounds: 0, isolations: 2 },
         ];
   const focus = gender === 'female'
-    ? v === 'A' ? 'Fessiers · Ischio · Quadriceps · Mollets' : 'Fessiers · Ischio · Abdos'
-    : v === 'A' ? 'Quadriceps · Ischio · Fessiers · Mollets' : 'Fessiers · Quads · Ischio · Abdos';
-  return buildDay(n, `Lower ${v}`, focus, groups, goal, level, gender, environment);
+    ? v === 'A' ? 'Fessiers Â· Ischio Â· Quadriceps Â· Mollets' : 'Fessiers Â· Ischio Â· Abdos'
+    : v === 'A' ? 'Quadriceps Â· Ischio Â· Fessiers Â· Mollets' : 'Fessiers Â· Quads Â· Ischio Â· Abdos';
+  return buildDay(n, `Lower ${v}`, focus, groups, goal, level, gender, equipmentSet);
 }
 
-// ─── Générateur principal ─────────────────────────────────────────────────────
+// â”€â”€â”€ GÃ©nÃ©rateur principal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface SplitInfo {
   name: string;
@@ -541,18 +545,18 @@ export interface SplitInfo {
 }
 
 export const SPLIT_INFO: Record<number, SplitInfo> = {
-  1: { name: 'Full Body',          description: '1 séance complète par semaine' },
-  2: { name: 'Full Body A/B',      description: 'Alternance 2 séances complètes' },
+  1: { name: 'Full Body',          description: '1 sÃ©ance complÃ¨te par semaine' },
+  2: { name: 'Full Body A/B',      description: 'Alternance 2 sÃ©ances complÃ¨tes' },
   3: { name: 'Push / Pull / Legs', description: 'Split classique 3 jours' },
-  4: { name: 'Upper / Lower',      description: 'Haut × 2 + Bas × 2 par semaine' },
-  5: { name: 'PPL + Upper/Lower',  description: 'Push·Pull·Legs + Upper·Lower' },
-  6: { name: 'PPL × 2',            description: 'Push·Pull·Legs répété 2 fois' },
+  4: { name: 'Upper / Lower',      description: 'Haut Ã— 2 + Bas Ã— 2 par semaine' },
+  5: { name: 'PPL + Upper/Lower',  description: 'PushÂ·PullÂ·Legs + UpperÂ·Lower' },
+  6: { name: 'PPL Ã— 2',            description: 'PushÂ·PullÂ·Legs rÃ©pÃ©tÃ© 2 fois' },
 };
 
 export const LEVEL_INFO: Record<PractitionerLevel, { label: string; emoji: string; description: string; color: string }> = {
-  beginner:     { label: 'Débutant',      emoji: '🌱', description: 'Moins d\'1 an · Machines & haltères · Séries droites',            color: '#10B981' },
-  intermediate: { label: 'Intermédiaire', emoji: '💪', description: '1 à 3 ans · Barres & haltères · Supersets antagonistes',          color: '#60A5FA' },
-  advanced:     { label: 'Avancé',        emoji: '🔥', description: '3+ ans · Techniques d\'intensification · Volume élevé',           color: '#F97316' },
+  beginner:     { label: 'DÃ©butant',      emoji: 'ðŸŒ±', description: 'Moins d\'1 an Â· Machines & haltÃ¨res Â· SÃ©ries droites',            color: '#10B981' },
+  intermediate: { label: 'IntermÃ©diaire', emoji: 'ðŸ’ª', description: '1 Ã  3 ans Â· Barres & haltÃ¨res Â· Supersets antagonistes',          color: '#60A5FA' },
+  advanced:     { label: 'AvancÃ©',        emoji: 'ðŸ”¥', description: '3+ ans Â· Techniques d\'intensification Â· Volume Ã©levÃ©',           color: '#F97316' },
 };
 
 export function generateProgram(
@@ -560,21 +564,23 @@ export function generateProgram(
   goal: FitnessGoal,
   level: PractitionerLevel,
   gender: Gender,
-  environment: 'gym' | 'home' = 'gym'
+  availableEquipment: EquipmentType[] = ALL_EQUIPMENT
 ): Omit<WorkoutProgram, 'id' | 'createdAt'> {
-  let days: ProgramDay[] = [];
   const g = gender;
-  const env = environment;
+  const eq = new Set<EquipmentType>(availableEquipment);
+  let days: ProgramDay[] = [];
 
   switch (sessionsPerWeek) {
-    case 1: days = [makeFullBody(1, 'A', goal, level, g, env)]; break;
-    case 2: days = [makeFullBody(1, 'A', goal, level, g, env), makeFullBody(2, 'B', goal, level, g, env)]; break;
-    case 3: days = [makePush(1, 'A', goal, level, g, env), makePull(2, 'A', goal, level, g, env), makeLegs(3, 'A', goal, level, g, env)]; break;
-    case 4: days = [makeUpper(1, 'A', goal, level, g, env), makeLower(2, 'A', goal, level, g, env), makeUpper(3, 'B', goal, level, g, env), makeLower(4, 'B', goal, level, g, env)]; break;
-    case 5: days = [makePush(1, 'A', goal, level, g, env), makePull(2, 'A', goal, level, g, env), makeLegs(3, 'A', goal, level, g, env), makeUpper(4, 'A', goal, level, g, env), makeLower(5, 'A', goal, level, g, env)]; break;
-    case 6: days = [makePush(1, 'A', goal, level, g, env), makePull(2, 'A', goal, level, g, env), makeLegs(3, 'A', goal, level, g, env), makePush(4, 'B', goal, level, g, env), makePull(5, 'B', goal, level, g, env), makeLegs(6, 'B', goal, level, g, env)]; break;
-    default: days = [makeFullBody(1, 'A', goal, level, g, env)];
+    case 1: days = [makeFullBody(1, 'A', goal, level, g, eq)]; break;
+    case 2: days = [makeFullBody(1, 'A', goal, level, g, eq), makeFullBody(2, 'B', goal, level, g, eq)]; break;
+    case 3: days = [makePush(1, 'A', goal, level, g, eq), makePull(2, 'A', goal, level, g, eq), makeLegs(3, 'A', goal, level, g, eq)]; break;
+    case 4: days = [makeUpper(1, 'A', goal, level, g, eq), makeLower(2, 'A', goal, level, g, eq), makeUpper(3, 'B', goal, level, g, eq), makeLower(4, 'B', goal, level, g, eq)]; break;
+    case 5: days = [makePush(1, 'A', goal, level, g, eq), makePull(2, 'A', goal, level, g, eq), makeLegs(3, 'A', goal, level, g, eq), makeUpper(4, 'A', goal, level, g, eq), makeLower(5, 'A', goal, level, g, eq)]; break;
+    case 6: days = [makePush(1, 'A', goal, level, g, eq), makePull(2, 'A', goal, level, g, eq), makeLegs(3, 'A', goal, level, g, eq), makePush(4, 'B', goal, level, g, eq), makePull(5, 'B', goal, level, g, eq), makeLegs(6, 'B', goal, level, g, eq)]; break;
+    default: days = [makeFullBody(1, 'A', goal, level, g, eq)];
   }
 
-  return { sessionsPerWeek, goal, level, gender, environment, splitName: SPLIT_INFO[sessionsPerWeek].name, days };
+  return { sessionsPerWeek, goal, level, gender, availableEquipment, splitName: SPLIT_INFO[sessionsPerWeek].name, days };
 }
+
+

@@ -81,7 +81,7 @@ export const useProgramStore = create<ProgramStore>()(
     }),
     {
       name: CONFIG.STORAGE_KEYS.PROGRAM,
-      version: 3,
+      version: 4,
       storage: createJSONStorage(() => AsyncStorage),
       migrate: (persisted: any, version: number) => {
         if (version < 2) {
@@ -89,8 +89,14 @@ export const useProgramStore = create<ProgramStore>()(
           persisted.workoutReminderMinute = null;
           persisted.workoutReminderIds = [];
         }
-        if (version < 3 && persisted.program) {
-          persisted.program.environment = 'gym';
+        if (version < 4 && persisted.program) {
+          const env = persisted.program.environment;
+          if (env === 'home') {
+            persisted.program.availableEquipment = ['bodyweight', 'dumbbells', 'pull_up_bar', 'resistance_band'];
+          } else {
+            persisted.program.availableEquipment = ['bodyweight', 'dumbbells', 'barbell', 'pull_up_bar', 'resistance_band', 'cables', 'machines'];
+          }
+          delete persisted.program.environment;
         }
         return persisted;
       },
