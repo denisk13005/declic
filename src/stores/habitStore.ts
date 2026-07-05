@@ -173,9 +173,11 @@ export const useHabitStore = create<HabitStore>()(
       canAddHabit: (isPremium) => {
         if (isPremium) return true;
         const { habits, temporaryUnlockUntil } = get();
-        if (temporaryUnlockUntil && Date.now() < temporaryUnlockUntil) return true;
         const activeCount = habits.filter((h) => !h.archived).length;
-        return activeCount < CONFIG.FREE_HABIT_LIMIT;
+        const limit = (temporaryUnlockUntil && Date.now() < temporaryUnlockUntil)
+          ? CONFIG.FREE_HABIT_LIMIT + 1
+          : CONFIG.FREE_HABIT_LIMIT;
+        return activeCount < limit;
       },
 
       setTemporaryUnlock: () => {
