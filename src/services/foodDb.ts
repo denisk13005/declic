@@ -12,6 +12,7 @@
 
 import * as SQLite from 'expo-sqlite';
 import * as FileSystem from 'expo-file-system/legacy';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Asset } from 'expo-asset';
 import { Macros } from '@/types';
 
@@ -27,6 +28,8 @@ let db: SQLite.SQLiteDatabase | null = null;
 const DB_NAME    = 'food.db';
 const DB_DIR     = FileSystem.documentDirectory + 'SQLite/';
 const DB_PATH    = DB_DIR + DB_NAME;
+// Incrémenter à chaque rebuild de food.db pour forcer la re-copie sur l'appareil
+const DB_VERSION = '2';
 
 async function copyAssetDb(): Promise<void> {
   // Crée le répertoire SQLite si besoin
@@ -60,10 +63,15 @@ export async function initFoodDb(): Promise<void> {
       await FileSystem.makeDirectoryAsync(DB_DIR, { intermediates: true });
     }
 
-    // Copie si la DB n'existe pas encore
-    const dbInfo = await FileSystem.getInfoAsync(DB_PATH);
-    if (!dbInfo.exists) {
+    // Re-copie si la DB n'existe pas ou si la version a changé
+    const [dbInfo, storedVersion] = await Promise.all([
+      FileSystem.getInfoAsync(DB_PATH),
+      AsyncStorage.getItem('food_db_version'),
+    ]);
+    if (!dbInfo.exists || storedVersion !== DB_VERSION) {
+      console.log(`[foodDb] Re-copie DB (version stockée: ${storedVersion} → ${DB_VERSION})`);
       await copyAssetDb();
+      await AsyncStorage.setItem('food_db_version', DB_VERSION);
     }
 
     db = await SQLite.openDatabaseAsync(DB_NAME);
@@ -77,6 +85,7 @@ export async function initFoodDb(): Promise<void> {
       await db.closeAsync();
       db = null;
       await copyAssetDb();
+      await AsyncStorage.setItem('food_db_version', DB_VERSION);
       db = await SQLite.openDatabaseAsync(DB_NAME);
     }
   } catch (e) {
