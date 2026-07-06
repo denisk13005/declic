@@ -92,10 +92,10 @@ export async function initFoodDb(): Promise<void> {
 export async function searchFood(query: string, limit = 8, offset = 0): Promise<FoodResult[]> {
   if (!db || !query || query.trim().length < 2) return [];
 
+  const lowerQuery = query.trim().toLowerCase();
+
   // Construit la requête FTS5 : chaque mot devient un préfixe ("mot*")
-  const terms = query
-    .trim()
-    .toLowerCase()
+  const terms = lowerQuery
     .split(/\s+/)
     .filter(w => w.length >= 1)
     .map(w => `"${w.replace(/"/g, '')}"*`)
@@ -114,9 +114,18 @@ export async function searchFood(query: string, limit = 8, offset = 0): Promise<
        FROM foods_fts fts
        JOIN foods f ON f.id = fts.rowid
        WHERE foods_fts MATCH ?
-       ORDER BY fts.rank, length(f.name)
+       ORDER BY
+         CASE
+           WHEN lower(f.name) = ? THEN 0
+           WHEN lower(f.name) LIKE ? || ', %' AND f.brand IS NULL THEN 1
+           WHEN lower(f.name) LIKE ? || '%' AND f.brand IS NULL THEN 2
+           WHEN lower(f.name) LIKE ? || '%' THEN 3
+           ELSE 4
+         END,
+         fts.rank,
+         length(f.name)
        LIMIT ? OFFSET ?`,
-      [terms, limit, offset]
+      [terms, lowerQuery, lowerQuery, lowerQuery, lowerQuery, limit, offset]
     );
 
     return rows.map(row => ({

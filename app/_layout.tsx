@@ -3,8 +3,11 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { StyleSheet, Platform } from 'react-native';
+import { StyleSheet, Platform, LogBox } from 'react-native';
 import Toast from 'react-native-toast-message';
+
+// expo-keep-awake échoue sur émulateur quand l'activité passe en arrière-plan au démarrage
+LogBox.ignoreLogs(['ExpoKeepAwake.activate']);
 import * as Notifications from 'expo-notifications';
 import { format } from 'date-fns';
 import { listenToAuthState } from '@/stores/authStore';

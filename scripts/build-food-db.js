@@ -16,11 +16,13 @@ const fs   = require('fs');
 const path = require('path');
 
 const CIQUAL_PATH = path.join(__dirname, '..', 'src', 'data', 'ciqual.json');
+const SUPP_PATH   = path.join(__dirname, '..', 'src', 'data', 'ciqual_supplement.json');
 const OFF_PATH    = path.join(__dirname, '..', 'src', 'data', 'off-fr.json');
 const OUT_PATH    = path.join(__dirname, '..', 'assets', 'food.db');
 
 if (!fs.existsSync(CIQUAL_PATH)) { console.error('❌ ciqual.json introuvable'); process.exit(1); }
-if (!fs.existsSync(OFF_PATH))    { console.error('❌ off-fr.json introuvable');  process.exit(1); }
+const hasOff = fs.existsSync(OFF_PATH);
+if (!hasOff) console.warn('⚠️  off-fr.json absent — build Ciqual seul (lancez convert-off.js pour inclure OFF)');
 
 // Supprime l'ancienne DB si elle existe
 if (fs.existsSync(OUT_PATH)) fs.unlinkSync(OUT_PATH);
@@ -60,8 +62,12 @@ const insert = db.prepare(`
 console.log('Chargement ciqual.json...');
 const ciqual = JSON.parse(fs.readFileSync(CIQUAL_PATH, 'utf8'));
 
-console.log('Chargement off-fr.json...');
-const offFr  = JSON.parse(fs.readFileSync(OFF_PATH, 'utf8'));
+console.log('Chargement ciqual_supplement.json...');
+const suppList = JSON.parse(fs.readFileSync(SUPP_PATH, 'utf8'));
+const supplement = new Map(suppList.map(s => [s.code, s]));
+
+const offFr = hasOff ? JSON.parse(fs.readFileSync(OFF_PATH, 'utf8')) : [];
+if (hasOff) console.log(`Chargement off-fr.json... (${offFr.length.toLocaleString()} entrées)`);
 
 // ── Insertion en transaction unique ────────────────────────────────────────
 const insertMany = db.transaction((items) => {
@@ -76,12 +82,13 @@ for (const item of ciqual) {
   const key = item.name.toLowerCase();
   if (seen.has(key)) continue;
   seen.add(key);
+  const supp = supplement.get(item.code);
   rows.push({
     name:    item.name,
     kcal:    Math.round(item.kcal),
-    protein: item.protein ?? null,
-    carbs:   item.carbs   ?? null,
-    fat:     item.fat     ?? null,
+    protein: item.protein ?? supp?.protein ?? null,
+    carbs:   item.carbs   ?? supp?.carbs   ?? null,
+    fat:     item.fat     ?? supp?.fat     ?? null,
     brand:   null,
     source:  'ciqual',
   });

@@ -123,7 +123,8 @@ export async function searchByName(query: string, signal?: AbortSignal): Promise
   const data = await response.json();
 
   // Mots significatifs de la requête normalisés (sans accents, sans mots vides, >= 2 chars)
-  const queryWords = normalizeStr(query.trim())
+  const queryNorm = normalizeStr(query.trim());
+  const queryWords = queryNorm
     .split(/\s+/)
     .filter(w => w.length >= 2 && !STOP_WORDS.has(w));
 
@@ -141,6 +142,13 @@ export async function searchByName(query: string, signal?: AbortSignal): Promise
     })
     .map(parseProduct)
     .filter(Boolean)
+    .sort((a: any, b: any) => {
+      const na = normalizeStr(a.name);
+      const nb = normalizeStr(b.name);
+      const pa = na === queryNorm ? 0 : na.startsWith(queryNorm) ? 1 : 2;
+      const pb = nb === queryNorm ? 0 : nb.startsWith(queryNorm) ? 1 : 2;
+      return pa !== pb ? pa - pb : a.name.length - b.name.length;
+    })
     .slice(0, 15) as ProductInfo[];
 }
 

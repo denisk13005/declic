@@ -1,5 +1,43 @@
 # Déclic — Dev Log
 
+## 2026-07-06 — Patch macros Ciqual via USDA SR Legacy (333 entrées)
+
+### Problème
+333/3 339 entrées Ciqual (10%) avaient protein/carbs/fat = null dans la source ANSES officielle. Ces aliments affichaient `null` dans l'UI pour les macros — inutilisable pour le suivi.
+
+### Solution — `src/data/ciqual_supplement.json` + `scripts/build-food-db.js`
+Créé `ciqual_supplement.json` : 333 entrées avec les macros USDA FoodData Central SR Legacy (données publiques). Couvre fruits, légumes, poissons, fromages, viandes, huiles, boissons, condiments.
+
+Le script `build-food-db.js` charge le supplement dans une `Map<code, {protein,carbs,fat}>` et applique un `??` lors de l'insertion Ciqual :
+```js
+protein: item.protein ?? supp?.protein ?? null
+```
+Les valeurs Ciqual officielles restent prioritaires — le supplement ne comble que les trous.
+
+### Résultat
+`food.db` : 0 entrée Ciqual avec macros null (avant : 333). OFF reste optionnel si `off-fr.json` absent.
+
+## 2026-07-06 — Fix priorité aliments génériques dans la recherche SQLite
+
+### Problème
+Quand l'utilisateur tape "banane", des produits OFF de marque courts ("Banane Bio", 10 chars) apparaissaient avant "Banane, chair sans peau, crue" (aliment générique Ciqual, 29 chars) à cause du tri par longueur croissante.
+
+### Cause
+La DB `food.db` contient 62 000 entrées (Ciqual + OFF). Dans le `ORDER BY` de `searchFood()`, tous les résultats commençant par la requête étaient dans le même tier, ensuite triés par `length(f.name)` — les noms courts (souvent des marques) passaient devant les génériques.
+
+### Fix — `src/services/foodDb.ts`
+Nouveau `ORDER BY` à 5 niveaux de priorité :
+- 0 : nom exact
+- 1 : commence par `requête, ` + pas de marque → format ANSES "Banane, chair sans peau, crue" (générique pur)
+- 2 : commence par requête + pas de marque → autres entrées Ciqual ("Banane plantain, crue")
+- 3 : commence par requête + marque → produits OFF
+- 4 : requête ailleurs dans le nom ("Nectar de banane")
+
+Le pattern `LIKE ? || ', %'` exploite la convention de nommage ANSES : l'ingrédient générique est toujours suivi d'une virgule puis de descripteurs.
+
+### Note données
+"Banane, chair sans peau, crue" (code Ciqual 13005) a protein/carbs/fat = null dans la source ANSES. C'est une limite du jeu de données officiel, pas un bug.
+
 ## 2026-04-16 — Amélioration moteur de recherche alimentaire (OFF parallèle + fix accents)
 
 ### Problèmes résolus
