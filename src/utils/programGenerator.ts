@@ -414,19 +414,35 @@ function makeFullBody(n: number, v: 'A' | 'B' | 'C', goal: FitnessGoal, level: P
 }
 
 function makePush(n: number, v: 'A' | 'B', goal: FitnessGoal, level: PractitionerLevel, gender: Gender, equipmentSet?: Set<EquipmentType>): ProgramDay {
-  const groups: GroupSpec[] = v === 'A'
-    ? [
-        { group: 'chest',     compounds: 2, isolations: level === 'beginner' ? 1 : 2 },
-        { group: 'shoulders', compounds: 1, isolations: 1 },
-        { group: 'triceps',   compounds: 1, isolations: 1 },
-      ]
-    : [
-        { group: 'chest',     compounds: 1, isolations: 2 },
-        { group: 'shoulders', compounds: 1, isolations: 2 },
-        { group: 'triceps',   compounds: 0, isolations: 2 },
-      ];
+  // Femme : épaules en tête, chest réduit par biasGroups (compound→0), triceps éliminé, abdos ajoutés.
+  // Homme : pectoraux prioritaires, split classique Push.
+  const groups: GroupSpec[] = gender === 'female'
+    ? v === 'A'
+      ? [
+          { group: 'shoulders', compounds: 1, isolations: 2 },
+          { group: 'chest',     compounds: 1, isolations: 1 },
+          { group: 'triceps',   compounds: 0, isolations: 1 },
+          { group: 'abs',       compounds: 0, isolations: 2 },
+        ]
+      : [
+          { group: 'shoulders', compounds: 1, isolations: 2 },
+          { group: 'chest',     compounds: 1, isolations: 1 },
+          { group: 'triceps',   compounds: 1, isolations: 0 },
+          { group: 'abs',       compounds: 0, isolations: 2 },
+        ]
+    : v === 'A'
+      ? [
+          { group: 'chest',     compounds: 2, isolations: level === 'beginner' ? 1 : 2 },
+          { group: 'shoulders', compounds: 1, isolations: 1 },
+          { group: 'triceps',   compounds: 1, isolations: 1 },
+        ]
+      : [
+          { group: 'chest',     compounds: 1, isolations: 2 },
+          { group: 'shoulders', compounds: 1, isolations: 2 },
+          { group: 'triceps',   compounds: 0, isolations: 2 },
+        ];
   const focus = gender === 'female'
-    ? 'Épaules · Pectoraux · (Fessiers finisher)'
+    ? 'Épaules · Pectoraux · Triceps · Abdos'
     : 'Pectoraux · Épaules · Triceps';
   return buildDay(n, `Push ${v}`, focus, groups, goal, level, gender, equipmentSet);
 }
@@ -486,22 +502,42 @@ function makeLegs(n: number, v: 'A' | 'B', goal: FitnessGoal, level: Practitione
 }
 
 function makeUpper(n: number, v: 'A' | 'B', goal: FitnessGoal, level: PractitionerLevel, gender: Gender, equipmentSet?: Set<EquipmentType>): ProgramDay {
-  const groups: GroupSpec[] = v === 'A'
-    ? [
-        { group: 'chest',     compounds: 1, isolations: 1 },
-        { group: 'back',      compounds: 2, isolations: 0 },
-        { group: 'shoulders', compounds: 1, isolations: 1 },
-        { group: 'biceps',    compounds: 0, isolations: 1 },
-        { group: 'triceps',   compounds: 0, isolations: 1 },
-      ]
-    : [
-        { group: 'chest',     compounds: 1, isolations: 2 },
-        { group: 'back',      compounds: 1, isolations: 1 },
-        { group: 'shoulders', compounds: 0, isolations: 2 },
-        { group: 'biceps',    compounds: 0, isolations: 1 },
-        { group: 'triceps',   compounds: 1, isolations: 1 },
-      ];
-  return buildDay(n, `Upper ${v}`, 'Pectoraux · Dos · Épaules · Bras', groups, goal, level, gender, equipmentSet);
+  // Femme : pas de chest/triceps lourds → dos + épaules + biceps + abdos.
+  // Homme : split haut classique pectoraux-centré.
+  const groups: GroupSpec[] = gender === 'female'
+    ? v === 'A'
+      ? [
+          { group: 'back',      compounds: 2, isolations: 0 },
+          { group: 'shoulders', compounds: 1, isolations: 1 },
+          { group: 'biceps',    compounds: 0, isolations: 1 },
+          { group: 'abs',       compounds: 0, isolations: 2 },
+        ]
+      : [
+          { group: 'back',      compounds: 1, isolations: 1 },
+          { group: 'shoulders', compounds: 0, isolations: 2 },
+          { group: 'biceps',    compounds: 0, isolations: 1 },
+          { group: 'chest',     compounds: 0, isolations: 1 },
+          { group: 'abs',       compounds: 0, isolations: 2 },
+        ]
+    : v === 'A'
+      ? [
+          { group: 'chest',     compounds: 1, isolations: 1 },
+          { group: 'back',      compounds: 2, isolations: 0 },
+          { group: 'shoulders', compounds: 1, isolations: 1 },
+          { group: 'biceps',    compounds: 0, isolations: 1 },
+          { group: 'triceps',   compounds: 0, isolations: 1 },
+        ]
+      : [
+          { group: 'chest',     compounds: 1, isolations: 2 },
+          { group: 'back',      compounds: 1, isolations: 1 },
+          { group: 'shoulders', compounds: 0, isolations: 2 },
+          { group: 'biceps',    compounds: 0, isolations: 1 },
+          { group: 'triceps',   compounds: 1, isolations: 1 },
+        ];
+  const focus = gender === 'female'
+    ? v === 'A' ? 'Dos · Épaules · Biceps · Abdos' : 'Dos · Épaules · Biceps · Pectoraux · Abdos'
+    : 'Pectoraux · Dos · Épaules · Bras';
+  return buildDay(n, `Upper ${v}`, focus, groups, goal, level, gender, equipmentSet);
 }
 
 function makeLower(n: number, v: 'A' | 'B', goal: FitnessGoal, level: PractitionerLevel, gender: Gender, equipmentSet?: Set<EquipmentType>): ProgramDay {
