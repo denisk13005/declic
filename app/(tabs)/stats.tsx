@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -9,6 +9,8 @@ import { useHabitStore } from '@/stores/habitStore';
 import { useCalorieStore } from '@/stores/calorieStore';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
 import { Habit } from '@/types';
+import WeightChartCard from '@/components/profile/WeightChartCard';
+import WeightModal from '@/components/nutrition/WeightModal';
 
 const { width: screenWidth } = Dimensions.get('window');
 const CHART_WIDTH = screenWidth - SPACING.lg * 2;
@@ -82,6 +84,7 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 // ─── StatsScreen ──────────────────────────────────────────────────────────────
 
 export default function StatsScreen() {
+  const [weightModalVisible, setWeightModalVisible] = useState(false);
   const { habits, getStats } = useHabitStore();
   const { getCaloriesForDate, goals } = useCalorieStore();
   const dailyGoal = goals.calories;
@@ -266,6 +269,9 @@ export default function StatsScreen() {
           )}
         </ChartCard>
 
+        {/* ── Courbe de poids ── */}
+        <WeightChartCard onLogWeight={() => setWeightModalVisible(true)} />
+
         {/* ── Heatmap 7j ── */}
         <Text style={styles.sectionTitle}>7 derniers jours</Text>
         <View style={styles.heatmapHeader}>
@@ -319,6 +325,8 @@ export default function StatsScreen() {
           </>
         )}
       </ScrollView>
+
+      <WeightModal visible={weightModalVisible} onClose={() => setWeightModalVisible(false)} />
     </SafeAreaView>
   );
 }

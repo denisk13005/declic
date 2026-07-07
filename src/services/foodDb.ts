@@ -29,7 +29,7 @@ const DB_NAME    = 'food.db';
 const DB_DIR     = FileSystem.documentDirectory + 'SQLite/';
 const DB_PATH    = DB_DIR + DB_NAME;
 // Incrémenter à chaque rebuild de food.db pour forcer la re-copie sur l'appareil
-const DB_VERSION = '2';
+const DB_VERSION = '3';
 
 async function copyAssetDb(): Promise<void> {
   // Crée le répertoire SQLite si besoin

@@ -1,5 +1,23 @@
 # Déclic — Dev Log
 
+## 2026-07-07 — Food.db OFF + courbe de poids + onboarding sport
+
+### Food.db — Intégration Open Food Facts (69 500 aliments)
+- `scripts/convert-off.js` : ajout `MAX_ENTRIES = 80_000` pour éviter le OOM Node.js sur le CSV ~6 GB compressé → génère `src/data/off-fr.json` (8.2 MB)
+- `scripts/build-food-db.js` : reconstruit `assets/food.db` avec Ciqual (3 339) + OFF (66 161 dédupliqués) → 6.9 MB
+- `src/services/foodDb.ts` : `DB_VERSION` `'2'` → `'3'` pour forcer la re-copie sur l'appareil au prochain lancement
+
+### Courbe de poids dans stats.tsx
+- Import de `WeightChartCard` + `WeightModal` dans `app/(tabs)/stats.tsx`
+- Ajout après le graphique calories — sélecteur 7j/30j/90j/tout, delta, IMC avec plage ajustée selon la fréquence sportive
+- `WeightModal` ouverte via le bouton "Ajouter" du composant
+
+### Onboarding sport — formulaire de configuration
+- `app/onboarding/sport.tsx` : réécriture complète (était un écran marketing sans collecte de données)
+- Formulaire scrollable : genre, niveau (3 niveaux), objectif (3 options), jours/semaine (1–6), équipement multi-select (7 types)
+- Bouton "Générer mon programme →" appelle `generateProgram()` + `saveProgram()` puis navigue vers `/onboarding/healthconnect`
+- Defaults : genre homme, débutant, prise de muscle, 3 jours, tout l'équipement
+
 ## 2026-07-06 — Patch macros Ciqual via USDA SR Legacy (333 entrées)
 
 ### Problème

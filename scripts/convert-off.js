@@ -77,6 +77,7 @@ async function main() {
     'fat_100g',
   ];
 
+  const MAX_ENTRIES = 80_000; // cap mobile — au-delà la DB devient trop lourde
   const results = [];
   const seen = new Set(); // déduplique par "name|brand"
   let lineCount = 0;
@@ -153,6 +154,7 @@ async function main() {
 
     results.push(entry);
     kept++;
+    if (kept >= MAX_ENTRIES) break;
   }
 
   console.log(`\n\nTotal lu     : ${lineCount.toLocaleString()} lignes`);
