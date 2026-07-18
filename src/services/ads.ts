@@ -8,6 +8,8 @@ import {
   RewardedAd,
   AdEventType,
   RewardedAdEventType,
+  AdsConsent,
+  AdsConsentStatus,
 } from 'react-native-google-mobile-ads';
 
 // ─── IDs AdMob ────────────────────────────────────────────────────────────────
@@ -42,6 +44,20 @@ export { BannerAd, BannerAdSize, AdEventType, RewardedAdEventType };
 export { AppOpenAd, InterstitialAd, RewardedAd };
 
 // Initialise le SDK (à appeler une fois au démarrage dans _layout.tsx)
+// Gère le consentement RGPD via UMP avant d'initialiser les pubs — obligatoire en UE.
+// Sans ce flow, AdMob ne sert aucune pub aux utilisateurs EU/EEA.
 export async function initAds(): Promise<void> {
+  try {
+    const consentInfo = await AdsConsent.requestInfoUpdate();
+    if (
+      consentInfo.isConsentFormAvailable &&
+      (consentInfo.status === AdsConsentStatus.REQUIRED ||
+        consentInfo.status === AdsConsentStatus.UNKNOWN)
+    ) {
+      await AdsConsent.showForm();
+    }
+  } catch (e) {
+    console.warn('[ads] UMP consent error:', e);
+  }
   await MobileAds().initialize();
 }

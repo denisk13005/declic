@@ -1,5 +1,16 @@
 # Déclic — Dev Log
 
+## 2026-07-18 — Pubs test ads + toggle mot de passe
+
+### Ads — fix pubs absentes (consentement RGPD manquant)
+- `src/services/ads.ts` : ajout du flow UMP (`AdsConsent.requestInfoUpdate` + `showForm`) avant `MobileAds().initialize()`
+- Cause racine : sans collecte de consentement GDPR/UE, AdMob ne sert aucune pub aux utilisateurs EU/EEA — obligatoire depuis 2024
+- `eas.json` : profils `development` et `preview` injectent `EXPO_PUBLIC_USE_TEST_ADS=true` (bonne pratique, sans rapport avec le bug)
+
+### Auth — afficher/masquer mot de passe
+- `app/auth/login.tsx` : toggle eye icon (Ionicons) sur le champ mot de passe
+- `app/auth/register.tsx` : idem sur "Mot de passe" et "Confirmer le mot de passe" (états indépendants)
+
 ## 2026-07-07 — Food.db OFF + courbe de poids + onboarding sport
 
 ### Food.db — Intégration Open Food Facts (69 500 aliments)

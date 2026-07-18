@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/services/firebase';
@@ -24,6 +25,8 @@ export default function RegisterScreen() {
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   async function handleRegister() {
     if (!email.trim() || !password || !confirm) {
@@ -89,28 +92,54 @@ export default function RegisterScreen() {
 
             <View style={styles.inputWrapper}>
               <Text style={styles.inputLabel}>Mot de passe</Text>
-              <TextInput
-                style={styles.input}
-                value={password}
-                onChangeText={setPassword}
-                placeholder="Min. 6 caractères"
-                placeholderTextColor={COLORS.textTertiary}
-                secureTextEntry
-                autoCapitalize="none"
-              />
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={styles.inputWithIcon}
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="Min. 6 caractères"
+                  placeholderTextColor={COLORS.textTertiary}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                />
+                <TouchableOpacity
+                  style={styles.eyeBtn}
+                  onPress={() => setShowPassword(!showPassword)}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons
+                    name={showPassword ? 'eye-off' : 'eye'}
+                    size={20}
+                    color={COLORS.textSecondary}
+                  />
+                </TouchableOpacity>
+              </View>
             </View>
 
             <View style={styles.inputWrapper}>
               <Text style={styles.inputLabel}>Confirmer le mot de passe</Text>
-              <TextInput
-                style={styles.input}
-                value={confirm}
-                onChangeText={setConfirm}
-                placeholder="••••••••"
-                placeholderTextColor={COLORS.textTertiary}
-                secureTextEntry
-                autoCapitalize="none"
-              />
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={styles.inputWithIcon}
+                  value={confirm}
+                  onChangeText={setConfirm}
+                  placeholder="••••••••"
+                  placeholderTextColor={COLORS.textTertiary}
+                  secureTextEntry={!showConfirm}
+                  autoCapitalize="none"
+                />
+                <TouchableOpacity
+                  style={styles.eyeBtn}
+                  onPress={() => setShowConfirm(!showConfirm)}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons
+                    name={showConfirm ? 'eye-off' : 'eye'}
+                    size={20}
+                    color={COLORS.textSecondary}
+                  />
+                </TouchableOpacity>
+              </View>
             </View>
 
             <TouchableOpacity
@@ -182,6 +211,27 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     fontSize: FONT_SIZE.md,
     color: COLORS.textPrimary,
+  },
+  inputContainer: {
+    position: 'relative',
+  },
+  inputWithIcon: {
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    paddingHorizontal: SPACING.md,
+    paddingRight: 48,
+    paddingVertical: 14,
+    fontSize: FONT_SIZE.md,
+    color: COLORS.textPrimary,
+  },
+  eyeBtn: {
+    position: 'absolute',
+    right: SPACING.md,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
   },
   btn: { borderRadius: RADIUS.md, overflow: 'hidden', marginTop: SPACING.sm },
   btnDisabled: { opacity: 0.6 },
