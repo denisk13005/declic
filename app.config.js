@@ -36,8 +36,7 @@ export default ({ config }) => ({
     [
       'react-native-google-mobile-ads',
       {
-        // TODO: remplace par ton vrai App ID AdMob (ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXXXX)
-        androidAppId: 'ca-app-pub-3940256099942544~3347511713', // ID de test Google
+        androidAppId: 'ca-app-pub-6176341588651241~3333714691',
         iosAppId: 'ca-app-pub-3940256099942544~1458002511', // ID de test iOS (app Android-only, juste pour silencer le warning)
         // Délai de démarrage de l'app pour charger la pub App Open (en ms)
         delay_app_measurement_init: false,

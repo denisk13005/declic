@@ -25,10 +25,21 @@ export default function RootLayout() {
 
   useEffect(() => {
     const unsubscribe = listenToAuthState();
-    SplashScreen.hideAsync();
-    initFoodDb().catch(e => console.warn('[foodDb] init échouée :', e));
-    initNotificationChannel();
-    initAds().catch(e => console.warn('[ads] init échouée :', e));
+
+    const init = async () => {
+      // Attend que la DB soit prête (copie des 7MB depuis l'APK au 1er lancement)
+      // avant de cacher le splash — sinon la recherche retourne [] sur install fraîche.
+      // Timeout 5s pour ne pas bloquer indéfiniment si l'init échoue.
+      await Promise.race([
+        initFoodDb().catch(e => console.warn('[foodDb] init échouée :', e)),
+        new Promise<void>(resolve => setTimeout(resolve, 5000)),
+      ]);
+      SplashScreen.hideAsync();
+      initNotificationChannel();
+      initAds().catch(e => console.warn('[ads] init échouée :', e));
+    };
+
+    init();
 
     // Écoute les actions des boutons (Galaxy Watch 4 + notifications système)
     const responseSub = Notifications.addNotificationResponseReceivedListener((response) => {

@@ -20,22 +20,22 @@ export const AD_UNITS = {
   // Banner — affiché en bas de Home et Calories (utilisateurs free uniquement)
   banner: IS_TEST
     ? TestIds.ADAPTIVE_BANNER
-    : 'ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX', // TODO: remplace
+    : 'ca-app-pub-6176341588651241/9767409499',
 
   // Interstitial — affiché après l'ajout d'une séance sport (max 1/30min)
   interstitial: IS_TEST
     ? TestIds.INTERSTITIAL
-    : 'ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX', // TODO: remplace
+    : 'ca-app-pub-6176341588651241/5669902290',
 
   // Rewarded — débloquer une 2ᵉ habitude le temps d'une journée
   rewarded: IS_TEST
     ? TestIds.REWARDED
-    : 'ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX', // TODO: remplace
+    : 'ca-app-pub-6176341588651241/7819903002',
 
   // App Open — au lancement de l'app (cooldown 4h géré dans useAppOpenAd)
   appOpen: IS_TEST
     ? TestIds.APP_OPEN
-    : 'ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX', // TODO: remplace
+    : 'ca-app-pub-6176341588651241/5614061975',
 } as const;
 
 export { BannerAd, BannerAdSize, AdEventType, RewardedAdEventType };
