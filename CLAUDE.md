@@ -50,7 +50,7 @@ npm run test:coverage
 ### Services (`src/services/`)
 | Fichier | Rôle |
 |---------|------|
-| `ciqualSearch.ts` | Recherche locale Fuse.js (3 339 aliments ANSES Ciqual 2025, hors-ligne) |
+| `foodDb.ts` | `initFoodDb()` + `searchFood()` — SQLite FTS5, 62 000 aliments (Ciqual + OFF-FR), hors-ligne |
 | `openFoodFacts.ts` | `lookupBarcode()` + `searchByName()` — fallback réseau |
 | `gemini.ts` | `analyzeFoodPhoto()` — analyse photo via Gemini Flash |
 | `healthConnect.ts` | `checkHCStatus`, `requestHCPermissions`, `readBurnedCalories` |
@@ -110,13 +110,11 @@ interface ComposedMeal {
 ## Recherche d'aliments — ordre de priorité (AddEntryModal)
 
 1. **Bibliothèque perso** (`calorieStore.foodLibrary`) — instantané, résultats en tête
-2. **Ciqual local** (`ciqualSearch.ts`) — Fuse.js, synchrone, hors-ligne
-3. **Open Food Facts** (`searchByName`) — fallback réseau si < 3 résultats locaux, timeout 20s
+2. **SQLite local** (`foodDb.ts`) — FTS5, 62 000 aliments Ciqual + OFF-FR, hors-ligne
+3. **Open Food Facts** (`searchByName`) — fallback réseau en parallèle, timeout 10s
 
 Règles importantes :
-- Fuse.js init **lazy** (1er appel) + `warmupCiqual()` au démarrage → évite ANR
-- Filtre post-Fuse : word prefix match + normalisation NFD accents
-- Tri par longueur de nom croissante
+- `initFoodDb()` appelé au démarrage (copie `assets/food.db` au 1er lancement)
 - Debounce 200ms dans `AddEntryModal` et `FoodLibraryModal`
 - Résultats OFF sélectionnés → auto-sauvegardés dans `foodLibrary`
 - Type unifié `FoodSuggestion` dans `AddEntryModal.tsx`
