@@ -76,7 +76,7 @@ export default function RootLayout() {
       unsubscribe();
       responseSub.remove();
     };
-  }, []);
+  }, [toggleCompletion]);
 
   return (
     <GestureHandlerRootView style={styles.root}>

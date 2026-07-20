@@ -11,7 +11,11 @@ function todayISO(): string {
   return format(new Date(), 'yyyy-MM-dd');
 }
 
+const statsCache = new WeakMap<string[], HabitStats>();
+
 function computeStats(habit: Habit): HabitStats {
+  const cached = statsCache.get(habit.completions);
+  if (cached) return cached;
   const sorted = [...habit.completions].sort();
   if (sorted.length === 0) {
     return { currentStreak: 0, longestStreak: 0, completionRate: 0, totalCompletions: 0 };
@@ -66,12 +70,14 @@ function computeStats(habit: Habit): HabitStats {
   ).length;
   const completionRate = Math.min(recentCompletions / 30, 1);
 
-  return {
+  const result: HabitStats = {
     currentStreak,
     longestStreak: Math.max(longestStreak, currentStreak),
     completionRate,
     totalCompletions: habit.completions.length,
   };
+  statsCache.set(habit.completions, result);
+  return result;
 }
 
 // ─── Store ────────────────────────────────────────────────────────────────────

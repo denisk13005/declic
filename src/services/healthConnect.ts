@@ -134,7 +134,7 @@ export async function readBurnedCalories(date: string): Promise<number | null> {
 
     // Estimation depuis les pas si Samsung Health n'a pas synchronisé ActiveCaloriesBurned
     const totalSteps = (stepsResult.records ?? []).reduce(
-      (s, r) => s + ((r as any).count ?? 0), 0
+      (s, r) => s + ((r as unknown as { count: number }).count ?? 0), 0
     );
     const stepsCalories = totalSteps * 0.04; // ~0.04 kcal/pas pour 70 kg
 

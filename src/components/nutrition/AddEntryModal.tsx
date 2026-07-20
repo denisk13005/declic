@@ -570,8 +570,8 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
     }
 
     const result = fromCamera
-      ? await ImagePicker.launchCameraAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, quality: 0.7, base64: true })
-      : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, quality: 0.7, base64: true });
+      ? await ImagePicker.launchCameraAsync({ mediaTypes: ['images'] as ImagePicker.MediaType[], allowsEditing: true, quality: 0.7, base64: true })
+      : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'] as ImagePicker.MediaType[], allowsEditing: true, quality: 0.7, base64: true });
 
     if (result.canceled || !result.assets[0]?.base64) return;
 
@@ -827,7 +827,7 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
                           const prevIsLocal = i === 0 || suggestions[i - 1].source !== 'off';
                           const isFirstOff = item.source === 'off' && prevIsLocal;
                           return (
-                            <React.Fragment key={`${item.name}-${i}`}>
+                            <React.Fragment key={`${item.source}-${item.name}`}>
                               {isFirstOff && (
                                 <View style={styles.offSeparator}>
                                   <Ionicons name="globe-outline" size={13} color="#6366F1" />

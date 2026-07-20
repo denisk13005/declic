@@ -58,11 +58,6 @@ async function copyAssetDb(): Promise<void> {
  */
 export async function initFoodDb(): Promise<void> {
   try {
-    const dirInfo = await FileSystem.getInfoAsync(DB_DIR);
-    if (!dirInfo.exists) {
-      await FileSystem.makeDirectoryAsync(DB_DIR, { intermediates: true });
-    }
-
     // Re-copie si la DB n'existe pas ou si la version a changé
     const [dbInfo, storedVersion] = await Promise.all([
       FileSystem.getInfoAsync(DB_PATH),

@@ -177,7 +177,14 @@ export const useCalorieStore = create<CalorieStore>()(
       },
 
       setManualBurnedCalories: (date, kcal) => {
-        set((s) => ({ manualBurnedCalories: { ...s.manualBurnedCalories, [date]: kcal } }));
+        const cutoff = format(new Date(Date.now() - 90 * 86400000), 'yyyy-MM-dd');
+        set((s) => {
+          const next = { ...s.manualBurnedCalories, [date]: kcal };
+          for (const key of Object.keys(next)) {
+            if (key < cutoff) delete next[key];
+          }
+          return { manualBurnedCalories: next };
+        });
       },
 
       clearManualBurnedCalories: (date) => {
@@ -264,31 +271,6 @@ export const useCalorieStore = create<CalorieStore>()(
           if (!persisted.mealReminderIds) persisted.mealReminderIds = {};
         }
         return persisted;
-      },
-      onRehydrateStorage: () => (state) => {
-        if (!state) return;
-        // Migrate old FoodEntry without serving field
-        state.entries = state.entries.map((e) => {
-          const withServing = !(e as any).serving
-            ? { ...e, serving: { quantity: 1, unit: 'piece' as const }, macros: null }
-            : e;
-          return !(withServing as any).meal
-            ? { ...withServing, meal: 'lunch' as MealType }
-            : withServing;
-        });
-        // Migrate dailyGoal → goals
-        if (!state.goals) {
-          state.goals = {
-            calories: (state as any).dailyGoal ?? 2000,
-            protein: null,
-            carbs: null,
-            fat: null,
-            targetWeight: null,
-          };
-        }
-        if (!state.foodLibrary) state.foodLibrary = [];
-        if (!state.composedMeals) state.composedMeals = [];
-        if (!state.manualBurnedCalories) state.manualBurnedCalories = {};
       },
     }
   )
