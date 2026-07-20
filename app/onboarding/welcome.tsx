@@ -28,7 +28,7 @@ export default function WelcomeScreen() {
 
         {/* Feature pills */}
         <View style={styles.pills}>
-          {['🔥 Séries de jours', '📊 Stats claires', '🔔 Rappels malins'].map((p) => (
+          {['🍽️ Nutrition & poids', '🔥 Séries de jours', '📊 Stats claires', '🔔 Rappels malins'].map((p) => (
             <View key={p} style={styles.pill}>
               <Text style={styles.pillText}>{p}</Text>
             </View>

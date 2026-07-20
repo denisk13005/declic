@@ -143,6 +143,7 @@ export default function HealthConnectScreen() {
           <View style={styles.dot} />
           <View style={styles.dot} />
           <View style={styles.dot} />
+          <View style={styles.dot} />
           <View style={[styles.dot, styles.dotActive]} />
           <View style={styles.dot} />
         </View>

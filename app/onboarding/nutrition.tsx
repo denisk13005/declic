@@ -5,56 +5,66 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
 
-const BENEFITS = [
+const FEATURES = [
   {
-    emoji: '🧠',
-    title: '21 jours pour ancrer une habitude',
-    desc: 'La science montre qu\'il faut en moyenne 66 jours pour automatiser un comportement. Cairn t\'aide à tenir.',
+    emoji: '🍽️',
+    title: 'Suivi calorique complet',
+    desc: '4 repas par jour. Ajoute un aliment en 3 secondes — base Ciqual, scan code-barres ou photo IA.',
+    gradient: ['#10B981', '#059669'] as const,
+  },
+  {
+    emoji: '🔍',
+    title: '62 000 aliments référencés',
+    desc: 'Base officielle ANSES Ciqual 2025 + Open Food Facts. Recherche instantanée, hors-ligne.',
     gradient: ['#7C3AED', '#5B21B6'] as const,
   },
   {
-    emoji: '🔥',
-    title: 'Le pouvoir des séries',
-    desc: 'Voir ta série grandir chaque jour crée une motivation puissante pour ne pas briser la chaîne.',
+    emoji: '⚖️',
+    title: 'Courbe de poids',
+    desc: 'Note ton poids chaque jour et suis ta progression vers ton objectif.',
     gradient: ['#F59E0B', '#D97706'] as const,
-  },
-  {
-    emoji: '📈',
-    title: 'Des progrès visibles',
-    desc: 'Tes statistiques te montrent clairement où tu en es et te motivent à continuer.',
-    gradient: ['#10B981', '#059669'] as const,
   },
 ];
 
-export default function BenefitsScreen() {
+export default function NutritionOnboardingScreen() {
   const router = useRouter();
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <View style={styles.content}>
-        <Text style={styles.title}>Pourquoi ça marche ?</Text>
+        <Text style={styles.title}>Nutrition au quotidien</Text>
         <Text style={styles.subtitle}>
-          Cairn utilise des techniques éprouvées pour t'aider à construire des habitudes durables.
+          Suis tes calories et macros sans prise de tête.
         </Text>
 
         <View style={styles.cards}>
-          {BENEFITS.map((b) => (
-            <View key={b.title} style={styles.card}>
-              <LinearGradient colors={b.gradient} style={styles.cardIcon}>
-                <Text style={styles.cardEmoji}>{b.emoji}</Text>
+          {FEATURES.map((f) => (
+            <View key={f.title} style={styles.card}>
+              <LinearGradient colors={f.gradient} style={styles.cardIcon}>
+                <Text style={styles.cardEmoji}>{f.emoji}</Text>
               </LinearGradient>
               <View style={styles.cardText}>
-                <Text style={styles.cardTitle}>{b.title}</Text>
-                <Text style={styles.cardDesc}>{b.desc}</Text>
+                <Text style={styles.cardTitle}>{f.title}</Text>
+                <Text style={styles.cardDesc}>{f.desc}</Text>
               </View>
             </View>
           ))}
+        </View>
+
+        {/* Modèle freemium */}
+        <View style={styles.freemiumBox}>
+          <Text style={styles.freemiumText}>
+            <Text style={styles.freemiumHighlight}>Gratuit</Text>
+            {' '}— nutrition complète + 1 habitude{'\n'}
+            <Text style={styles.freemiumHighlight}>Premium</Text>
+            {' '}— habitudes illimitées, sans publicité
+          </Text>
         </View>
       </View>
 
       <View style={styles.footer}>
         <TouchableOpacity
-          onPress={() => router.push('/onboarding/nutrition')}
+          onPress={() => router.push('/onboarding/sport')}
           style={styles.btnWrapper}
           activeOpacity={0.9}
         >
@@ -63,11 +73,11 @@ export default function BenefitsScreen() {
           </LinearGradient>
         </TouchableOpacity>
 
-        {/* Step indicator */}
+        {/* Step indicator — 6 étapes, dot 3 actif */}
         <View style={styles.dots}>
           <View style={styles.dot} />
-          <View style={[styles.dot, styles.dotActive]} />
           <View style={styles.dot} />
+          <View style={[styles.dot, styles.dotActive]} />
           <View style={styles.dot} />
           <View style={styles.dot} />
           <View style={styles.dot} />
@@ -80,6 +90,7 @@ export default function BenefitsScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.bg },
   content: { flex: 1, padding: SPACING.lg },
+
   title: {
     fontSize: FONT_SIZE.display,
     fontWeight: FONT_WEIGHT.extrabold,
@@ -93,6 +104,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     marginBottom: SPACING.xl,
   },
+
   cards: { gap: SPACING.md },
   card: {
     flexDirection: 'row',
@@ -114,13 +126,35 @@ const styles = StyleSheet.create({
   },
   cardEmoji: { fontSize: 24 },
   cardText: { flex: 1 },
-  cardTitle: { fontSize: FONT_SIZE.md, fontWeight: FONT_WEIGHT.semibold, color: COLORS.textPrimary, marginBottom: 4 },
+  cardTitle: {
+    fontSize: FONT_SIZE.md,
+    fontWeight: FONT_WEIGHT.semibold,
+    color: COLORS.textPrimary,
+    marginBottom: 4,
+  },
   cardDesc: { fontSize: FONT_SIZE.sm, color: COLORS.textSecondary, lineHeight: 20 },
+
+  freemiumBox: {
+    marginTop: SPACING.lg,
+    backgroundColor: COLORS.bgCard,
+    borderRadius: RADIUS.md,
+    padding: SPACING.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  freemiumText: {
+    fontSize: FONT_SIZE.sm,
+    color: COLORS.textSecondary,
+    lineHeight: 22,
+    textAlign: 'center',
+  },
+  freemiumHighlight: { fontWeight: FONT_WEIGHT.semibold, color: COLORS.textPrimary },
 
   footer: { padding: SPACING.lg, gap: SPACING.lg },
   btnWrapper: { borderRadius: RADIUS.lg, overflow: 'hidden' },
   btn: { paddingVertical: SPACING.md + 4, alignItems: 'center' },
   btnText: { fontSize: FONT_SIZE.lg, fontWeight: FONT_WEIGHT.bold, color: '#fff' },
+
   dots: { flexDirection: 'row', justifyContent: 'center', gap: 8 },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.bgElevated },
   dotActive: { width: 24, backgroundColor: COLORS.primary },
