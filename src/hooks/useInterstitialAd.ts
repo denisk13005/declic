@@ -10,6 +10,7 @@ export function useInterstitialAd() {
   const loadedRef = useRef(false);
 
   const reload = useCallback(() => {
+    adRef.current?.removeAllListeners();
     loadedRef.current = false;
     const ad = InterstitialAd.createForAdRequest(AD_UNITS.interstitial);
     adRef.current = ad;
@@ -30,6 +31,10 @@ export function useInterstitialAd() {
 
   useEffect(() => {
     reload();
+    return () => {
+      adRef.current?.removeAllListeners();
+      adRef.current = null;
+    };
   }, [reload]);
 
   const show = useCallback(async () => {

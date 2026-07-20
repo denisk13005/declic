@@ -7,6 +7,7 @@ const COOLDOWN_MS = 4 * 60 * 60 * 1000; // 4h
 
 export function useAppOpenAd() {
   const mountedRef = useRef(true);
+  const adRef = useRef<ReturnType<typeof AppOpenAd.createForAdRequest> | null>(null);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -18,6 +19,7 @@ export function useAppOpenAd() {
         if (Date.now() - last < COOLDOWN_MS) return;
 
         const ad = AppOpenAd.createForAdRequest(AD_UNITS.appOpen);
+        adRef.current = ad;
 
         ad.addAdEventListener(AdEventType.LOADED, () => {
           if (!mountedRef.current) return;
@@ -40,6 +42,8 @@ export function useAppOpenAd() {
 
     return () => {
       mountedRef.current = false;
+      adRef.current?.removeAllListeners();
+      adRef.current = null;
     };
   }, []);
 }

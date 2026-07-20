@@ -211,6 +211,13 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
   const lastQueryRef = useRef('');
   const dbCountRef = useRef(0); // nombre de résultats DB actuellement affichés (hors library)
 
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      offAbortRef.current?.abort();
+    };
+  }, []);
+
   // Photo / barcode state
   const [photoUri, setPhotoUri] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
