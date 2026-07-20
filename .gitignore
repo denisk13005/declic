@@ -28,6 +28,10 @@ ios/*.xcuserstate
 .env
 .env.local
 .env.*.local
+env*
+
+# Test coverage
+coverage/
 
 # Logs
 npm-debug.log*
