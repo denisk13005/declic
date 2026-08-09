@@ -19,6 +19,10 @@ export default ({ config }) => ({
     infoPlist: {
       NSUserNotificationUsageDescription:
         'Cairn uses notifications to remind you of your daily habits.',
+      NSCameraUsageDescription:
+        'Cairn utilise la caméra pour scanner les codes-barres et photographier tes plats.',
+      NSPhotoLibraryUsageDescription:
+        'Cairn accède à tes photos pour analyser un plat depuis ta photothèque.',
     },
   },
   android: {
