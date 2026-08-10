@@ -1,5 +1,13 @@
 # Déclic — Dev Log
 
+## 2026-08-10 — Fix build EAS iOS (sharp)
+
+### EAS Build iOS — `npm ci` échouait sur sharp
+- Cause : `sharp` (native, en `devDependencies`) n'a pas de binaire précompilé pour l'env EAS → build depuis les sources → échec (`Please add node-addon-api`) → `npm ci --include=dev` s'arrête, build errored
+- Fix : déplacé `sharp` et `better-sqlite3` de `devDependencies` vers `optionalDependencies` (`package.json` + `package-lock.json` régénéré). En optionnel, un échec d'install natif est non-fatal et ignoré sur EAS
+- Ces deux libs ne servent qu'aux scripts locaux (`scripts/scale-icons.js`, `scripts/build-food-db.js`), jamais au build cloud
+- Expo bascule sur `jimp` si `sharp` est absent (optimisation d'icônes) — aucun impact
+
 ## 2026-07-18 — Pubs test ads + toggle mot de passe
 
 ### Ads — fix pubs absentes (consentement RGPD manquant)
