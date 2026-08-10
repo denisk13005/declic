@@ -17,6 +17,7 @@ export default ({ config }) => ({
     supportsTablet: false,
     bundleIdentifier: 'com.declic.nutrition',
     infoPlist: {
+      ITSAppUsesNonExemptEncryption: false,
       NSUserNotificationUsageDescription:
         'Cairn uses notifications to remind you of your daily habits.',
       NSCameraUsageDescription:
