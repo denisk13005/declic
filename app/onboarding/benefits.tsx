@@ -9,7 +9,7 @@ const BENEFITS = [
   {
     emoji: '🧠',
     title: '21 jours pour ancrer une habitude',
-    desc: 'La science montre qu\'il faut en moyenne 66 jours pour automatiser un comportement. Cairn t\'aide à tenir.',
+    desc: 'La science montre qu\'il faut en moyenne 66 jours pour automatiser un comportement. Vitacairn t\'aide à tenir.',
     gradient: ['#7C3AED', '#5B21B6'] as const,
   },
   {
@@ -34,7 +34,7 @@ export default function BenefitsScreen() {
       <View style={styles.content}>
         <Text style={styles.title}>Pourquoi ça marche ?</Text>
         <Text style={styles.subtitle}>
-          Cairn utilise des techniques éprouvées pour t'aider à construire des habitudes durables.
+          Vitacairn utilise des techniques éprouvées pour t'aider à construire des habitudes durables.
         </Text>
 
         <View style={styles.cards}>

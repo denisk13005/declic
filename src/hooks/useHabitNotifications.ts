@@ -32,7 +32,7 @@ export function useHabitNotifications() {
     if (!granted) {
       Alert.alert(
         'Permission refusée',
-        'Active les notifications pour Cairn dans les paramètres de ton téléphone.',
+        'Active les notifications pour Vitacairn dans les paramètres de ton téléphone.',
         [{ text: 'OK' }]
       );
       return false;

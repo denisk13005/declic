@@ -51,7 +51,7 @@ export default function NotificationsScreen() {
         {/* Notification preview */}
         <View style={styles.preview}>
           <View style={styles.previewHeader}>
-            <Text style={styles.previewApp}>⚡️ Cairn</Text>
+            <Text style={styles.previewApp}>⚡️ Vitacairn</Text>
             <Text style={styles.previewTime}>maintenant</Text>
           </View>
           <Text style={styles.previewTitle}>🏃 Temps pour ton habitude !</Text>

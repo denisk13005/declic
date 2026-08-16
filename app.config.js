@@ -1,6 +1,6 @@
 export default ({ config }) => ({
   ...config,
-  name: 'Cairn',
+  name: 'Vitacairn',
   slug: 'declic',
   owner: 'dk13',
   version: '1.0.0',
@@ -19,11 +19,11 @@ export default ({ config }) => ({
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
       NSUserNotificationUsageDescription:
-        'Cairn uses notifications to remind you of your daily habits.',
+        'Vitacairn uses notifications to remind you of your daily habits.',
       NSCameraUsageDescription:
-        'Cairn utilise la caméra pour scanner les codes-barres et photographier tes plats.',
+        'Vitacairn utilise la caméra pour scanner les codes-barres et photographier tes plats.',
       NSPhotoLibraryUsageDescription:
-        'Cairn accède à tes photos pour analyser un plat depuis ta photothèque.',
+        'Vitacairn accède à tes photos pour analyser un plat depuis ta photothèque.',
     },
   },
   android: {

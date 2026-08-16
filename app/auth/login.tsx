@@ -61,7 +61,7 @@ export default function LoginScreen() {
             <LinearGradient colors={COLORS.gradientPrimary} style={styles.logoCircle}>
               <Text style={styles.logoEmoji}>✦</Text>
             </LinearGradient>
-            <Text style={styles.title}>Cairn</Text>
+            <Text style={styles.title}>Vitacairn</Text>
             <Text style={styles.subtitle}>Connecte-toi pour continuer</Text>
           </View>
 
