@@ -1,5 +1,14 @@
 # Déclic — Dev Log
 
+## 2026-08-16 — Fix build EAS iOS (sharp, suite) — `NPM_CONFIG_OMIT=optional`
+
+### Le passage en `optionalDependencies` ne suffisait pas
+- Symptôme : build production iOS (commit `b56088c`) toujours errored sur `npm ci --include=dev`, `sharp` compilé depuis les sources → `Please add node-addon-api` → exit 1
+- Cause racine : `package-lock.json` est généré sous **Windows**, il ne contient donc que les binaires optionnels `@img/sharp-win32-*`, jamais `@img/sharp-darwin-arm64`. Sur les builders EAS (macOS), npm ne trouve aucun prebuilt et retombe sur la compilation `node-gyp`, qui échoue. En `optionalDependencies`, l'install de `sharp` lui-même reste tentée (c'est l'install de ses binaires natifs qui est optionnelle).
+- Fix : ajout de `"NPM_CONFIG_OMIT": "optional"` dans l'`env` des 4 profils EAS (`eas.json`). `npm ci --include=dev` inclut les devDeps mais omet les optionnelles → `sharp` + `better-sqlite3` jamais installés sur le cloud, plus de node-gyp.
+- Les deux libs restent installées **en local** pour les scripts `scripts/build-food-db.js` et `scripts/scale-icons.js` — workflow dev inchangé.
+- Piste plus définitive (non faite) : sortir ces deux outils dans un `package.json` séparé côté scripts.
+
 ## 2026-08-10 — Fix build EAS iOS (sharp)
 
 ### EAS Build iOS — `npm ci` échouait sur sharp

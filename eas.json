@@ -9,7 +9,8 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_USE_TEST_ADS": "true"
+        "EXPO_PUBLIC_USE_TEST_ADS": "true",
+        "NPM_CONFIG_OMIT": "optional"
       }
     },
     "preview": {
@@ -18,17 +19,24 @@
         "simulator": false
       },
       "env": {
-        "EXPO_PUBLIC_USE_TEST_ADS": "true"
+        "EXPO_PUBLIC_USE_TEST_ADS": "true",
+        "NPM_CONFIG_OMIT": "optional"
       }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "NPM_CONFIG_OMIT": "optional"
+      }
     },
     "production-apk": {
       "autoIncrement": true,
       "distribution": "internal",
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "NPM_CONFIG_OMIT": "optional"
       }
     }
   },
