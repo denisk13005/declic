@@ -43,7 +43,10 @@ export default ({ config }) => ({
       {
         NSHealthShareUsageDescription:
           'Vitacairn lit tes calories brûlées (Apple Watch / app Santé) pour calculer ton objectif calorique net.',
-        NSHealthUpdateUsageDescription: false, // lecture seule : pas d'écriture dans Santé
+        // Apple exige aussi la purpose string d'écriture dès que l'entitlement HealthKit est présent,
+        // même si l'app ne fait que lire. On la fournit (honnête : Vitacairn n'écrit rien dans Santé).
+        NSHealthUpdateUsageDescription:
+          'Vitacairn n’enregistre aucune donnée dans l’app Santé.',
         background: false, // pas de background delivery (lecture à la demande)
       },
     ],
