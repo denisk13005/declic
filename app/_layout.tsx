@@ -16,6 +16,7 @@ import { initFoodDb } from '@/services/foodDb';
 import { initNotificationChannel, HABIT_CHANNEL_ID, HABIT_REMINDER_CATEGORY_ID } from '@/services/notifications';
 import { initAds } from '@/services/ads';
 import { useAppOpenAd } from '@/hooks/useAppOpenAd';
+import UpdateGate from '@/components/UpdateGate';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -97,6 +98,7 @@ export default function RootLayout() {
         />
         <Stack.Screen name="onboarding" options={{ animation: 'fade' }} />
       </Stack>
+      <UpdateGate />
       <Toast />
     </GestureHandlerRootView>
   );

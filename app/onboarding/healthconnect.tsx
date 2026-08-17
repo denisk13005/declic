@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -70,7 +70,7 @@ export default function HealthConnectScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      <View style={styles.content}>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Icon */}
         <LinearGradient colors={['#F97316', '#EA580C']} style={styles.iconBg}>
           <Text style={styles.iconEmoji}>🔥</Text>
@@ -100,7 +100,7 @@ export default function HealthConnectScreen() {
             <Text style={styles.successText}>{HEALTH_APP} synchronisé</Text>
           </View>
         )}
-      </View>
+      </ScrollView>
 
       <View style={styles.footer}>
         {!done ? (
@@ -175,7 +175,8 @@ function FeatureRow({ icon, text }: { icon: string; text: string }) {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.bg },
-  content: { flex: 1, padding: SPACING.lg, alignItems: 'center', justifyContent: 'center' },
+  scroll: { flex: 1 },
+  content: { flexGrow: 1, padding: SPACING.lg, alignItems: 'center', justifyContent: 'center' },
 
   iconBg: {
     width: 96,

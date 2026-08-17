@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -37,7 +37,7 @@ export default function NotificationsScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      <View style={styles.content}>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Icon */}
         <LinearGradient colors={['#EC4899', '#BE185D']} style={styles.iconBg}>
           <Text style={styles.iconEmoji}>🔔</Text>
@@ -57,7 +57,7 @@ export default function NotificationsScreen() {
           <Text style={styles.previewTitle}>🏃 Temps pour ton habitude !</Text>
           <Text style={styles.previewBody}>N'oublie pas de cocher ta séance de sport du jour.</Text>
         </View>
-      </View>
+      </ScrollView>
 
       <View style={styles.footer}>
         <TouchableOpacity
@@ -92,7 +92,8 @@ export default function NotificationsScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.bg },
-  content: { flex: 1, padding: SPACING.lg, alignItems: 'center', justifyContent: 'center' },
+  scroll: { flex: 1 },
+  content: { flexGrow: 1, padding: SPACING.lg, alignItems: 'center', justifyContent: 'center' },
 
   iconBg: {
     width: 96,

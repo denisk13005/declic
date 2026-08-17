@@ -9,6 +9,7 @@ import {
   Platform,
   TextInput,
   KeyboardAvoidingView,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -144,6 +145,12 @@ function ExerciseCard({
   onRemoveSet: (exerciseId: string, setIndex: number) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
+
+  function openYoutube(name: string) {
+    const query = encodeURIComponent(name + ' exercice musculation');
+    Linking.openURL('https://www.youtube.com/results?search_query=' + query);
+  }
 
   const isSuperset =
     (pe.technique === 'superset' || pe.technique === 'biset') && !!pe.supersetWith;
@@ -200,12 +207,49 @@ function ExerciseCard({
           </Text>
         </View>
 
+        {/* Bouton infos — description + démonstration (indépendant du dépliage des séries) */}
+        <TouchableOpacity
+          onPress={() => setShowInfo((v) => !v)}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          style={{ paddingHorizontal: 4 }}
+        >
+          <Ionicons
+            name={showInfo ? 'chevron-up' : 'information-circle-outline'}
+            size={18}
+            color={showInfo ? COLORS.primary : COLORS.textTertiary}
+          />
+        </TouchableOpacity>
+
         <Ionicons
           name={expanded ? 'chevron-up' : 'chevron-down'}
           size={16}
           color={COLORS.textTertiary}
         />
       </TouchableOpacity>
+
+      {/* Description / démonstration exercice */}
+      {showInfo && (
+        <View style={cardStyles.infoBox}>
+          <Text style={cardStyles.infoLabel}>{isSuperset ? `A — ${pe.exercise.name}` : pe.exercise.name}</Text>
+          <Text style={cardStyles.infoText}>{pe.exercise.description}</Text>
+          <TouchableOpacity style={cardStyles.ytBtn} onPress={() => openYoutube(pe.exercise.name)} activeOpacity={0.7}>
+            <Ionicons name="logo-youtube" size={13} color="#EF4444" />
+            <Text style={cardStyles.ytText}>Voir une démonstration</Text>
+          </TouchableOpacity>
+
+          {isSuperset && pe.supersetWith && (
+            <>
+              <View style={cardStyles.infoDivider} />
+              <Text style={cardStyles.infoLabel}>B — {pe.supersetWith.name}</Text>
+              <Text style={cardStyles.infoText}>{pe.supersetWith.description}</Text>
+              <TouchableOpacity style={cardStyles.ytBtn} onPress={() => openYoutube(pe.supersetWith!.name)} activeOpacity={0.7}>
+                <Ionicons name="logo-youtube" size={13} color="#EF4444" />
+                <Text style={cardStyles.ytText}>Voir une démonstration</Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+      )}
 
       {/* Contenu déroulé */}
       {expanded && (
@@ -554,6 +598,17 @@ const cardStyles = StyleSheet.create({
     color: COLORS.textSecondary, marginBottom: 4,
   },
   separator: { height: 1, backgroundColor: COLORS.border, marginVertical: SPACING.sm },
+  infoBox: {
+    backgroundColor: COLORS.bgElevated, borderRadius: RADIUS.md,
+    padding: SPACING.sm, marginTop: SPACING.xs, gap: SPACING.xs,
+  },
+  infoLabel: {
+    fontSize: FONT_SIZE.xs, fontWeight: FONT_WEIGHT.semibold, color: COLORS.textPrimary,
+  },
+  infoText: { fontSize: FONT_SIZE.xs, color: COLORS.textSecondary, lineHeight: 18 },
+  infoDivider: { height: 1, backgroundColor: COLORS.border, marginVertical: SPACING.xs },
+  ytBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start' },
+  ytText: { fontSize: FONT_SIZE.xs, color: '#EF4444', fontWeight: FONT_WEIGHT.medium },
   techniqueNote: {
     fontSize: FONT_SIZE.xs, color: COLORS.textTertiary,
     fontStyle: 'italic', marginTop: SPACING.xs,

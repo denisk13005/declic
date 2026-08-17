@@ -14,6 +14,26 @@
 - Textes platform-aware : `app/onboarding/healthconnect.tsx` (bascule sur le service unifié `health.ts`) + carte activité de `app/(tabs)/calories.tsx` → « Apple Santé » sur iOS, « Samsung Health » sur Android.
 - ⚠️ Reste à faire : nouveau build EAS iOS (`eas build -p ios`) + resubmit TestFlight ; vérifier que la capability HealthKit est bien activée sur l'App ID (EAS le gère au build). Prévoir politique de confidentialité + privacy labels (données santé jamais transmises à AdMob — guideline 5.1.3).
 
+## 2026-08-17 — Version gate (force / recommande une mise à jour)
+
+### Deux niveaux, piloté à distance via Realtime DB REST (0 dépendance native)
+- `src/services/versionGate.ts` : lit `GET {databaseURL}/appConfig.json` (fetch REST, timeout 5s), compare la version installée (`Constants.expoConfig.version`) en semver. Fail-open (jamais bloquant si config absente/illisible/URL vide).
+- Niveaux : `installée < minVersion` → **forced** (écran bloquant) ; `installée < latestVersion` → **recommended** (dismissible) ; sinon `ok`.
+- `src/hooks/useVersionGate.ts` + `src/components/UpdateGate.tsx` (monté à la racine dans `app/_layout.tsx`, au-dessus du Stack).
+- `firebaseConfig.ts` : + `databaseURL` via `EXPO_PUBLIC_FIREBASE_DATABASE_URL`.
+- **Setup restant (console Firebase, 1 fois)** : activer Realtime Database, créer le nœud `appConfig` `{ minVersion, latestVersion, iosUrl, androidUrl, message? }`, règle de lecture publique sur `/appConfig` uniquement, et renseigner `EXPO_PUBLIC_FIREBASE_DATABASE_URL` dans `.env`.
+- Pourquoi RTDB REST : gratuit à cette échelle (mini-JSON), pas de module natif, piloté à distance sans rebuild. Firestore aurait été facturé par lecture en grandissant.
+
+## 2026-08-17 — Fix preview exercices (séance) + scroll onboarding
+
+### Régression : preview exercice disparue pendant la séance
+- La description d'exercice + lien « Voir une démonstration » (YouTube) existait dans `WorkoutSessionModal` (commit `7e525c1`), retirée en « grosse évol » (`84adafd`) — le dépliage de la carte a été réaffecté à la saisie des séries.
+- Réintégré **sans casser** : bouton info (ⓘ) séparé dans l'en-tête de chaque exercice → ouvre un encart description + démonstration (gère aussi le B d'un superset/biset). Le chevron continue de déplier la saisie des séries.
+
+### Onboarding : impossible de scroller sur petits écrans
+- `benefits`, `nutrition`, `healthconnect`, `notifications` avaient leur contenu dans un `<View flex:1>` fixe → texte coupé sur iPhone SE, pas de scroll.
+- Passés en `<ScrollView contentContainerStyle={{ flexGrow:1 }}>` (footer bouton/dots reste épinglé). Layout identique sur grand écran, scroll dispo sur petit. `welcome` (hero centré, peu de contenu) laissé tel quel. `sport` avait déjà un ScrollView.
+
 ## 2026-08-17 — Audit safe-area iOS (notch / Dynamic Island / home indicator)
 
 ### État : bon dans l'ensemble, 2 correctifs

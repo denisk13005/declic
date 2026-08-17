@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -31,7 +31,7 @@ export default function NutritionOnboardingScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      <View style={styles.content}>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={styles.title}>Nutrition au quotidien</Text>
         <Text style={styles.subtitle}>
           Suis tes calories et macros sans prise de tête.
@@ -60,7 +60,7 @@ export default function NutritionOnboardingScreen() {
             {' '}— habitudes illimitées, sans publicité
           </Text>
         </View>
-      </View>
+      </ScrollView>
 
       <View style={styles.footer}>
         <TouchableOpacity
@@ -89,7 +89,8 @@ export default function NutritionOnboardingScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.bg },
-  content: { flex: 1, padding: SPACING.lg },
+  scroll: { flex: 1 },
+  content: { flexGrow: 1, padding: SPACING.lg },
 
   title: {
     fontSize: FONT_SIZE.display,
