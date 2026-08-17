@@ -11,6 +11,7 @@ import {
   Platform,
   StatusBar,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LifestyleLevel, ExerciseFrequency, FitnessGoal, Gender } from '@/types';
 import {
@@ -105,12 +106,15 @@ export default function PhysicalProfileModal({ visible, onClose, onSave, initial
     onClose();
   };
 
-  const statusBarHeight = Platform.OS === 'android' ? (StatusBar.currentHeight ?? 24) : 0;
+  const insets = useSafeAreaInsets();
+  // Modal plein écran : sur iOS il couvre l'encoche/Dynamic Island → padding = inset haut.
+  // Sur Android, la status bar translucide → hauteur réelle de la barre.
+  const topInset = Platform.OS === 'android' ? (StatusBar.currentHeight ?? 24) : insets.top;
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <KeyboardAvoidingView
-        style={[styles.root, { paddingTop: statusBarHeight }]}
+        style={[styles.root, { paddingTop: topInset }]}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <View style={styles.header}>

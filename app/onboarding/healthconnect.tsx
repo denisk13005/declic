@@ -1,11 +1,21 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { checkHCStatus, requestHCPermissions, openHCPlayStore, openHCSettings } from '@/services/healthConnect';
+import {
+  checkHealthStatus as checkHCStatus,
+  requestHealthPermissions as requestHCPermissions,
+  openHealthStore as openHCPlayStore,
+  openHealthSettings as openHCSettings,
+} from '@/services/health';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
+
+// Libellés adaptés à la plateforme (iOS : Apple Santé / Apple Watch — Android : Samsung Health)
+const isIos = Platform.OS === 'ios';
+const HEALTH_APP = isIos ? 'Apple Santé' : 'Samsung Health';
+const HEALTH_SOURCE = isIos ? 'Apple Watch / Santé' : 'Samsung Health';
 
 type HCStep =
   | 'idle'           // état initial
@@ -71,14 +81,14 @@ export default function HealthConnectScreen() {
         </Text>
         <Text style={styles.subtitle}>
           {done
-            ? 'Tes données Samsung Health seront automatiquement synchronisées chaque jour dans ton suivi.'
-            : 'Connecte Samsung Health pour voir combien tu brûles réellement et adapter ton objectif calorique net.'}
+            ? `Tes données ${HEALTH_APP} seront automatiquement synchronisées chaque jour dans ton suivi.`
+            : `Connecte ${HEALTH_APP} pour voir combien tu brûles réellement et adapter ton objectif calorique net.`}
         </Text>
 
         {/* Illustration */}
         {!done && (
           <View style={styles.features}>
-            <FeatureRow icon="fitness" text="Calories brûlées au quotidien (Samsung Health)" />
+            <FeatureRow icon="fitness" text={`Calories brûlées au quotidien (${HEALTH_SOURCE})`} />
             <FeatureRow icon="calculator" text="Objectif net = objectif − calories brûlées" />
             <FeatureRow icon="trending-up" text="Ajuste automatiquement selon ton activité" />
           </View>
@@ -87,7 +97,7 @@ export default function HealthConnectScreen() {
         {done && (
           <View style={styles.successBadge}>
             <Ionicons name="checkmark-circle" size={48} color="#10B981" />
-            <Text style={styles.successText}>Samsung Health synchronisé</Text>
+            <Text style={styles.successText}>{HEALTH_APP} synchronisé</Text>
           </View>
         )}
       </View>
@@ -104,7 +114,7 @@ export default function HealthConnectScreen() {
               >
                 <LinearGradient colors={['#F97316', '#EA580C']} style={styles.btn}>
                   <Ionicons name="settings-outline" size={20} color="#fff" />
-                  <Text style={styles.btnText}>Ouvrir les paramètres HC</Text>
+                  <Text style={styles.btnText}>Ouvrir les paramètres {isIos ? 'Santé' : 'HC'}</Text>
                 </LinearGradient>
               </TouchableOpacity>
             ) : (
@@ -121,7 +131,7 @@ export default function HealthConnectScreen() {
                       ? 'Connexion…'
                       : step === 'needs_install'
                         ? 'J\'ai installé HC → Continuer'
-                        : 'Connecter Samsung Health'}
+                        : `Connecter ${HEALTH_APP}`}
                   </Text>
                 </LinearGradient>
               </TouchableOpacity>

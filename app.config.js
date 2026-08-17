@@ -39,6 +39,15 @@ export default ({ config }) => ({
     'expo-router',
     'expo-font',
     [
+      '@kingstinct/react-native-healthkit',
+      {
+        NSHealthShareUsageDescription:
+          'Vitacairn lit tes calories brûlées (Apple Watch / app Santé) pour calculer ton objectif calorique net.',
+        NSHealthUpdateUsageDescription: false, // lecture seule : pas d'écriture dans Santé
+        background: false, // pas de background delivery (lecture à la demande)
+      },
+    ],
+    [
       'react-native-google-mobile-ads',
       {
         androidAppId: 'ca-app-pub-6176341588651241~3333714691',

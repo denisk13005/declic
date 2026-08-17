@@ -1,5 +1,29 @@
 # Déclic — Dev Log
 
+## 2026-08-17 — Intégration HealthKit (iOS) — Apple Watch / app Santé
+
+### Calories brûlées sur iOS (miroir de Health Connect Android)
+- Lib : `@kingstinct/react-native-healthkit@14.0.2` (+ `react-native-nitro-modules@0.36.5`, requis, New Arch déjà activée)
+- On ne lit PAS la montre directement : l'Apple Watch (et Garmin/Fitbit/Oura/Whoop/Withings…) écrit dans l'app Santé → on lit HealthKit.
+- `src/services/healthIos.ts` : stub remplacé par l'implémentation réelle
+  - `checkHKStatus` → `isHealthDataAvailable` + `getRequestStatusForAuthorization`
+  - `requestHKPermissions` → `requestAuthorization({ toShare: [], toRead })` (lecture seule)
+  - `readHKBurnedCalories` → `queryStatisticsForQuantity('...ActiveEnergyBurned', ['cumulativeSum'], { filter:{date}, unit:'kcal' })`
+  - Choix : **Active Energy** seul (anneau Move), pas le Basal → évite le double comptage avec l'objectif calorique (qui inclut déjà le BMR)
+- `app.config.js` : config plugin ajouté → entitlement `com.apple.developer.healthkit` + `NSHealthShareUsageDescription`. `background: false` (pas de background delivery), `NSHealthUpdateUsageDescription: false` (lecture seule).
+- Textes platform-aware : `app/onboarding/healthconnect.tsx` (bascule sur le service unifié `health.ts`) + carte activité de `app/(tabs)/calories.tsx` → « Apple Santé » sur iOS, « Samsung Health » sur Android.
+- ⚠️ Reste à faire : nouveau build EAS iOS (`eas build -p ios`) + resubmit TestFlight ; vérifier que la capability HealthKit est bien activée sur l'App ID (EAS le gère au build). Prévoir politique de confidentialité + privacy labels (données santé jamais transmises à AdMob — guideline 5.1.3).
+
+## 2026-08-17 — Audit safe-area iOS (notch / Dynamic Island / home indicator)
+
+### État : bon dans l'ensemble, 2 correctifs
+- Tous les écrans utilisent déjà `SafeAreaView` (onglets en `edges={['top']}`, onboarding/auth/paywall en `['top','bottom']`). Pas de `SafeAreaProvider` explicite mais expo-router fournit son `SafeAreaProviderCompat` → `useSafeAreaInsets()` OK partout.
+- **Fix 1 — tab bar** (`app/(tabs)/_layout.tsx`) : hauteur/paddingBottom iOS étaient hardcodés (88 / 28, pattern « iPhone X en dur »). Remplacé par `60 + insets.bottom` / `insets.bottom` → correct sur iPhone SE (0) comme sur modèles à encoche (34). Android inchangé (118 / 8).
+- **Fix 2 — PhysicalProfileModal** (`<Modal>` plein écran) : `paddingTop` iOS = 0 → header sous l'encoche. Remplacé par `insets.top` sur iOS (Android garde `StatusBar.currentHeight`).
+- Bottom-sheets (AddEntry, Goals, Weight, Workout, Program, ExercisePicker, ExerciseStats, AddWorkout, Theme) : `paddingBottom: iOS ? 40 : …` — approximation statique **sûre** (40 ≥ 34pt, pas de clipping). `FoodLibraryModal` fait déjà la version dynamique via `useSafeAreaInsets`.
+- Modals caméra/permission d'`AddEntryModal` : déjà en `SafeAreaView`.
+- Piste (non faite, faible priorité) : passer les bottom-sheets au `paddingBottom` dynamique (`insets.bottom`) comme FoodLibraryModal pour gagner l'espace superflu sur iPhone SE.
+
 ## 2026-08-16 — Fix build EAS iOS (sharp, suite) — `NPM_CONFIG_OMIT=optional`
 
 ### Le passage en `optionalDependencies` ne suffisait pas

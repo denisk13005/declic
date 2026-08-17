@@ -33,6 +33,11 @@ import { useHealthConnect } from '@/hooks/useHealthConnect';
 import { usePremium } from '@/hooks/usePremium';
 import { BannerAd, BannerAdSize, AD_UNITS } from '@/services/ads';
 
+// Libellés santé adaptés à la plateforme (iOS : Apple Santé / Watch — Android : Samsung Health / Health Connect)
+const IS_IOS = Platform.OS === 'ios';
+const HEALTH_APP_LABEL = IS_IOS ? 'Apple Santé' : 'Samsung Health';
+const HEALTH_SETTINGS_LABEL = IS_IOS ? 'Santé' : 'HC';
+
 function todayISO(): string {
   return format(new Date(), 'yyyy-MM-dd');
 }
@@ -604,24 +609,26 @@ export default function CaloriesScreen() {
 
             {hcStatus === 'unavailable' && !isManualBurned && (
               <Text style={styles.hcDesc}>
-                Health Connect n'est pas disponible sur cet appareil.
+                {IS_IOS
+                  ? "L'accès aux données Santé n'est pas disponible sur cet appareil."
+                  : "Health Connect n'est pas disponible sur cet appareil."}
               </Text>
             )}
 
             {hcStatus === 'not_authorized' && (
               <>
                 <Text style={styles.hcDesc}>
-                  Connecte Samsung Health pour voir tes calories brûlées et ajuster ton objectif net.
+                  Connecte {HEALTH_APP_LABEL} pour voir tes calories brûlées et ajuster ton objectif net.
                 </Text>
                 <TouchableOpacity onPress={requestPermissions} activeOpacity={0.85} style={styles.hcBtnWrapper}>
                   <LinearGradient colors={C.gradientPrimary} style={styles.hcBtn}>
                     <Ionicons name="heart" size={16} color="#fff" />
-                    <Text style={styles.hcBtnText}>Connecter Samsung Health</Text>
+                    <Text style={styles.hcBtnText}>Connecter {HEALTH_APP_LABEL}</Text>
                   </LinearGradient>
                 </TouchableOpacity>
-                {/* Si l'user a déjà refusé 2x, Android bloque le dialog — proposer les Settings */}
+                {/* Si l'user a déjà refusé (Android bloque le dialog après 2x, iOS ne re-propose pas) — proposer les réglages */}
                 <TouchableOpacity onPress={openHCSettings} style={styles.hcSettingsLink}>
-                  <Text style={styles.hcSettingsText}>Permissions bloquées ? Ouvrir les paramètres HC</Text>
+                  <Text style={styles.hcSettingsText}>Permissions bloquées ? Ouvrir les paramètres {HEALTH_SETTINGS_LABEL}</Text>
                 </TouchableOpacity>
               </>
             )}

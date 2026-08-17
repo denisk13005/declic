@@ -2,6 +2,7 @@ import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '@/constants/theme';
 import { Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -22,6 +23,10 @@ function TabIcon({
 }
 
 export default function TabsLayout() {
+  const insets = useSafeAreaInsets();
+  // iOS : hauteur = contenu (60) + home indicator dynamique (0 sur iPhone SE, 34 sur les modèles à encoche/Dynamic Island).
+  // Android : valeurs inchangées (plateforme testée sur Galaxy S10).
+  const isIos = Platform.OS === 'ios';
   return (
     <Tabs
       screenOptions={{
@@ -33,8 +38,8 @@ export default function TabsLayout() {
           borderTopColor: COLORS.border,
           borderTopWidth: 1,
           paddingTop: 8,
-          height: Platform.OS === 'ios' ? 88 : 118,
-          paddingBottom: Platform.OS === 'ios' ? 28 : 8,
+          height: isIos ? 60 + insets.bottom : 118,
+          paddingBottom: isIos ? insets.bottom : 8,
         },
         tabBarLabelStyle: {
           fontSize: 11,
