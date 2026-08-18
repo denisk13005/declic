@@ -225,6 +225,22 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
   );
   const [editingDayIdx, setEditingDayIdx] = useState<number | null>(null);
   const [showPicker, setShowPicker] = useState(false);
+  // Exercices dépliés (aperçu description + démo) dans le customizer
+  const [expandedInfo, setExpandedInfo] = useState<Set<string>>(() => new Set());
+
+  function toggleInfo(key: string) {
+    setExpandedInfo((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+
+  function openYoutube(name: string) {
+    const query = encodeURIComponent(name + ' exercice musculation');
+    Linking.openURL('https://www.youtube.com/results?search_query=' + query);
+  }
 
   // Synchronise le tableau quand sessions change
   const adjustedCustomExercises = useMemo(() => {
@@ -657,12 +673,15 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
                           const hasAntagonistInDay = otherExsWithIdx.some(({ pe: o }) => antagonists.includes(o.exercise.muscleGroup));
                           const hasSameMuscleInDay = otherExsWithIdx.some(({ pe: o }) => o.exercise.muscleGroup === pe.exercise.muscleGroup);
 
+                          const infoKey = `${dayIdx}:${pe.exercise.id}`;
+                          const isInfoOpen = expandedInfo.has(infoKey);
+
                           return (
                             <View
                               key={`${pe.exercise.id}-${exIdx}`}
                               style={[styles.customizerExRow, exIdx > 0 && styles.customizerExRowBorder]}
                             >
-                              {/* Ligne nom + poubelle */}
+                              {/* Ligne nom + infos + poubelle */}
                               <View style={styles.customizerExHeader}>
                                 <View style={styles.customizerExInfo}>
                                   <Text style={styles.customizerExName}>{pe.exercise.name}</Text>
@@ -671,12 +690,38 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
                                   </Text>
                                 </View>
                                 <TouchableOpacity
+                                  onPress={() => toggleInfo(infoKey)}
+                                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                                  style={{ paddingHorizontal: 4 }}
+                                >
+                                  <Ionicons
+                                    name={isInfoOpen ? 'chevron-up' : 'information-circle-outline'}
+                                    size={16}
+                                    color={isInfoOpen ? C.primary : COLORS.textTertiary}
+                                  />
+                                </TouchableOpacity>
+                                <TouchableOpacity
                                   onPress={() => removeExerciseFromDay(dayIdx, exIdx)}
                                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                                 >
                                   <Ionicons name="trash-outline" size={16} color={COLORS.textTertiary} />
                                 </TouchableOpacity>
                               </View>
+
+                              {/* Aperçu description + démonstration */}
+                              {isInfoOpen && (
+                                <View style={styles.customizerInfoBox}>
+                                  <Text style={styles.customizerInfoText}>{pe.exercise.description}</Text>
+                                  <TouchableOpacity
+                                    style={styles.customizerYtBtn}
+                                    onPress={() => openYoutube(pe.exercise.name)}
+                                    activeOpacity={0.7}
+                                  >
+                                    <Ionicons name="logo-youtube" size={13} color="#EF4444" />
+                                    <Text style={styles.customizerYtText}>Voir une démonstration</Text>
+                                  </TouchableOpacity>
+                                </View>
+                              )}
 
                               {/* Chips technique */}
                               <View style={styles.techChipsRow}>
@@ -981,6 +1026,13 @@ const styles = StyleSheet.create({
   customizerExInfo: { flex: 1 },
   customizerExName: { fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.medium, color: COLORS.textPrimary },
   customizerExMeta: { fontSize: FONT_SIZE.xs, color: COLORS.textTertiary, marginTop: 2 },
+  customizerInfoBox: {
+    backgroundColor: COLORS.bgElevated, borderRadius: RADIUS.sm,
+    padding: SPACING.sm, marginTop: 6, gap: SPACING.xs,
+  },
+  customizerInfoText: { fontSize: FONT_SIZE.xs, color: COLORS.textSecondary, lineHeight: 18 },
+  customizerYtBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start' },
+  customizerYtText: { fontSize: FONT_SIZE.xs, color: '#EF4444', fontWeight: FONT_WEIGHT.medium },
 
   // Technique chips
   techChipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 },
