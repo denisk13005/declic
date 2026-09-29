@@ -3,7 +3,7 @@ export default ({ config }) => ({
   name: 'Vitacairn',
   slug: 'declic',
   owner: 'dk13',
-  version: '1.0.1',
+  version: '1.0.3',
   orientation: 'portrait',
   icon: './assets/icon.png',
   userInterfaceStyle: 'dark',

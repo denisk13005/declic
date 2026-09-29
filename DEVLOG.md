@@ -1,5 +1,12 @@
 # Déclic — Dev Log
 
+## 2026-09-29 — Bump version 1.0.3 (avant build)
+
+- `app.config.js` : `version` 1.0.1 → **1.0.3** (marketing version, source pour EAS).
+- `android/app/build.gradle` : `versionName` 1.0.1 → **1.0.3** (aligné, pour build Android local `expo run:android`).
+- iOS EAS production : `buildNumber` auto-incrémenté (`autoIncrement:true` + `appVersionSource:remote`).
+- ⚠️ `versionCode` Android reste **35** — à incrémenter manuellement si build Android soumis au Play Store (doit être > version en prod).
+
 ## 2026-09-29 — Mentions légales + CGU (pages GitHub Pages)
 
 - **Éditeur identifié** : Éléonore Grange, entrepreneur individuel (nom commercial EG Consulting), SIRET 941 897 217 00019, 60 rue François Ier 75008 Paris, APE 62.02A. TVA : franchise en base (art. 293 B CGI) — à confirmer si assujettissement.
