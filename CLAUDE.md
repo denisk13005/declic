@@ -2,7 +2,7 @@ v# Déclic — Instructions pour Claude Code
 
 ## Présentation du projet
 
-Application mobile React Native (Expo) de suivi nutritionnel et d'habitudes. Thème sombre, UI violet/orange. Cible Android uniquement (Samsung Galaxy S10+ pour les tests).
+Application mobile React Native (Expo) de suivi nutritionnel et d'habitudes. Thème sombre, UI violet/orange. **Cibles : Android ET iOS** (builds iOS déjà réalisés via EAS). Tests natifs principaux sur Samsung Galaxy S10+ (Android) ; iOS testé via build EAS / TestFlight. Certaines fonctionnalités sont spécifiques à une plateforme : Health Connect = Android uniquement ; Sign in with Apple + HealthKit = iOS uniquement.
 
 ---
 
