@@ -9,3 +9,9 @@ export const FIREBASE_CONFIG = {
   // Utilisée par le version gate (lecture REST). Vide → gate désactivé (fail-open).
   databaseURL: process.env.EXPO_PUBLIC_FIREBASE_DATABASE_URL ?? '',
 };
+
+// OAuth "Web client" ID (Firebase Console → Authentication → Sign-in method → Google,
+// ou Google Cloud → API et services → Identifiants → client OAuth "Web").
+// Requis par @react-native-google-signin : c'est cet ID (pas l'Android) qui produit
+// un idToken exploitable par signInWithCredential côté Firebase. Vide → login Google désactivé.
+export const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? '';

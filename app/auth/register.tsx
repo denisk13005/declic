@@ -17,6 +17,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/services/firebase';
+import GoogleSignInButton from '@/components/auth/GoogleSignInButton';
+import AppleSignInButton from '@/components/auth/AppleSignInButton';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
 
 export default function RegisterScreen() {
@@ -156,6 +158,9 @@ export default function RegisterScreen() {
                 )}
               </LinearGradient>
             </TouchableOpacity>
+
+            <GoogleSignInButton label="S'inscrire avec Google" />
+            <AppleSignInButton type="signUp" />
           </View>
 
           {/* Footer */}

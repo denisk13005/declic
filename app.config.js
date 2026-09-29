@@ -3,7 +3,7 @@ export default ({ config }) => ({
   name: 'Vitacairn',
   slug: 'declic',
   owner: 'dk13',
-  version: '1.0.0',
+  version: '1.0.1',
   orientation: 'portrait',
   icon: './assets/icon.png',
   userInterfaceStyle: 'dark',
@@ -16,6 +16,7 @@ export default ({ config }) => ({
   ios: {
     supportsTablet: false,
     bundleIdentifier: 'com.declic.nutrition',
+    usesAppleSignIn: true,
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
       NSUserNotificationUsageDescription:
@@ -38,6 +39,7 @@ export default ({ config }) => ({
   plugins: [
     'expo-router',
     'expo-font',
+    '@react-native-google-signin/google-signin',
     [
       '@kingstinct/react-native-healthkit',
       {

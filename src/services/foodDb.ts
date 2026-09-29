@@ -120,16 +120,22 @@ export async function searchFood(query: string, limit = 8, offset = 0): Promise<
        WHERE foods_fts MATCH ?
        ORDER BY
          CASE
-           WHEN lower(f.name) = ? THEN 0
-           WHEN lower(f.name) LIKE ? || ', %' AND f.brand IS NULL THEN 1
-           WHEN lower(f.name) LIKE ? || '%' AND f.brand IS NULL THEN 2
-           WHEN lower(f.name) LIKE ? || '%' THEN 3
-           ELSE 4
+           -- Aliments Ciqual (génériques ANSES, données fiables, en français) en priorité,
+           -- y compris quand le mot cherché n'est pas en tête ("steak" → "Boeuf, steak haché")
+           WHEN lower(f.name) = ? AND f.source = 'ciqual' THEN 0
+           WHEN lower(f.name) LIKE ? || ', %' AND f.source = 'ciqual' THEN 1
+           WHEN lower(f.name) LIKE ? || '%' AND f.source = 'ciqual' THEN 2
+           WHEN f.source = 'ciqual' THEN 3
+           -- Puis produits OFF : nom exact, préfixe générique (sans marque), préfixe de marque
+           WHEN lower(f.name) = ? THEN 4
+           WHEN lower(f.name) LIKE ? || '%' AND f.brand IS NULL THEN 5
+           WHEN lower(f.name) LIKE ? || '%' THEN 6
+           ELSE 7
          END,
          fts.rank,
          length(f.name)
        LIMIT ? OFFSET ?`,
-      [terms, lowerQuery, lowerQuery, lowerQuery, lowerQuery, limit, offset]
+      [terms, lowerQuery, lowerQuery, lowerQuery, lowerQuery, lowerQuery, lowerQuery, limit, offset]
     );
 
     return rows.map(row => ({

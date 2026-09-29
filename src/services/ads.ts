@@ -61,3 +61,11 @@ export async function initAds(): Promise<void> {
   }
   await MobileAds().initialize();
 }
+
+/**
+ * Rouvre le formulaire de consentement/options de confidentialité (RGPD) à la demande,
+ * depuis l'écran Profil. Permet à l'utilisateur de revenir sur son choix à tout moment.
+ */
+export async function openAdPrivacyOptions(): Promise<void> {
+  await AdsConsent.showPrivacyOptionsForm();
+}

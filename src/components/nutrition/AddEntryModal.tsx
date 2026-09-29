@@ -464,7 +464,7 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
         });
 
       // 3. SQLite local (62 000 aliments Ciqual + OFF-FR, FTS5)
-      const PAGE_SIZE = 8;
+      const PAGE_SIZE = 12;
       const rawDb = await searchFood(rawQuery, PAGE_SIZE + 1, 0);
       const moreAvailable = rawDb.length > PAGE_SIZE;
       const dbPage = rawDb.slice(0, PAGE_SIZE);

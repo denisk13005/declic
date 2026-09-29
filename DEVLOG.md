@@ -1,5 +1,74 @@
 # Déclic — Dev Log
 
+## 2026-09-29 — Mentions légales + CGU (pages GitHub Pages)
+
+- **Éditeur identifié** : Éléonore Grange, entrepreneur individuel (nom commercial EG Consulting), SIRET 941 897 217 00019, 60 rue François Ier 75008 Paris, APE 62.02A. TVA : franchise en base (art. 293 B CGI) — à confirmer si assujettissement.
+- **`docs/index.html`** : ajout d'un bloc **« Éditeur & mentions légales »** (identité, SIRET, directrice de publication, hébergeur GitHub Inc., distribution Google/Apple) + lien vers les CGU. Date maj → 29/09/2026.
+- **`docs/terms.html`** créé (CGU, même charte que la privacy) : objet, éditeur, compte, description service + **avertissement santé (pas un dispositif médical)**, abonnement Premium (RevenueCat/stores, reconduction, gestion via store), droit de rétractation (renonciation contenu numérique), obligations, PI (Ciqual/ANSES + OFF ODbL), responsabilité, données perso (renvoi privacy + droits RGPD in-app), résiliation, modif CGU, droit français + médiation conso.
+- `src/constants/legal.ts` inchangé (URLs déjà correctes : `termsUrl` = `.../terms.html`).
+- ⏳ **Reste** : (1) vérifier que **GitHub Pages** est activé (Settings → Pages → main /docs) pour que les URLs répondent ; (2) confirmer TVA + que `contact@declic-app.fr` est relevé.
+
+## 2026-09-29 — RGPD (profil) + audit sécurité
+
+### RGPD / droits utilisateur (écran Profil)
+- **Boutons légaux câblés** (avant : `onPress={() => {}}` morts) → `Linking.openURL` vers `src/constants/legal.ts` (`privacyUrl` = GitHub Pages `docs/index.html`, `termsUrl` = `docs/terms.html` à publier).
+- **Section « Compte »** (si connecté) : email/nom, **Export de mes données** (portabilité RGPD → `account.ts` `exportUserData`, JSON via `Share`), **Déconnexion** (`logOut` = signOut Firebase + Google natif).
+- **Suppression de compte in-app** (droit à l'effacement + exigé stores) : `deleteAccount()` (firebase.ts) supprime le compte serveur avec **ré-auth automatique** Google/Apple si `requires-recent-login` (email/mdp → invite à se reconnecter), puis `wipeAllLocalData()` efface mémoire + AsyncStorage (toutes les `CONFIG.STORAGE_KEYS`).
+- **Consentement pub RGPD rejouable** : `openAdPrivacyOptions()` (`AdsConsent.showPrivacyOptionsForm`) → row « Consentement publicitaire ».
+- « Réinitialiser l'app » utilise désormais `wipeAllLocalData` (wipe complet vs partiel avant).
+- ✅ **Finalisé** (voir entrée « Mentions légales + CGU » ci-dessus) : `docs/terms.html` créé + bloc éditeur/mentions légales dans `docs/index.html`.
+
+### Audit sécurité — constats
+- ✅ `.env` + keystores gitignorés, aucun secret committé ; SQLite paramétré (pas d'injection) ; consentement UMP présent.
+- 🔴 **Clé Gemini exposée** (`EXPO_PUBLIC_GEMINI_API_KEY` dans l'URL → embarquée dans l'APK). À restreindre en Google Cloud (appli Android + API + quota) ou proxifier. Cf. mémoire `project_gemini_key_backend`.
+- 🟠 **Règles Realtime Database à vérifier** en console (le version gate lit la RTDB en REST ; s'assurer qu'elles ne sont pas en mode test `.read/.write:true`).
+- 🟡 Prompt injection Gemini (`query` non bornée) — impact faible.
+
+## 2026-09-29 — Sign in with Apple (iOS) — Firebase Auth
+
+- **Pourquoi** : complément du login Google + **obligatoire App Store** (guideline 4.8 : login social tiers → Apple exige le sien sur iOS).
+- **Lib** : `expo-apple-authentication` + `expo-crypto` (nonce). Flux : bouton natif Apple → `identityToken` → `OAuthProvider('apple.com')` → `signInWithCredential`.
+- **Nonce** : SHA-256(rawNonce) envoyé à Apple, rawNonce donné à Firebase (anti-rejeu). `Crypto.getRandomBytes` + `digestStringAsync`.
+- **Code** :
+  - `src/services/firebase.ts` : `signInWithApple()` (→ `null` si annulation `ERR_REQUEST_CANCELED`). Persiste le `displayName` au 1er login (Apple ne renvoie le nom qu'une seule fois).
+  - `src/components/auth/AppleSignInButton.tsx` : bouton natif `AppleAuthenticationButton` (blanc, `SIGN_IN`/`SIGN_UP`), rend `null` hors iOS / si indispo.
+  - Ajouté dans `login.tsx` (signIn) et `register.tsx` (signUp), sous le bouton Google.
+  - `app.config.js` : `ios.usesAppleSignIn: true` → ajoute l'entitlement `com.apple.developer.applesignin`.
+- ⚠️ **À faire, sinon échec** :
+  1. Firebase Console → Authentication → Sign-in method → activer **Apple** (pour iOS natif, activer suffit : pas besoin de Services ID / clé, ceux-ci ne servent qu'au flux web/Android).
+  2. **Build iOS EAS** (`eas build -p ios`) : EAS active la capability « Sign In with Apple » sur l'App ID `com.declic.nutrition` grâce à `usesAppleSignIn`. Non testable sur Android (bouton masqué) ni sur Windows en local.
+  3. Tester sur device iOS / TestFlight connecté à un compte iCloud.
+
+## 2026-09-29 — Connexion / inscription avec Google (Firebase Auth)
+
+- **Besoin** : l'auth email/mot de passe existait déjà (`app/auth/login.tsx`, `register.tsx`, Firebase JS SDK) ; il manquait « Continuer avec Google ».
+- **Contrainte** : `signInWithPopup` du Firebase JS SDK ne marche pas en RN. Choix : `@react-native-google-signin/google-signin@16.1.5` (sélecteur de compte natif) → `idToken` → `GoogleAuthProvider.credential` → `signInWithCredential`.
+- **Code** :
+  - `src/services/firebase.ts` : `GoogleSignin.configure({ webClientId })` au chargement + `signInWithGoogle()` (renvoie `null` si annulation) + `signOutGoogle()` (pour un futur logout).
+  - `src/constants/firebaseConfig.ts` : `GOOGLE_WEB_CLIENT_ID` (env `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`).
+  - `src/components/auth/GoogleSignInButton.tsx` : bouton + séparateur « ou », loading/erreurs, `router.replace('/')` au succès.
+  - Bouton câblé dans `login.tsx` et `register.tsx`.
+  - `app.config.js` : plugin `@react-native-google-signin/google-signin` ajouté.
+- ⚠️ **À faire (console + rebuild), sinon le bouton renverra une erreur** :
+  1. Firebase Console → Authentication → Sign-in method → activer **Google**.
+  2. Récupérer le **Web client ID** (client OAuth « Web ») → le mettre dans `.env` (`EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID`) **et** dans la variable EAS pour les builds cloud.
+  3. Enregistrer le **SHA-1** (debug + release) de l'app dans Firebase → Paramètres → app Android, sinon Google refuse le token en release.
+  4. **Rebuild natif** (`npx expo run:android`) — nouveau module natif. En cas de prebuild, réappliquer les patchs `android/` (cf. CLAUDE.md).
+  5. iOS : nécessitera l'URL scheme inversé du client iOS OAuth (à voir si build iOS visé).
+
+## 2026-09-28 — Recherche aliments : tri Ciqual prioritaire (perçue « incomplète »)
+
+- **Symptôme** : la liste de recherche semblait incomplète/de mauvaise qualité. En réalité `food.db` est riche (69 500 aliments : 3 339 Ciqual + 66 161 OFF), mais le tri enterrait les bonnes entrées.
+- **Cause** : dans `src/services/foodDb.ts` (`searchFood`), le tier 0 du `ORDER BY` (nom exact) ne filtrait pas la marque → un produit OFF nommé exactement « Poulet » (89 kcal [Halal]) ou « Banane » (161 kcal [M&S]) passait devant les entrées Ciqual génériques ANSES (« Poulet, filet sans peau cru » 110 kcal, « Banane, chair sans peau, crue » 88 kcal).
+- **Fix** : le `ORDER BY` priorise désormais explicitement `source = 'ciqual'` (données FR curées) avant tout produit OFF, y compris quand le mot n'est pas en tête du nom (« steak » → « Bœuf, steak haché… »). Les recherches de marque (nutella, coca — 0 entrée Ciqual) tombent normalement sur OFF.
+- Aucune régénération de `food.db` nécessaire (tri SQL uniquement). 71 tests OK, pas de nouvelle erreur `tsc`.
+
+## 2026-09-06 — Bump 1.0.1 (force MàJ) + rotation clé Gemini
+
+- `app.config.js` : `version` 1.0.0 → **1.0.1** (buildNumber iOS / versionCode Android auto-incrémentés par EAS `autoIncrement`).
+- **Clé Gemini rotée** : nouvelle clé (nouveau format Google `AQ.…`, testée OK contre `generateContent`). Mise à jour dans la **variable EAS `production`** `EXPO_PUBLIC_GEMINI_API_KEY` (source de vérité des builds cloud) — le `.env` local seul ne suffit pas, il ne sert qu'au dev `expo run:android`.
+- **Version gate — fait en console Firebase** : `appConfig.minVersion` et `latestVersion` passés à `1.0.1` (RTDB `declic-64bbf`, region europe-west1). ⚠️ `minVersion=1.0.1` bloque (force MàJ) toutes les installs 1.0.0 : les builds 1.0.1 doivent être publiés en test (iOS + Android) pour que les testeurs puissent se débloquer.
+
 ## 2026-08-17 — Intégration HealthKit (iOS) — Apple Watch / app Santé
 
 ### Calories brûlées sur iOS (miroir de Health Connect Android)

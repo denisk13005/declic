@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert, Switch } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert, Switch, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,7 +15,11 @@ import PhysicalProfileModal from '@/components/profile/PhysicalProfileModal';
 import TDEECard from '@/components/profile/TDEECard';
 import ThemePickerModal from '@/components/profile/ThemePickerModal';
 import { restorePurchases } from '@/services/revenueCat';
-import { cancelAllReminders } from '@/services/notifications';
+import { openAdPrivacyOptions } from '@/services/ads';
+import { logOut, deleteAccount } from '@/services/firebase';
+import { exportUserData, wipeAllLocalData } from '@/services/account';
+import { useAuthStore } from '@/stores/authStore';
+import { LEGAL } from '@/constants/legal';
 import { computeTDEE, LIFESTYLE_LABELS, GOAL_LABELS } from '@/utils/tdee';
 import { FitnessGoal, LifestyleLevel, ExerciseFrequency, Gender } from '@/types';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
@@ -214,10 +218,11 @@ export default function ProfileScreen() {
   const router = useRouter();
   const C = useAppColors();
   const { themeId } = useThemeStore();
-  const { profile, setPremium, reset: resetProfile, setPhysicalData } = useProfileStore();
+  const { profile, setPremium, setPhysicalData } = useProfileStore();
   const { habits } = useHabitStore();
   const { getLatestWeight, logWeight } = useWeightStore();
   const { setGoals, mealReminderTimes, setMealReminder, clearMealReminder } = useCalorieStore();
+  const { user } = useAuthStore();
   const [weightModalVisible, setWeightModalVisible] = useState(false);
   const [physicalModalVisible, setPhysicalModalVisible] = useState(false);
   const [themeModalVisible, setThemeModalVisible] = useState(false);
@@ -284,21 +289,92 @@ export default function ProfileScreen() {
   const handleReset = () => {
     Alert.alert(
       "Réinitialiser l'app",
-      'Toutes tes habitudes et statistiques seront supprimées. Cette action est irréversible.',
+      'Toutes tes données locales (habitudes, nutrition, poids, séances) seront supprimées. Ton compte, lui, est conservé. Cette action est irréversible.',
       [
         { text: 'Annuler', style: 'cancel' },
         {
           text: 'Réinitialiser',
           style: 'destructive',
           onPress: async () => {
-            await cancelAllReminders();
-            useHabitStore.setState({ habits: [] });
-            resetProfile();
+            await wipeAllLocalData();
             router.replace('/onboarding/welcome');
           },
         },
       ]
     );
+  };
+
+  const handleLogout = () => {
+    Alert.alert('Déconnexion', 'Se déconnecter de ton compte ?', [
+      { text: 'Annuler', style: 'cancel' },
+      {
+        text: 'Se déconnecter',
+        style: 'destructive',
+        onPress: async () => {
+          await logOut();
+          router.replace('/auth/login');
+        },
+      },
+    ]);
+  };
+
+  const handleExport = async () => {
+    try {
+      await exportUserData();
+    } catch (e: any) {
+      Alert.alert('Export impossible', e?.message ?? 'Une erreur est survenue.');
+    }
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Supprimer mon compte',
+      'Ton compte et toutes tes données (habitudes, nutrition, poids, séances) seront définitivement supprimés des serveurs et de cet appareil. Cette action est irréversible.',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer définitivement',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteAccount();
+              await wipeAllLocalData();
+              router.replace('/auth/login');
+            } catch (e: any) {
+              if (e?.code === 'reauth-cancelled') return; // annulation → silencieux
+              if (e?.code === 'reauth-password') {
+                Alert.alert(
+                  'Reconnexion requise',
+                  'Pour des raisons de sécurité, reconnecte-toi puis relance la suppression.',
+                  [
+                    {
+                      text: 'OK',
+                      onPress: async () => {
+                        await logOut();
+                        router.replace('/auth/login');
+                      },
+                    },
+                  ]
+                );
+                return;
+              }
+              Alert.alert('Suppression impossible', e?.message ?? 'Une erreur est survenue.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleAdConsent = async () => {
+    try {
+      await openAdPrivacyOptions();
+    } catch {
+      Alert.alert(
+        'Indisponible',
+        "Les options de consentement publicitaire ne sont pas disponibles pour le moment."
+      );
+    }
   };
 
   return (
@@ -443,22 +519,52 @@ export default function ProfileScreen() {
           />
         </View>
 
+        {user && (
+          <>
+            <Text style={styles.section}>Compte</Text>
+            <View style={styles.card}>
+              <SettingsRow
+                icon="person-circle-outline"
+                label={user.displayName || user.email || 'Connecté'}
+                sublabel={user.displayName && user.email ? user.email : undefined}
+              />
+              <SettingsRow
+                icon="download-outline"
+                label="Exporter mes données"
+                sublabel="Télécharge une copie de tes données (RGPD)"
+                onPress={handleExport}
+              />
+              <SettingsRow
+                icon="log-out-outline"
+                label="Déconnexion"
+                onPress={handleLogout}
+              />
+            </View>
+          </>
+        )}
+
         <Text style={styles.section}>À propos</Text>
         <View style={styles.card}>
           <SettingsRow
             icon="information-circle-outline"
             label="Version"
-            rightEl={<Text style={styles.versionText}>1.0.0</Text>}
+            rightEl={<Text style={styles.versionText}>1.0.1</Text>}
           />
           <SettingsRow
             icon="shield-checkmark-outline"
             label="Politique de confidentialité"
-            onPress={() => {}}
+            onPress={() => Linking.openURL(LEGAL.privacyUrl)}
           />
           <SettingsRow
             icon="document-text-outline"
             label="Conditions d'utilisation"
-            onPress={() => {}}
+            onPress={() => Linking.openURL(LEGAL.termsUrl)}
+          />
+          <SettingsRow
+            icon="options-outline"
+            label="Consentement publicitaire"
+            sublabel="Gérer mes préférences RGPD"
+            onPress={handleAdConsent}
           />
         </View>
 
@@ -467,10 +573,19 @@ export default function ProfileScreen() {
           <SettingsRow
             icon="trash-outline"
             label="Réinitialiser l'app"
-            sublabel="Supprime toutes les données"
+            sublabel="Supprime les données locales (compte conservé)"
             onPress={handleReset}
             danger
           />
+          {user && (
+            <SettingsRow
+              icon="person-remove-outline"
+              label="Supprimer mon compte"
+              sublabel="Compte + données, suppression définitive"
+              onPress={handleDeleteAccount}
+              danger
+            />
+          )}
         </View>
       </ScrollView>
 

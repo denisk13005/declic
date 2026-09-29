@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Conditions générales d'utilisation — Déclic</title>
+  <style>
+    :root {
+      --bg: #0A0A0F;
+      --surface: #13131A;
+      --border: #1E1E2E;
+      --purple: #7C3AED;
+      --purple-light: #A78BFA;
+      --orange: #F97316;
+      --text: #E2E8F0;
+      --muted: #94A3B8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.7;
+      font-size: 16px;
+    }
+
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 24px 0;
+      text-align: center;
+    }
+
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, var(--purple), var(--orange));
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+
+    .logo-text {
+      font-size: 28px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--purple-light), var(--orange));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    main {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+    }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 48px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 24px;
+    }
+
+    h2 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--purple-light);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    h2::before {
+      content: '';
+      display: block;
+      width: 4px;
+      height: 20px;
+      background: linear-gradient(to bottom, var(--purple), var(--orange));
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    p {
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    p:last-child { margin-bottom: 0; }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 12px 0 0;
+    }
+
+    ul li {
+      color: var(--muted);
+      padding: 6px 0 6px 20px;
+      position: relative;
+      border-bottom: 1px solid var(--border);
+    }
+
+    ul li:last-child { border-bottom: none; }
+
+    ul li::before {
+      content: '›';
+      position: absolute;
+      left: 0;
+      color: var(--purple-light);
+      font-weight: 700;
+    }
+
+    strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .highlight {
+      background: rgba(124, 58, 237, 0.08);
+      border: 1px solid rgba(124, 58, 237, 0.2);
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-top: 16px;
+    }
+
+    .highlight p {
+      margin: 0;
+      font-size: 14px;
+    }
+
+    .warn {
+      background: rgba(249, 115, 22, 0.08);
+      border: 1px solid rgba(249, 115, 22, 0.25);
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-top: 16px;
+    }
+
+    .warn p {
+      margin: 0;
+      font-size: 14px;
+      color: var(--text);
+    }
+
+    a {
+      color: var(--purple-light);
+      text-decoration: none;
+    }
+
+    a:hover { text-decoration: underline; }
+
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      padding: 32px 24px;
+      border-top: 1px solid var(--border);
+    }
+
+    @media (max-width: 600px) {
+      h1 { font-size: 24px; }
+      .card { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">⚡</div>
+    <span class="logo-text">Déclic</span>
+  </div>
+</header>
+
+<main>
+  <h1>Conditions générales d'utilisation</h1>
+  <p class="subtitle">Dernière mise à jour : 29 septembre 2026</p>
+
+  <div class="card">
+    <h2>1. Objet</h2>
+    <p>
+      Les présentes conditions générales d'utilisation (les « <strong>CGU</strong> ») régissent
+      l'accès et l'utilisation de l'application mobile <strong>Déclic</strong> (l'« <strong>Application</strong> »),
+      un service de suivi nutritionnel et de suivi d'habitudes.
+    </p>
+    <p>
+      En téléchargeant, installant ou utilisant l'Application, vous acceptez sans réserve les
+      présentes CGU. Si vous ne les acceptez pas, vous devez ne pas utiliser l'Application.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>2. Éditeur</h2>
+    <p>L'Application est éditée par :</p>
+    <ul>
+      <li><strong>Éléonore Grange</strong> — Entrepreneur individuel (nom commercial <strong>EG Consulting</strong>)</li>
+      <li><strong>Siège social</strong> — 60 rue François Ier, 75008 Paris, France</li>
+      <li><strong>SIREN</strong> — 941 897 217 / <strong>SIRET</strong> — 941 897 217 00019</li>
+      <li><strong>Code APE</strong> — 62.02A</li>
+      <li><strong>Contact</strong> — <a href="mailto:contact@declic-app.fr">contact@declic-app.fr</a></li>
+    </ul>
+    <p style="margin-top: 12px;">
+      Les mentions légales complètes et la politique de confidentialité figurent sur la
+      <a href="index.html">page dédiée</a>.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>3. Accès au service et compte</h2>
+    <p>
+      L'Application est accessible gratuitement dans ses fonctionnalités de base. Certaines
+      fonctionnalités nécessitent la création d'un compte (par e-mail/mot de passe, connexion
+      Google ou connexion Apple).
+    </p>
+    <p>
+      Vous êtes responsable de la confidentialité de vos identifiants et de toute activité
+      effectuée depuis votre compte. Vous vous engagez à fournir des informations exactes et
+      à les tenir à jour.
+    </p>
+    <p>
+      L'accès au service suppose un appareil compatible et une connexion Internet pour
+      certaines fonctionnalités (recherche en ligne d'aliments, analyse photo, authentification,
+      achats). L'essentiel des données est stocké localement sur votre appareil.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>4. Description du service</h2>
+    <p>L'Application permet notamment de :</p>
+    <ul>
+      <li>enregistrer des repas et suivre calories et macronutriments ;</li>
+      <li>rechercher des aliments (base locale, code-barres, analyse photo) ;</li>
+      <li>suivre des habitudes quotidiennes et son poids ;</li>
+      <li>consulter, en option, les calories brûlées via Health Connect.</li>
+    </ul>
+    <div class="warn">
+      <p>
+        <strong>Avertissement santé.</strong> Déclic est un outil d'information et de suivi
+        personnel. Ce n'est <strong>pas un dispositif médical</strong> et il ne fournit aucun
+        diagnostic, conseil médical ou nutritionnel personnalisé. Les valeurs nutritionnelles
+        et estimations (calories, macros, dépense énergétique) sont indicatives et peuvent
+        comporter des imprécisions. Consultez un professionnel de santé avant toute décision
+        relative à votre alimentation, votre activité physique ou votre santé.
+      </p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>5. Abonnement Premium</h2>
+    <p>
+      L'Application propose des fonctionnalités payantes via un abonnement « <strong>Premium</strong> ».
+      Les achats sont effectués et facturés par l'intermédiaire du <strong>Google Play Store</strong>
+      ou de l'<strong>App Store</strong>, et gérés techniquement par le prestataire
+      <strong>RevenueCat</strong>.
+    </p>
+    <ul>
+      <li>Le prix et la durée de l'abonnement sont affichés dans l'Application avant tout achat.</li>
+      <li>Sauf mention contraire, l'abonnement est à <strong>reconduction automatique</strong> pour la
+        même durée, sauf résiliation au moins 24 h avant la fin de la période en cours.</li>
+      <li>La gestion et la résiliation de l'abonnement s'effectuent depuis votre compte
+        Google Play ou Apple, selon les conditions de la plateforme concernée.</li>
+      <li>La facturation, les remboursements éventuels et le paiement relèvent des conditions de la
+        plateforme de téléchargement (Google / Apple), à laquelle vous devez vous référer.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>6. Droit de rétractation</h2>
+    <p>
+      L'abonnement Premium donne accès à un contenu numérique fourni immédiatement. Conformément
+      à l'article L.221-28 du Code de la consommation, en démarrant l'utilisation du service dès
+      la souscription, vous demandez expressément son exécution immédiate et
+      <strong>renoncez à votre droit de rétractation</strong> de 14 jours une fois le service
+      pleinement exécuté. Les modalités de remboursement restent régies par la plateforme de
+      téléchargement.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>7. Obligations de l'utilisateur</h2>
+    <p>Vous vous engagez à ne pas :</p>
+    <ul>
+      <li>utiliser l'Application à des fins illicites ou contraires aux présentes CGU ;</li>
+      <li>tenter d'accéder frauduleusement au service, de le perturber ou de le contourner ;</li>
+      <li>décompiler, désassembler ou reproduire l'Application hors des cas autorisés par la loi ;</li>
+      <li>porter atteinte aux droits de tiers ou de l'éditeur.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>8. Propriété intellectuelle</h2>
+    <p>
+      L'Application, son code, son interface, ses graphismes et sa marque sont la propriété de
+      l'éditeur et sont protégés par le droit de la propriété intellectuelle. Aucune licence
+      autre que le droit d'usage personnel de l'Application ne vous est concédée.
+    </p>
+    <p>
+      Les données nutritionnelles proviennent notamment de la table <strong>Ciqual</strong> (ANSES)
+      et de la base <strong>Open Food Facts</strong> (licence ODbL). Les données que vous créez
+      (repas, habitudes, aliments personnalisés) restent votre propriété.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>9. Responsabilité</h2>
+    <p>
+      L'Application est fournie « en l'état ». L'éditeur ne garantit pas qu'elle sera exempte
+      d'erreurs ni disponible sans interruption. Dans les limites permises par la loi, l'éditeur
+      ne saurait être tenu responsable des dommages indirects, ni des conséquences résultant de
+      l'utilisation des estimations nutritionnelles ou de données inexactes issues de sources
+      tierces.
+    </p>
+    <p>
+      Vous êtes seul responsable de l'usage que vous faites des informations fournies par
+      l'Application, notamment en matière d'alimentation et de santé.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>10. Données personnelles</h2>
+    <p>
+      Le traitement de vos données personnelles est décrit dans notre
+      <a href="index.html">politique de confidentialité</a>. Conformément au RGPD, vous disposez
+      de droits d'accès, de rectification, d'effacement et de portabilité, exerçables depuis
+      l'Application (export et suppression de compte) ou à l'adresse
+      <a href="mailto:contact@declic-app.fr">contact@declic-app.fr</a>.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>11. Résiliation</h2>
+    <p>
+      Vous pouvez cesser d'utiliser l'Application à tout moment, supprimer votre compte depuis
+      l'écran Profil et désinstaller l'Application. L'éditeur peut suspendre ou résilier l'accès
+      en cas de manquement aux présentes CGU.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>12. Modification des CGU</h2>
+    <p>
+      L'éditeur peut modifier les présentes CGU à tout moment. En cas de changement significatif,
+      vous en serez informé via l'Application. La date de dernière mise à jour figure en haut de
+      cette page. La poursuite de l'utilisation vaut acceptation des CGU modifiées.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>13. Droit applicable et litiges</h2>
+    <p>
+      Les présentes CGU sont soumises au <strong>droit français</strong>. En cas de litige, une
+      solution amiable sera recherchée en priorité. À défaut, conformément à l'article L.612-1 du
+      Code de la consommation, le consommateur peut recourir gratuitement à un
+      <strong>médiateur de la consommation</strong>. À défaut de résolution amiable, les tribunaux
+      français sont compétents.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>Contact</h2>
+    <p>
+      Pour toute question relative aux présentes CGU :
+      <a href="mailto:contact@declic-app.fr">contact@declic-app.fr</a>
+    </p>
+  </div>
+</main>
+
+<footer>
+  <p>© 2026 Déclic — Éléonore Grange (EG Consulting) — Tous droits réservés</p>
+</footer>
+
+</body>
+</html>
