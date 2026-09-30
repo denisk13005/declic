@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/services/firebase';
+import { logInRevenueCat, logOutRevenueCat } from '@/services/revenueCat';
 
 interface AuthUser {
   uid: string;
@@ -31,8 +32,11 @@ export function listenToAuthState(): () => void {
         email: firebaseUser.email,
         displayName: firebaseUser.displayName,
       });
+      // Lie l'abonnement RevenueCat au compte (retrouvé d'un device/plateforme à l'autre).
+      logInRevenueCat(firebaseUser.uid);
     } else {
       useAuthStore.getState().clearUser();
+      logOutRevenueCat();
     }
   });
   return unsubscribe;

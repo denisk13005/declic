@@ -1,5 +1,15 @@
 # Déclic — Dev Log
 
+## 2026-09-30 — Abonnement RevenueCat : install + branchement complet
+
+- **`react-native-purchases@10.10.2` installé** (n'était PAS dans package.json malgré le code existant → tout le flux achat était inopérant, `Purchases` = null). Peer dep RN >= 0.73 → compatible RN 0.83. ⚠️ **Rebuild natif requis** (Android `expo run:android` + build EAS iOS) pour embarquer le module.
+- **`revenueCat.ts`** : ajout de `syncPremiumStatus()` (resync depuis RC, no-op hors-ligne pour ne pas rétrograder un abonné), `addPremiumListener()` (achat/expiration/restore cross-device en temps réel via `addCustomerInfoUpdateListener`), `logInRevenueCat(uid)` / `logOutRevenueCat()` (App User ID = uid Firebase → abo partagé iOS↔Android). `purchasePackage`/`restorePurchases` mettent maintenant à jour le store via `applyPremium()`. Garde-fou clé API manquante + flag `configured`.
+- **`_layout.tsx`** : `initRevenueCat()` au boot (avant l'écoute auth), `addPremiumListener()` (cleanup au unmount), `syncPremiumStatus()` après init.
+- **`authStore.ts`** : `logInRevenueCat(uid)` à la connexion Firebase, `logOutRevenueCat()` à la déconnexion.
+- Suppression des pubs : déjà câblée (`!isPremium` sur bannières Home/Calories, interstitiel Sport, App Open) → fonctionne dès que l'entitlement `premium` est actif.
+- tsc : 0 erreur sur les fichiers touchés (total 15→9, les erreurs RC « module introuvable » résolues). 71/71 tests OK.
+- **Reste (consoles, côté user)** : produits abo App Store Connect (+ accord Paid Apps + shared secret) & Google Play (base plan + service account), config RevenueCat dashboard (entitlement `premium`, offering `default`, mapping produits, clés API). Puis test Sandbox/license + rebuild EAS iOS+Android.
+
 ## 2026-09-30 — Version affichée dynamique + fix Google Sign-In (Play App Signing)
 
 - **Version dans l'app** : `profile.tsx` affichait `1.0.1` codé en dur (décorrélé de `app.config.js`). Remplacé par `{CURRENT_VERSION}` (importé de `@/services/versionGate`, qui lit `Constants.expoConfig?.version`). La version affichée suit désormais automatiquement `app.config.js` (1.0.3) — plus de valeur à maintenir à la main. tsc : 0 erreur sur le fichier.

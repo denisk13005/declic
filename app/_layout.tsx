@@ -15,6 +15,7 @@ import { useHabitStore } from '@/stores/habitStore';
 import { initFoodDb } from '@/services/foodDb';
 import { initNotificationChannel, HABIT_CHANNEL_ID, HABIT_REMINDER_CATEGORY_ID } from '@/services/notifications';
 import { initAds } from '@/services/ads';
+import { initRevenueCat, syncPremiumStatus, addPremiumListener } from '@/services/revenueCat';
 import { useAppOpenAd } from '@/hooks/useAppOpenAd';
 import UpdateGate from '@/components/UpdateGate';
 
@@ -25,7 +26,10 @@ export default function RootLayout() {
   useAppOpenAd();
 
   useEffect(() => {
+    // Configure RevenueCat AVANT l'écoute auth (logIn RC a besoin du SDK configuré).
+    initRevenueCat();
     const unsubscribe = listenToAuthState();
+    const removePremiumListener = addPremiumListener();
 
     const init = async () => {
       // Attend que la DB soit prête (copie des 7MB depuis l'APK au 1er lancement)
@@ -38,6 +42,8 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
       initNotificationChannel();
       initAds().catch(e => console.warn('[ads] init échouée :', e));
+      // Resynchronise l'état premium depuis RevenueCat (abo expiré/restauré, autre device).
+      syncPremiumStatus().catch(e => console.warn('[RevenueCat] sync échouée :', e));
     };
 
     init();
@@ -75,6 +81,7 @@ export default function RootLayout() {
 
     return () => {
       unsubscribe();
+      removePremiumListener();
       responseSub.remove();
     };
   }, [toggleCompletion]);
