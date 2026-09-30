@@ -1,5 +1,10 @@
 # Déclic — Dev Log
 
+## 2026-09-30 — Version affichée dynamique + fix Google Sign-In (Play App Signing)
+
+- **Version dans l'app** : `profile.tsx` affichait `1.0.1` codé en dur (décorrélé de `app.config.js`). Remplacé par `{CURRENT_VERSION}` (importé de `@/services/versionGate`, qui lit `Constants.expoConfig?.version`). La version affichée suit désormais automatiquement `app.config.js` (1.0.3) — plus de valeur à maintenir à la main. tsc : 0 erreur sur le fichier.
+- **Google Sign-In `DEVELOPER_ERROR`** (résolu, config console, pas de code) : l'app en test fermé est signée par la **clé de signature Google Play**, pas par le keystore EAS (= simple clé d'upload). Le SHA-1/SHA-256 de la clé de signature Play (Play Console → Protégé avec Play → Signature d'application) ont été ajoutés dans Firebase (app `com.declic.nutrition`) → connexion Google OK. Aucun rebuild requis.
+
 ## 2026-09-29 — Bump version 1.0.3 (avant build)
 
 - `app.config.js` : `version` 1.0.1 → **1.0.3** (marketing version, source pour EAS).

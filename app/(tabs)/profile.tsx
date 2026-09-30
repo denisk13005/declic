@@ -17,6 +17,7 @@ import ThemePickerModal from '@/components/profile/ThemePickerModal';
 import { restorePurchases } from '@/services/revenueCat';
 import { openAdPrivacyOptions } from '@/services/ads';
 import { logOut, deleteAccount } from '@/services/firebase';
+import { CURRENT_VERSION } from '@/services/versionGate';
 import { exportUserData, wipeAllLocalData } from '@/services/account';
 import { useAuthStore } from '@/stores/authStore';
 import { LEGAL } from '@/constants/legal';
@@ -548,7 +549,7 @@ export default function ProfileScreen() {
           <SettingsRow
             icon="information-circle-outline"
             label="Version"
-            rightEl={<Text style={styles.versionText}>1.0.1</Text>}
+            rightEl={<Text style={styles.versionText}>{CURRENT_VERSION}</Text>}
           />
           <SettingsRow
             icon="shield-checkmark-outline"
