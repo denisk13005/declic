@@ -1,3 +1,6 @@
+// Global RN (défini par Metro/jest-expo, absent en testEnvironment node)
+global.__DEV__ = true;
+
 // Mock AsyncStorage (non disponible dans l'environnement Jest)
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')

@@ -2,9 +2,12 @@ export const CONFIG = {
   // RevenueCat
   REVENUECAT_IOS_KEY: process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY ?? '',
   REVENUECAT_ANDROID_KEY: process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY ?? '',
+  // Clé Test Store (achats simulés) — dev builds uniquement ; en release __DEV__ = false
+  // et le minifier retire la valeur du bundle.
+  REVENUECAT_TEST_KEY: __DEV__ ? (process.env.EXPO_PUBLIC_REVENUECAT_TEST_KEY ?? '') : '',
 
   // Offering / entitlement IDs (must match RevenueCat dashboard)
-  RC_ENTITLEMENT_ID: 'premium',
+  RC_ENTITLEMENT_ID: 'vitacairn_pro',
   RC_OFFERING_ID: 'default',
 
   // App limits (free tier)

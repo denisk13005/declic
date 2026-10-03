@@ -1,5 +1,11 @@
 # Déclic — Dev Log
 
+## 2026-10-03 — RevenueCat : alignement entitlement + état du dashboard
+
+- **Bug** : `CONFIG.RC_ENTITLEMENT_ID` valait `'premium'` alors que l'entitlement créé dans le dashboard RevenueCat (projet `vitacairn`) s'appelle **`vitacairn_pro`** → un achat réussi n'aurait jamais activé le premium. Corrigé dans `src/constants/config.ts`. tsc OK, 71/71 tests OK.
+- **Test Store en dev** : nouvelle variable `EXPO_PUBLIC_REVENUECAT_TEST_KEY` (clé `test_…` du dashboard). `CONFIG.REVENUECAT_TEST_KEY` ne la lit que si `__DEV__` (vidée en release, retirée du bundle par le minifier) ; `initRevenueCat()` la prend en priorité sur les clés `goog_`/`appl_` → achats simulés en `npm run android`, sans Play/App Store. `jest.setup.js` : `global.__DEV__ = true`. 71/71 tests OK.
+- **État dashboard RC** : app App Store (`com.declic.nutrition`) créée ; **aucune app Play Store** ; offering `default` (3 packages) + produits `monthly`/`yearly`/`lifetime` = **Test Store uniquement**, aucun produit App Store/Play importé.
+
 ## 2026-09-30 — Abonnement RevenueCat : install + branchement complet
 
 - **`react-native-purchases@10.10.2` installé** (n'était PAS dans package.json malgré le code existant → tout le flux achat était inopérant, `Purchases` = null). Peer dep RN >= 0.73 → compatible RN 0.83. ⚠️ **Rebuild natif requis** (Android `expo run:android` + build EAS iOS) pour embarquer le module.

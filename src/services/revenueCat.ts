@@ -17,8 +17,10 @@ let configured = false;
 
 export async function initRevenueCat(): Promise<void> {
   if (!Purchases || configured) return;
+  // En dev, la clé Test Store (si définie) prime : achats simulés, sans Play/App Store.
   const apiKey =
-    Platform.OS === 'ios' ? CONFIG.REVENUECAT_IOS_KEY : CONFIG.REVENUECAT_ANDROID_KEY;
+    CONFIG.REVENUECAT_TEST_KEY ||
+    (Platform.OS === 'ios' ? CONFIG.REVENUECAT_IOS_KEY : CONFIG.REVENUECAT_ANDROID_KEY);
   if (!apiKey) {
     console.warn('[RevenueCat] Clé API manquante pour', Platform.OS);
     return;
