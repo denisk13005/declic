@@ -15,16 +15,51 @@ import { useRouter } from 'expo-router';
 import { PurchasesPackage } from 'react-native-purchases';
 import { getOfferings, purchasePackage, restorePurchases } from '@/services/revenueCat';
 import { useProfileStore } from '@/stores/profileStore';
+import { CONFIG } from '@/constants/config';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
 
+// Uniquement ce que `isPremium` débloque réellement dans l'app (exigence stores :
+// ne jamais promettre une fonctionnalité absente).
 const FEATURES = [
-  { icon: '✅', label: 'Habitudes illimitées' },
-  { icon: '📊', label: 'Statistiques avancées & historique complet' },
-  { icon: '🔔', label: 'Rappels personnalisés par habitude' },
-  { icon: '🎨', label: 'Thèmes et couleurs exclusifs' },
-  { icon: '🏆', label: 'Badges et achievements' },
-  { icon: '☁️', label: 'Sauvegarde iCloud / Google Drive' },
+  { icon: '🚫', label: 'Aucune publicité' },
+  { icon: '✅', label: `Habitudes illimitées (${CONFIG.FREE_HABIT_LIMIT} en version gratuite)` },
 ];
+
+// Sur Google Play, les forfaits d'un même abonnement partagent le même titre produit
+// → on libelle chaque package d'après son type (MONTHLY / ANNUAL / LIFETIME).
+const PACKAGE_INFO: Record<string, { label: string; period: string; order: number }> = {
+  ANNUAL: { label: 'Annuel', period: '/an', order: 0 },
+  MONTHLY: { label: 'Mensuel', period: '/mois', order: 1 },
+  LIFETIME: { label: 'À vie', period: '', order: 2 },
+};
+
+function packageInfo(pkg: PurchasesPackage) {
+  return PACKAGE_INFO[pkg.packageType] ?? { label: pkg.product.title, period: '', order: 9 };
+}
+
+/** Économie de l'annuel par rapport à 12 mois de mensuel, en % arrondi (null si non calculable). */
+function annualSavingsPercent(packages: PurchasesPackage[]): number | null {
+  const monthly = packages.find((p) => p.packageType === 'MONTHLY');
+  const annual = packages.find((p) => p.packageType === 'ANNUAL');
+  if (!monthly || !annual || monthly.product.price <= 0) return null;
+  const savings = 1 - annual.product.price / (monthly.product.price * 12);
+  return savings > 0 ? Math.round(savings * 100) : null;
+}
+
+function packageSubtitle(pkg: PurchasesPackage): string {
+  switch (pkg.packageType) {
+    case 'ANNUAL':
+      return pkg.product.pricePerMonthString
+        ? `Soit ${pkg.product.pricePerMonthString}/mois, facturé une fois par an`
+        : 'Facturé une fois par an';
+    case 'MONTHLY':
+      return 'Facturé chaque mois, sans engagement';
+    case 'LIFETIME':
+      return 'Paiement unique, accès à vie';
+    default:
+      return pkg.product.description;
+  }
+}
 
 export default function PaywallScreen() {
   const router = useRouter();
@@ -36,11 +71,15 @@ export default function PaywallScreen() {
 
   useEffect(() => {
     getOfferings().then((pkgs) => {
-      setPackages(pkgs);
-      if (pkgs.length > 0) setSelected(pkgs[0]);
+      // Annuel en tête et présélectionné (meilleure offre)
+      const sorted = [...pkgs].sort((a, b) => packageInfo(a).order - packageInfo(b).order);
+      setPackages(sorted);
+      if (sorted.length > 0) setSelected(sorted[0]);
       setLoading(false);
     });
   }, []);
+
+  const savingsPercent = annualSavingsPercent(packages);
 
   const handlePurchase = async () => {
     if (!selected) return;
@@ -110,6 +149,9 @@ export default function PaywallScreen() {
             <View style={styles.packages}>
               {packages.map((pkg) => {
                 const sel = selected?.identifier === pkg.identifier;
+                const info = packageInfo(pkg);
+                const subtitle = packageSubtitle(pkg);
+                const showSavings = pkg.packageType === 'ANNUAL' && savingsPercent != null;
                 return (
                   <TouchableOpacity
                     key={pkg.identifier}
@@ -126,17 +168,25 @@ export default function PaywallScreen() {
                       />
                     )}
                     <View style={styles.packageInfo}>
-                      <Text style={[styles.packageTitle, sel && styles.textWhite]}>
-                        {pkg.product.title || pkg.packageType}
-                      </Text>
-                      {pkg.product.description ? (
+                      <View style={styles.packageTitleRow}>
+                        <Text style={[styles.packageTitle, sel && styles.textWhite]}>
+                          {info.label}
+                        </Text>
+                        {showSavings && (
+                          <View style={styles.savingsBadge}>
+                            <Text style={styles.savingsText}>-{savingsPercent} %</Text>
+                          </View>
+                        )}
+                      </View>
+                      {subtitle ? (
                         <Text style={[styles.packageDesc, sel && styles.textWhiteAlpha]}>
-                          {pkg.product.description}
+                          {subtitle}
                         </Text>
                       ) : null}
                     </View>
                     <Text style={[styles.packagePrice, sel && styles.textWhite]}>
                       {pkg.product.priceString}
+                      {info.period}
                     </Text>
                     {sel && (
                       <View style={styles.packageCheck}>
@@ -161,7 +211,9 @@ export default function PaywallScreen() {
                 <ActivityIndicator color="#fff" />
               ) : (
                 <Text style={styles.ctaText}>
-                  {selected ? `Continuer — ${selected.product.priceString}` : 'Continuer'}
+                  {selected
+                    ? `Continuer — ${selected.product.priceString}${packageInfo(selected).period}`
+                    : 'Continuer'}
                 </Text>
               )}
             </LinearGradient>
@@ -241,7 +293,15 @@ const styles = StyleSheet.create({
   },
   packageCardSelected: { borderColor: 'transparent' },
   packageInfo: { flex: 1 },
+  packageTitleRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
   packageTitle: { fontSize: FONT_SIZE.md, fontWeight: FONT_WEIGHT.semibold, color: COLORS.textPrimary },
+  savingsBadge: {
+    backgroundColor: COLORS.success,
+    borderRadius: RADIUS.sm,
+    paddingHorizontal: SPACING.xs,
+    paddingVertical: 1,
+  },
+  savingsText: { fontSize: FONT_SIZE.xs, fontWeight: FONT_WEIGHT.bold, color: '#fff' },
   packageDesc: { fontSize: FONT_SIZE.xs, color: COLORS.textSecondary, marginTop: 2 },
   packagePrice: { fontSize: FONT_SIZE.md, fontWeight: FONT_WEIGHT.bold, color: COLORS.textPrimary },
   packageCheck: { marginLeft: SPACING.sm },

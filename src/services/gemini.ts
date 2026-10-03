@@ -1,7 +1,37 @@
+import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import { Macros } from '@/types';
 
 const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY ?? '';
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+// Raisonnement interne désactivé : inutile pour une simple estimation JSON, et facturé
+// au tarif des tokens de sortie (~85 % du coût d'une analyse photo).
+const GENERATION_CONFIG = { thinkingConfig: { thinkingBudget: 0 } };
+
+// Gemini facture 258 tokens par tuile de 768×768 px : au-delà, on paie (et on uploade)
+// des détails inutiles pour reconnaître un plat.
+const MAX_IMAGE_SIDE = 768;
+
+/**
+ * Redimensionne la photo (plus grand côté ≤ 768 px) et la renvoie en base64 JPEG,
+ * prête pour `analyzeFoodPhoto`.
+ */
+export async function prepareFoodPhoto(uri: string, width: number, height: number): Promise<string> {
+  const context = ImageManipulator.manipulate(uri);
+  if (Math.max(width, height) > MAX_IMAGE_SIDE) {
+    context.resize(width >= height ? { width: MAX_IMAGE_SIDE } : { height: MAX_IMAGE_SIDE });
+  }
+  const image = await context.renderAsync();
+  try {
+    const result = await image.saveAsync({ base64: true, compress: 0.7, format: SaveFormat.JPEG });
+    if (!result.base64) throw new Error('Conversion de la photo impossible');
+    return result.base64;
+  } finally {
+    // Libère les objets natifs (sinon conservés jusqu'au GC)
+    image.release();
+    context.release();
+  }
+}
 
 export interface FoodAnalysis {
   name: string;
@@ -26,7 +56,10 @@ export async function searchFoodSuggestions(query: string, signal?: AbortSignal)
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     signal,
-    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: GENERATION_CONFIG,
+    }),
   });
 
   if (!response.ok) return [];
@@ -78,6 +111,7 @@ export async function analyzeFoodPhoto(base64Image: string): Promise<FoodAnalysi
           ],
         },
       ],
+      generationConfig: GENERATION_CONFIG,
     }),
   });
 

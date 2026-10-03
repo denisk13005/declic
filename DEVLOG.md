@@ -1,5 +1,13 @@
 # Déclic — Dev Log
 
+## 2026-10-03 — Paywall : distinction mensuel / annuel
+
+- **Bug** : sur Google Play, les forfaits `monthly`/`yearly` d'un même abonnement (`vitacairn_pro`) partagent le même `product.title` → les deux cartes du paywall étaient identiques (seul le prix différait).
+- **`app/paywall.tsx`** : libellé par `packageType` (Annuel / Mensuel / À vie), prix suffixé `/an` ou `/mois`, sous-titre (« Soit X/mois, facturé une fois par an » via `pricePerMonthString`, « Facturé chaque mois, sans engagement »), badge vert **-N %** sur l'annuel (calculé vs 12 × mensuel), annuel trié en tête et présélectionné, CTA avec période. tsc OK, 71/71 tests.
+- **Avantages paywall** : liste réduite à ce que `isPremium` débloque vraiment (« Aucune publicité », « Habitudes illimitées (N en version gratuite) » via `CONFIG.FREE_HABIT_LIMIT`). Retirés : stats avancées, rappels par habitude, thèmes, badges, sauvegarde iCloud/Drive (non gatés ou inexistants → risque rejet Apple 2.3.1). `profile.tsx` : bannière « Sans publicité, habitudes illimitées », compteur limite `x/3` → `x/FREE_HABIT_LIMIT` (= 1).
+- **Gemini** (`gemini.ts`) : `generationConfig.thinkingConfig.thinkingBudget = 0` sur les 2 appels → plus de tokens de raisonnement facturés en sortie (≈ 0,003 $ → ≈ 0,0006 $ / photo, réponse plus rapide). **Redimensionnement** : `expo-image-manipulator@~55.0.21` installé (`npx expo install`, module Expo natif → rebuild requis ; `expo-image-loader` 55.0.0 → 55.0.1 au passage ; patch Expo CLI `gradle.js` vérifié intact). `prepareFoodPhoto(uri, w, h)` (`gemini.ts`) : plus grand côté ramené à 768 px (1 tuile Gemini au lieu de ~4), JPEG 0.7, base64, `release()` des objets natifs. `AddEntryModal` : l'ImagePicker ne génère plus de base64 pleine résolution.
+- Console : abonnement Play `vitacairn_pro` (monthly 5,99 € / yearly 35,99 € FR) relié à l'entitlement `vitacairn_pro` + offering `default` dans RevenueCat ; achat test OK sur build 38 (test de licence).
+
 ## 2026-10-03 — RevenueCat : alignement entitlement + état du dashboard
 
 - **Bug** : `CONFIG.RC_ENTITLEMENT_ID` valait `'premium'` alors que l'entitlement créé dans le dashboard RevenueCat (projet `vitacairn`) s'appelle **`vitacairn_pro`** → un achat réussi n'aurait jamais activé le premium. Corrigé dans `src/constants/config.ts`. tsc OK, 71/71 tests OK.

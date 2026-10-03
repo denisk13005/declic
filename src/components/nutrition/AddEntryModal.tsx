@@ -20,7 +20,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { useCalorieStore } from '@/stores/calorieStore';
 import { useAppColors } from '@/hooks/useAppColors';
-import { analyzeFoodPhoto } from '@/services/gemini';
+import { analyzeFoodPhoto, prepareFoodPhoto } from '@/services/gemini';
 import { searchFood } from '@/services/foodDb';
 import { lookupPortionWeight } from '@/data/portionWeights';
 import { lookupBarcode, searchByName as searchOFF } from '@/services/openFoodFacts';
@@ -570,17 +570,19 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
     }
 
     const result = fromCamera
-      ? await ImagePicker.launchCameraAsync({ mediaTypes: ['images'] as ImagePicker.MediaType[], allowsEditing: true, quality: 0.7, base64: true })
-      : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'] as ImagePicker.MediaType[], allowsEditing: true, quality: 0.7, base64: true });
+      ? await ImagePicker.launchCameraAsync({ mediaTypes: ['images'] as ImagePicker.MediaType[], allowsEditing: true, quality: 0.7 })
+      : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'] as ImagePicker.MediaType[], allowsEditing: true, quality: 0.7 });
 
-    if (result.canceled || !result.assets[0]?.base64) return;
+    if (result.canceled || !result.assets[0]) return;
 
     const asset = result.assets[0];
     setPhotoUri(asset.uri);
     setAnalyzing(true);
 
     try {
-      const analysis = await analyzeFoodPhoto(asset.base64!);
+      // Réduite à 768 px avant envoi : moins de tokens facturés et upload plus rapide
+      const base64 = await prepareFoodPhoto(asset.uri, asset.width, asset.height);
+      const analysis = await analyzeFoodPhoto(base64);
       prefillFromAnalysis(analysis.name, analysis.calories, analysis.macros);
     } catch (err: any) {
       Alert.alert('Analyse échouée', err.message ?? "Gemini n'a pas pu identifier le plat.");

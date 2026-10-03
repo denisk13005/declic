@@ -21,6 +21,7 @@ import { CURRENT_VERSION } from '@/services/versionGate';
 import { exportUserData, wipeAllLocalData } from '@/services/account';
 import { useAuthStore } from '@/stores/authStore';
 import { LEGAL } from '@/constants/legal';
+import { CONFIG } from '@/constants/config';
 import { computeTDEE, LIFESTYLE_LABELS, GOAL_LABELS } from '@/utils/tdee';
 import { FitnessGoal, LifestyleLevel, ExerciseFrequency, Gender } from '@/types';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
@@ -389,7 +390,7 @@ export default function ProfileScreen() {
             <Ionicons name="star" size={24} color="#fff" />
             <View>
               <Text style={styles.premiumTitle}>Premium actif ✨</Text>
-              <Text style={styles.premiumSub}>Habitudes illimitées, stats complètes</Text>
+              <Text style={styles.premiumSub}>Sans publicité, habitudes illimitées</Text>
             </View>
           </LinearGradient>
         ) : (
@@ -421,7 +422,7 @@ export default function ProfileScreen() {
           <View style={styles.divider} />
           <View style={styles.quickStat}>
             <Text style={styles.quickStatValue}>
-              {profile.isPremium ? '∞' : `${activeCount}/3`}
+              {profile.isPremium ? '∞' : `${activeCount}/${CONFIG.FREE_HABIT_LIMIT}`}
             </Text>
             <Text style={styles.quickStatLabel}>Limite</Text>
           </View>
