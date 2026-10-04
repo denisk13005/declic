@@ -1,5 +1,11 @@
 # Déclic — Dev Log
 
+## 2026-10-04 — Politique de confidentialité mise à jour (`docs/index.html`)
+
+- **Ajouts** : Google **AdMob** (absent jusqu'ici alors que l'app affiche des pubs : données collectées, formulaire de consentement UE, Profil → Consentement publicitaire) ; **Voix IA** (enregistrement ≤ 60 s envoyé à Gemini, fichier supprimé après analyse) ; permission **Micro** ; Connexion Google/Apple ; RevenueCat (identifiant de compte, paiement traité par Google/Apple) ; carte **Vos droits (RGPD)** (droits, export JSON, suppression in-app, réclamation CNIL) ; transferts hors UE.
+- **Corrections** : Gemini « l'image n'est pas conservée » → formulation exacte (pas conservée par Vitacairn, mais traitée par Google selon les conditions de l'API, possiblement utilisée pour améliorer ses produits selon l'offre) ; suppression du compte via l'app (et plus « en contactant le support »).
+- Libellés des boutons vérifiés dans `profile.tsx`. ⚠️ À revoir quand Gemini passera en payant (retirer la mention d'utilisation par Google).
+
 ## 2026-10-04 — AdMob : vrais IDs iOS + correction de l'App ID Android
 
 - **iOS** : app AdMob « Vitacairn » (iOS) créée dans le compte `pub-6176341588651241` (Éléonore). `app.config.js` → `iosAppId: ca-app-pub-6176341588651241~8983063328` (avant : App ID **de test** Google). `ads.ts` : `AD_UNITS` choisit maintenant les blocs par plateforme (`adUnit(testId, { android, ios })`) — avant, l'iPhone utilisait les blocs **Android**. Blocs iOS : bannière `/6391549840`, interstitiel `/8378670501`, récompense `/8735651310`, ouverture `/3345835675`.

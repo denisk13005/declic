@@ -199,7 +199,7 @@
 
 <main>
   <h1>Politique de confidentialité</h1>
-  <p class="subtitle">Dernière mise à jour : 29 septembre 2026</p>
+  <p class="subtitle">Dernière mise à jour : 4 octobre 2026</p>
 
   <div class="card">
     <h2>Présentation</h2>
@@ -259,16 +259,24 @@
     <h2>Services tiers utilisés</h2>
 
     <p><strong>Firebase (Google)</strong> <span class="badge">Authentification</span></p>
-    <p>Utilisé pour la création de compte et la connexion. Votre adresse e-mail est transmise à Firebase pour l'authentification. Politique de confidentialité : <a href="https://firebase.google.com/support/privacy" target="_blank">firebase.google.com</a></p>
+    <p>Utilisé pour la création de compte et la connexion (e-mail et mot de passe, <strong>Connexion avec Google</strong> ou <strong>Connexion avec Apple</strong>). Votre adresse e-mail, votre nom (s'il est fourni par Google ou Apple) et un identifiant de compte sont transmis à Firebase pour l'authentification. Au démarrage, l'application consulte également une configuration technique (version minimale requise) sans transmettre de donnée personnelle. Politique de confidentialité : <a href="https://firebase.google.com/support/privacy" target="_blank">firebase.google.com</a></p>
 
-    <p style="margin-top: 20px;"><strong>RevenueCat</strong> <span class="badge">Achats in-app</span></p>
-    <p>Gère les abonnements et achats premium. Les données de transaction sont transmises à RevenueCat. Politique de confidentialité : <a href="https://www.revenuecat.com/privacy" target="_blank">revenuecat.com</a></p>
+    <p style="margin-top: 20px;"><strong>RevenueCat</strong> <span class="badge">Abonnements</span></p>
+    <p>Gère l'abonnement Premium, acheté via Google Play ou l'App Store (le paiement est traité par Google ou Apple : nous n'avons jamais accès à vos coordonnées bancaires). Les données de transaction (produit, dates, statut de l'abonnement) et l'identifiant de votre compte Vitacairn sont transmis à RevenueCat, ce qui permet de retrouver votre abonnement sur un autre appareil. Politique de confidentialité : <a href="https://www.revenuecat.com/privacy" target="_blank">revenuecat.com</a></p>
+
+    <p style="margin-top: 20px;"><strong>Google AdMob</strong> <span class="badge">Publicité</span></p>
+    <p>La version gratuite de Vitacairn affiche des publicités fournies par Google AdMob (l'abonnement Premium les supprime). Pour afficher et mesurer ces publicités, AdMob peut collecter des données techniques sur votre appareil (identifiant publicitaire, adresse IP, modèle de l'appareil, interactions avec les annonces). Si vous êtes situé dans l'Espace économique européen, au Royaume-Uni ou en Suisse, un formulaire de consentement vous est présenté au premier lancement : vous pouvez <strong>accepter, refuser ou personnaliser</strong> vos choix, et les modifier à tout moment depuis l'écran <strong>Profil → Consentement publicitaire</strong>. En cas de refus, seules des publicités non personnalisées peuvent être affichées. Politique : <a href="https://policies.google.com/technologies/ads" target="_blank">policies.google.com</a></p>
 
     <p style="margin-top: 20px;"><strong>Open Food Facts</strong> <span class="badge">Base de données alimentaires</span></p>
     <p>Lorsque vous scannez un code-barres ou recherchez un aliment introuvable localement, une requête est envoyée à l'API Open Food Facts. Aucune donnée personnelle n'est transmise. Politique : <a href="https://world.openfoodfacts.org/privacy" target="_blank">openfoodfacts.org</a></p>
 
-    <p style="margin-top: 20px;"><strong>Google Gemini Flash</strong> <span class="badge">Analyse photo</span></p>
-    <p>Si vous utilisez la fonctionnalité d'analyse de photo de plat, l'image est envoyée à l'API Google Gemini pour identifier les aliments. L'image est utilisée uniquement pour cette analyse et n'est pas conservée. Politique : <a href="https://policies.google.com/privacy" target="_blank">policies.google.com</a></p>
+    <p style="margin-top: 20px;"><strong>Google Gemini</strong> <span class="badge">Analyse photo et vocale (IA)</span></p>
+    <p>Ces fonctionnalités sont facultatives et ne sont utilisées que lorsque vous les déclenchez :</p>
+    <ul>
+      <li><strong>Photo IA</strong> — la photo de votre plat (réduite à 768 pixels) est envoyée à l'API Google Gemini pour identifier les aliments et estimer les calories.</li>
+      <li><strong>Voix IA</strong> — lorsque vous dictez le contenu de votre repas, l'enregistrement audio (60 secondes maximum) est envoyé à l'API Google Gemini pour estimer les calories. Le micro n'est actif que pendant l'enregistrement que vous lancez, et le fichier audio est supprimé de votre appareil dès l'analyse terminée.</li>
+    </ul>
+    <p style="margin-top: 12px;">Vitacairn ne conserve ni les photos ni les enregistrements sur ses serveurs. En revanche, ces contenus sont traités par Google selon les conditions de l'API Gemini : Google peut les conserver temporairement et, selon l'offre de service utilisée, les utiliser pour améliorer ses produits. <strong>Évitez donc d'inclure des visages, des documents ou des informations personnelles</strong> dans vos photos et enregistrements. Politique : <a href="https://policies.google.com/privacy" target="_blank">policies.google.com</a> — Conditions de l'API Gemini : <a href="https://ai.google.dev/gemini-api/terms" target="_blank">ai.google.dev</a></p>
 
     <p style="margin-top: 20px;"><strong>Health Connect (Android)</strong> <span class="badge">Calories brûlées</span></p>
     <p>Si vous accordez l'accès, Vitacairn lit les calories brûlées depuis Health Connect (synchronisé avec Samsung Health ou Google Fit). Ces données sont affichées dans l'app et ne sont pas transmises à nos serveurs.</p>
@@ -282,6 +290,7 @@
     <ul>
       <li><strong>Appareil photo</strong> — pour scanner les codes-barres et photographier vos plats</li>
       <li><strong>Galerie photos</strong> — pour sélectionner une photo d'un plat existant</li>
+      <li><strong>Micro</strong> — pour dicter le contenu de votre repas (Voix IA), uniquement pendant l'enregistrement que vous lancez</li>
       <li><strong>Notifications</strong> — pour vous rappeler vos habitudes quotidiennes</li>
       <li><strong>Health Connect (Android) / Apple HealthKit (iOS)</strong> — pour lire les calories brûlées (optionnel)</li>
       <li><strong>Démarrage automatique / Alarmes exactes</strong> — pour la fiabilité des rappels de notifications</li>
@@ -292,13 +301,43 @@
     <h2>Conservation et suppression des données</h2>
     <p>
       Toutes vos données locales (repas, habitudes, poids, profil) peuvent être supprimées
-      en désinstallant l'application. Aucune copie n'est conservée sur nos serveurs.
+      depuis <strong>Profil → Réinitialiser l'app</strong> ou en désinstallant l'application.
+      Aucune copie n'est conservée sur nos serveurs.
     </p>
     <p>
-      Les données d'authentification Firebase peuvent être supprimées en contactant notre
-      support. Les données de transaction RevenueCat sont soumises à leur propre politique
-      de conservation.
+      Votre compte peut être supprimé à tout moment directement dans l'application, depuis
+      <strong>Profil → Supprimer mon compte</strong> : votre compte d'authentification et toutes
+      les données locales sont alors effacés. Vous pouvez aussi nous écrire pour le demander.
+      Les données de transaction liées à un abonnement sont conservées par Google, Apple et
+      RevenueCat selon leurs propres obligations légales (notamment comptables).
     </p>
+  </div>
+
+  <div class="card">
+    <h2>Vos droits (RGPD)</h2>
+    <p>
+      Conformément au Règlement général sur la protection des données, vous disposez d'un droit
+      d'accès, de rectification, d'effacement, de limitation, d'opposition et de portabilité
+      de vos données, ainsi que du droit de retirer votre consentement à tout moment.
+    </p>
+    <ul>
+      <li><strong>Portabilité</strong> — exportez vos données au format JSON depuis <strong>Profil → Exporter mes données</strong></li>
+      <li><strong>Effacement</strong> — <strong>Profil → Supprimer mon compte</strong></li>
+      <li><strong>Publicité</strong> — modifiez votre consentement depuis <strong>Profil → Consentement publicitaire</strong></li>
+      <li><strong>Autres demandes</strong> — écrivez-nous à <a href="mailto:contact@declic-app.fr">contact@declic-app.fr</a> ; nous répondons sous un mois</li>
+    </ul>
+    <p style="margin-top: 12px;">
+      Si vous estimez que vos droits ne sont pas respectés, vous pouvez introduire une réclamation
+      auprès de la <a href="https://www.cnil.fr/fr/plaintes" target="_blank">CNIL</a>.
+    </p>
+    <div class="highlight">
+      <p>
+        <strong>Transferts hors de l'Union européenne.</strong> Certains prestataires (Google, Apple,
+        RevenueCat) peuvent traiter des données aux États-Unis. Ces transferts sont encadrés par les
+        garanties prévues par le RGPD (Data Privacy Framework UE–États-Unis et/ou clauses contractuelles
+        types de la Commission européenne).
+      </p>
+    </div>
   </div>
 
   <div class="card">
