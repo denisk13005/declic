@@ -1,5 +1,12 @@
 # Déclic — Dev Log
 
+## 2026-10-04 — AdMob : vrais IDs iOS + correction de l'App ID Android
+
+- **iOS** : app AdMob « Vitacairn » (iOS) créée dans le compte `pub-6176341588651241` (Éléonore). `app.config.js` → `iosAppId: ca-app-pub-6176341588651241~8983063328` (avant : App ID **de test** Google). `ads.ts` : `AD_UNITS` choisit maintenant les blocs par plateforme (`adUnit(testId, { android, ios })`) — avant, l'iPhone utilisait les blocs **Android**. Blocs iOS : bannière `/6391549840`, interstitiel `/8378670501`, récompense `/8735651310`, ouverture `/3345835675`.
+- **Android (bug)** : `AndroidManifest.xml` contenait l'App ID **de test** Google (`ca-app-pub-3940256099942544~3347511713`) alors que `app.config.js` déclare `~3333714691` — la valeur du plugin est ignorée car le dossier `android/` est natif (pas de prebuild). Corrigé directement dans le manifest → les pubs Android utilisent enfin l'app « Ryvl » réelle. ⚠️ Si `android/` est régénéré, le plugin réappliquera la bonne valeur depuis `app.config.js`.
+- `user_tracking_usage_description` (iOS ATT) : texte placeholder « Cette valeur n'est pas utilisée sur Android » → vraie phrase FR.
+- tsc OK, 78/78 tests.
+
 ## 2026-10-04 — Nouvelle fonctionnalité : dictée vocale du repas (« Voix IA »)
 
 - **Besoin** : décrire son repas à voix haute (« 200 g de riz, un blanc de poulet et une pomme ») → estimation calories + macros, comme la photo IA.

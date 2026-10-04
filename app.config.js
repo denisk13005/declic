@@ -56,10 +56,12 @@ export default ({ config }) => ({
       'react-native-google-mobile-ads',
       {
         androidAppId: 'ca-app-pub-6176341588651241~3333714691',
-        iosAppId: 'ca-app-pub-3940256099942544~1458002511', // ID de test iOS (app Android-only, juste pour silencer le warning)
+        iosAppId: 'ca-app-pub-6176341588651241~8983063328', // app AdMob « Vitacairn » (iOS)
         // Délai de démarrage de l'app pour charger la pub App Open (en ms)
         delay_app_measurement_init: false,
-        user_tracking_usage_description: "Cette valeur n'est pas utilisée sur Android",
+        // NSUserTrackingUsageDescription : affiché si l'autorisation de suivi (ATT) est demandée sur iOS
+        user_tracking_usage_description:
+          'Ton identifiant publicitaire permet d’afficher des publicités plus pertinentes et de financer la version gratuite de Vitacairn.',
       },
     ],
     [

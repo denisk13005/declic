@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import {
   MobileAds,
   BannerAd,
@@ -13,31 +14,41 @@ import {
 } from 'react-native-google-mobile-ads';
 
 // ─── IDs AdMob ────────────────────────────────────────────────────────────────
-// Remplace les TEST_IDs par tes vrais IDs avant de publier en production.
-// App ID → app.config.js (plugin react-native-google-mobile-ads > androidAppId)
+// Compte éditeur pub-6176341588651241. Une app AdMob par plateforme, chacune avec
+// ses propres blocs : Android = app « Ryvl » (ancien nom), iOS = app « Vitacairn ».
+// App IDs → app.config.js (plugin react-native-google-mobile-ads > androidAppId / iosAppId)
 
 const IS_TEST = __DEV__;
 
+function adUnit(testId: string, ids: { android: string; ios: string }): string {
+  if (IS_TEST) return testId;
+  return Platform.OS === 'ios' ? ids.ios : ids.android;
+}
+
 export const AD_UNITS = {
   // Banner — affiché en bas de Home et Calories (utilisateurs free uniquement)
-  banner: IS_TEST
-    ? TestIds.ADAPTIVE_BANNER
-    : 'ca-app-pub-6176341588651241/9767409499',
+  banner: adUnit(TestIds.ADAPTIVE_BANNER, {
+    android: 'ca-app-pub-6176341588651241/9767409499',
+    ios: 'ca-app-pub-6176341588651241/6391549840',
+  }),
 
   // Interstitial — affiché après l'ajout d'une séance sport (max 1/30min)
-  interstitial: IS_TEST
-    ? TestIds.INTERSTITIAL
-    : 'ca-app-pub-6176341588651241/5669902290',
+  interstitial: adUnit(TestIds.INTERSTITIAL, {
+    android: 'ca-app-pub-6176341588651241/5669902290',
+    ios: 'ca-app-pub-6176341588651241/8378670501',
+  }),
 
   // Rewarded — débloquer une 2ᵉ habitude le temps d'une journée
-  rewarded: IS_TEST
-    ? TestIds.REWARDED
-    : 'ca-app-pub-6176341588651241/7819903002',
+  rewarded: adUnit(TestIds.REWARDED, {
+    android: 'ca-app-pub-6176341588651241/7819903002',
+    ios: 'ca-app-pub-6176341588651241/8735651310',
+  }),
 
   // App Open — au lancement de l'app (cooldown 4h géré dans useAppOpenAd)
-  appOpen: IS_TEST
-    ? TestIds.APP_OPEN
-    : 'ca-app-pub-6176341588651241/5614061975',
+  appOpen: adUnit(TestIds.APP_OPEN, {
+    android: 'ca-app-pub-6176341588651241/5614061975',
+    ios: 'ca-app-pub-6176341588651241/3345835675',
+  }),
 } as const;
 
 export { BannerAd, BannerAdSize, AdEventType, RewardedAdEventType };
