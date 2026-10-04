@@ -126,7 +126,7 @@ export default function PaywallScreen() {
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
           {/* Hero */}
-          <Text style={styles.badge}>✨ DÉCLIC PREMIUM</Text>
+          <Text style={styles.badge}>✨ VITACAIRN PREMIUM</Text>
           <Text style={styles.headline}>Construis des habitudes{'\n'}qui durent.</Text>
           <Text style={styles.subheadline}>
             Débloque tout pour rester motivé chaque jour.

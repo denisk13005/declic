@@ -1,5 +1,11 @@
 # Déclic — Dev Log
 
+## 2026-10-04 — Abonnements App Store + reliquat « Déclic »
+
+- **`app/paywall.tsx`** : badge « ✨ DÉCLIC PREMIUM » → « ✨ VITACAIRN PREMIUM » (dernier texte visible à l'ancien nom ; `app_name` Android et `app.config.js` déjà « Vitacairn »).
+- **App Store Connect** : groupe `Vitacairn Pro` (ID 22439629, nom affiché FR), `vitacairn_pro_monthly` 1 mois **5,99 €** (prêt), `vitacairn_pro_yearly` 1 an **39,99 €** zone euro (35,99 € indisponible chez Apple : paliers 34,99/39,99 ; choix user). Annuel = formule « 1 an à l'avance » (pas l'engagement mensuel 12 mois, iOS 26.4+). Capture de vérification 640×920. Premier abonnement à soumettre **avec une version de l'app**.
+- Le paywall n'a pas besoin de variante iOS : prix (`priceString`), « Soit X/mois » (`pricePerMonthString`) et badge -N % sont calculés depuis les prix du store → iPhone affichera 39,99 €/an, ~3,33 €/mois, -44 %.
+
 ## 2026-10-03 — Paywall : distinction mensuel / annuel
 
 - **Bug** : sur Google Play, les forfaits `monthly`/`yearly` d'un même abonnement (`vitacairn_pro`) partagent le même `product.title` → les deux cartes du paywall étaient identiques (seul le prix différait).
