@@ -21,6 +21,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useCalorieStore } from '@/stores/calorieStore';
 import { useAppColors } from '@/hooks/useAppColors';
 import { analyzeFoodPhoto, prepareFoodPhoto } from '@/services/gemini';
+import VoiceMealInput from './VoiceMealInput';
 import { searchFood } from '@/services/foodDb';
 import { lookupPortionWeight } from '@/data/portionWeights';
 import { lookupBarcode, searchByName as searchOFF } from '@/services/openFoodFacts';
@@ -66,7 +67,8 @@ interface Props {
   initialTab?: Tab;
 }
 
-type Tab = 'manuel' | 'photo' | 'barcode';
+export type AddEntryTab = 'manuel' | 'photo' | 'voix' | 'barcode';
+type Tab = AddEntryTab;
 
 const UNITS: { value: ServingUnit; label: string }[] = [
   { value: 'g', label: 'g' },
@@ -706,6 +708,7 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
   const tabs: { key: Tab; label: string; icon: React.ComponentProps<typeof Ionicons>['name'] }[] = [
     { key: 'manuel', label: 'Manuel', icon: 'pencil-outline' },
     { key: 'photo', label: 'Photo IA', icon: 'camera-outline' },
+    { key: 'voix', label: 'Voix IA', icon: 'mic-outline' },
     { key: 'barcode', label: 'Code-barres', icon: 'barcode-outline' },
   ];
 
@@ -783,6 +786,13 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
                       : 'Prends une photo ou choisis depuis la galerie.\nL\'IA identifiera le plat et estimera les calories.'}
                   </Text>
                 </View>
+              )}
+
+              {/* ── Voix IA tab ────────────────────────────────────────────── */}
+              {tab === 'voix' && (
+                <VoiceMealInput
+                  onResult={(a) => prefillFromAnalysis(a.name, a.calories, a.macros, "Estimation IA d'après ta description")}
+                />
               )}
 
               {/* ── Barcode tab ───────────────────────────────────────────── */}

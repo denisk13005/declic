@@ -63,6 +63,17 @@ export default ({ config }) => ({
       },
     ],
     [
+      'expo-audio',
+      {
+        microphonePermission:
+          'Vitacairn utilise le micro pour que tu puisses dicter le contenu de ton repas.',
+        // Enregistrement au premier plan uniquement : pas de mode audio en arrière-plan
+        // (évite UIBackgroundModes=audio, que l'App Review demanderait de justifier).
+        enableBackgroundPlayback: false,
+        enableBackgroundRecording: false,
+      },
+    ],
+    [
       'expo-notifications',
       {
         icon: './assets/icon.png',

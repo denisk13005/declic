@@ -1,0 +1,178 @@
+import React, { useEffect, useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import {
+  RecordingPresets,
+  requestRecordingPermissionsAsync,
+  setAudioModeAsync,
+  useAudioRecorder,
+  useAudioRecorderState,
+  type RecordingOptions,
+} from 'expo-audio';
+import * as FileSystem from 'expo-file-system/legacy';
+import { analyzeFoodVoice, FoodAnalysis } from '@/services/gemini';
+import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
+
+// Voix uniquement : mono 16 kHz / 32 kbps suffit (~240 Ko par minute) → upload rapide.
+// Gemini facture l'audio à la durée (32 tokens/s), pas à la qualité.
+const VOICE_RECORDING: RecordingOptions = {
+  ...RecordingPresets.HIGH_QUALITY,
+  sampleRate: 16000,
+  numberOfChannels: 1,
+  bitRate: 32000,
+};
+
+const MAX_DURATION_MS = 60_000;
+const MIN_DURATION_MS = 1_000;
+
+type Phase = 'idle' | 'recording' | 'analyzing';
+
+function formatDuration(ms: number): string {
+  const s = Math.floor(ms / 1000);
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+}
+
+/**
+ * Onglet « Voix IA » : l'utilisateur décrit son repas à voix haute, l'enregistrement
+ * est analysé par Gemini et le résultat est remonté via `onResult`.
+ */
+export default function VoiceMealInput({ onResult }: { onResult: (analysis: FoodAnalysis) => void }) {
+  const recorder = useAudioRecorder(VOICE_RECORDING);
+  const recorderState = useAudioRecorderState(recorder, 250);
+  const [phase, setPhase] = useState<Phase>('idle');
+
+  // Arrêt automatique au bout d'une minute
+  useEffect(() => {
+    if (phase === 'recording' && recorderState.durationMillis >= MAX_DURATION_MS) {
+      stopAndAnalyze();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, recorderState.durationMillis]);
+
+  // Si l'onglet est quitté pendant l'enregistrement : on coupe le micro
+  useEffect(() => {
+    return () => {
+      // L'objet natif peut déjà avoir été libéré par useAudioRecorder → accès protégé
+      try {
+        if (recorder.isRecording) {
+          recorder.stop().catch((e) => console.warn('[Voice] stop au démontage', e));
+        }
+      } catch (e) {
+        console.warn('[Voice] recorder déjà libéré', e);
+      }
+      setAudioModeAsync({ allowsRecording: false }).catch(() => undefined);
+    };
+  }, [recorder]);
+
+  async function startRecording() {
+    const { granted } = await requestRecordingPermissionsAsync();
+    if (!granted) {
+      Alert.alert('Micro refusé', "L'accès au micro est nécessaire pour dicter ton repas. Tu peux l'activer dans les réglages du téléphone.");
+      return;
+    }
+    try {
+      await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+      await recorder.prepareToRecordAsync();
+      recorder.record();
+      setPhase('recording');
+    } catch (err: any) {
+      setPhase('idle');
+      Alert.alert('Enregistrement impossible', err?.message ?? "Le micro n'a pas pu démarrer.");
+    }
+  }
+
+  async function stopAndAnalyze() {
+    if (phase !== 'recording') return;
+    const duration = recorderState.durationMillis;
+    setPhase('analyzing');
+
+    let uri: string | null = null;
+    try {
+      await recorder.stop();
+      await setAudioModeAsync({ allowsRecording: false });
+      uri = recorder.uri;
+      if (!uri) throw new Error("L'enregistrement est introuvable.");
+      if (duration < MIN_DURATION_MS) {
+        throw new Error('Enregistrement trop court : maintiens la parole quelques secondes.');
+      }
+
+      const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+      const analysis = await analyzeFoodVoice(base64);
+      onResult(analysis);
+    } catch (err: any) {
+      Alert.alert('Analyse échouée', err?.message ?? "L'IA n'a pas pu estimer ton repas.");
+    } finally {
+      // Fichier temporaire : inutile de le garder (et contient la voix de l'utilisateur)
+      if (uri) FileSystem.deleteAsync(uri, { idempotent: true }).catch(() => undefined);
+      setPhase('idle');
+    }
+  }
+
+  const recording = phase === 'recording';
+  const analyzing = phase === 'analyzing';
+
+  return (
+    <View style={styles.container}>
+      <TouchableOpacity
+        style={[styles.micBtn, recording && styles.micBtnRecording, analyzing && styles.btnDisabled]}
+        onPress={recording ? stopAndAnalyze : startRecording}
+        disabled={analyzing}
+        activeOpacity={0.8}
+        accessibilityRole="button"
+        accessibilityLabel={recording ? "Arrêter l'enregistrement" : 'Dicter mon repas'}
+      >
+        {analyzing ? (
+          <ActivityIndicator color={COLORS.primary} />
+        ) : (
+          <Ionicons name={recording ? 'stop' : 'mic'} size={40} color={recording ? '#fff' : COLORS.primary} />
+        )}
+      </TouchableOpacity>
+
+      {recording && (
+        <Text style={styles.timer}>
+          {formatDuration(recorderState.durationMillis)} / {formatDuration(MAX_DURATION_MS)}
+        </Text>
+      )}
+
+      <Text style={styles.hint}>
+        {analyzing
+          ? 'Analyse en cours…'
+          : recording
+            ? 'Je t’écoute… Appuie sur ◼ quand tu as fini.'
+            : 'Appuie sur le micro et décris ton repas avec les quantités.\nEx : « 200 g de riz, un blanc de poulet et une pomme »'}
+      </Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    alignItems: 'center',
+    paddingVertical: SPACING.xl,
+    gap: SPACING.md,
+  },
+  micBtn: {
+    width: 100,
+    height: 100,
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.bgElevated,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  micBtnRecording: { backgroundColor: COLORS.error, borderColor: COLORS.error },
+  btnDisabled: { opacity: 0.6 },
+  timer: {
+    fontSize: FONT_SIZE.md,
+    fontWeight: FONT_WEIGHT.semibold,
+    color: COLORS.textPrimary,
+    fontVariant: ['tabular-nums'],
+  },
+  hint: {
+    fontSize: FONT_SIZE.sm,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+});

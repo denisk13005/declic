@@ -1,5 +1,16 @@
 # Déclic — Dev Log
 
+## 2026-10-04 — Nouvelle fonctionnalité : dictée vocale du repas (« Voix IA »)
+
+- **Besoin** : décrire son repas à voix haute (« 200 g de riz, un blanc de poulet et une pomme ») → estimation calories + macros, comme la photo IA.
+- **Choix (option A)** : enregistrement audio puis envoi **direct à Gemini** (compréhension + estimation en 1 appel). Écartés : transcription on-device (`expo-speech-recognition`, module tiers, dépend du service vocal Google sur Android) et dictée clavier (moins pratique).
+- **Dépendance** : `expo-audio` (module Expo officiel SDK 55, `npx expo install`) → **rebuild natif requis**. Plugin ajouté dans `app.config.js` (`NSMicrophoneUsageDescription` FR, `enableBackgroundPlayback/Recording: false` → pas d'`UIBackgroundModes=audio`). Android : `RECORD_AUDIO` déjà présent dans `AndroidManifest.xml`. Patch Expo CLI `gradle.js` vérifié intact.
+- **`gemini.ts`** : refacto `requestFoodAnalysis(prompt, mime, base64)` + `parseFoodAnalysis(text)` (exporté, gère `{"error": ...}`) partagés photo/voix ; nouvelle `analyzeFoodVoice(base64)` (`audio/m4a`, `name` = résumé < 60 car. avec quantités → l'utilisateur vérifie ce que l'IA a compris).
+- **`VoiceMealInput.tsx`** (nouveau) : bouton micro (tap = démarrer / tap = arrêter), chrono, arrêt auto à 60 s, min 1 s ; enregistrement mono 16 kHz 32 kbps m4a (~240 Ko/min) ; fichier temporaire supprimé après analyse ; micro coupé si l'onglet est quitté.
+- **`AddEntryModal`** : 4e onglet « Voix IA » (type exporté `AddEntryTab`), résultat → onglet Manuel pré-rempli (modifiable) avec mention « Estimation IA d'après ta description ». **`calories.tsx`** : raccourci micro dans la barre d'actions.
+- Coût Gemini : 32 tokens/s audio à 1 $/M (tarif payant) → ~0,0007 $ pour 20 s. ⚠️ En free tier, Google peut utiliser les enregistrements (RGPD) → passer en payant avant prod.
+- Tests : `__tests__/services/gemini.test.ts` (7 tests `parseFoodAnalysis`). tsc OK, 78/78.
+
 ## 2026-10-04 — Abonnements App Store + reliquat « Déclic »
 
 - **`app/paywall.tsx`** : badge « ✨ DÉCLIC PREMIUM » → « ✨ VITACAIRN PREMIUM » (dernier texte visible à l'ancien nom ; `app_name` Android et `app.config.js` déjà « Vitacairn »).

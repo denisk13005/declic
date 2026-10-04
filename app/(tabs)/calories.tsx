@@ -22,7 +22,7 @@ import { useCalorieStore } from '@/stores/calorieStore';
 import { useWorkoutStore } from '@/stores/workoutStore';
 import { useProfileStore } from '@/stores/profileStore';
 import { FoodEntry, MealType } from '@/types';
-import { PrefillFood } from '@/components/nutrition/AddEntryModal';
+import { AddEntryTab, PrefillFood } from '@/components/nutrition/AddEntryModal';
 import AddEntryModal from '@/components/nutrition/AddEntryModal';
 import FoodLibraryModal from '@/components/nutrition/FoodLibraryModal';
 import GoalsModal from '@/components/nutrition/GoalsModal';
@@ -385,7 +385,7 @@ export default function CaloriesScreen() {
   const [selectedDate, setSelectedDate] = useState(todayISO());
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [initialMeal, setInitialMeal] = useState<MealType | undefined>(undefined);
-  const [initialTab, setInitialTab] = useState<'manuel' | 'barcode' | 'photo'>('manuel');
+  const [initialTab, setInitialTab] = useState<AddEntryTab>('manuel');
   const [libraryModalVisible, setLibraryModalVisible] = useState(false);
   const [goalsModalVisible, setGoalsModalVisible] = useState(false);
   const [prefillFood, setPrefillFood] = useState<PrefillFood | null>(null);
@@ -455,7 +455,7 @@ export default function CaloriesScreen() {
     ]);
   }
 
-  function openAddModal(meal?: MealType, tab: 'manuel' | 'barcode' | 'photo' = 'manuel') {
+  function openAddModal(meal?: MealType, tab: AddEntryTab = 'manuel') {
     setInitialMeal(meal);
     setInitialTab(tab);
     setAddModalVisible(true);
@@ -758,6 +758,9 @@ export default function CaloriesScreen() {
           </TouchableOpacity>
           <TouchableOpacity style={styles.actionIconBtn} onPress={() => openAddModal(undefined, 'photo')} activeOpacity={0.7}>
             <Ionicons name="camera-outline" size={20} color={COLORS.textSecondary} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionIconBtn} onPress={() => openAddModal(undefined, 'voix')} activeOpacity={0.7}>
+            <Ionicons name="mic-outline" size={20} color={COLORS.textSecondary} />
           </TouchableOpacity>
         </View>
         {/* Bouton principal */}

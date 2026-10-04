@@ -87,47 +87,24 @@ export async function searchFoodSuggestions(query: string, signal?: AbortSignal)
   }
 }
 
-export async function analyzeFoodPhoto(base64Image: string): Promise<FoodAnalysis> {
-  const response = await fetch(GEMINI_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [
-        {
-          parts: [
-            {
-              text:
-                'Identifie ce plat alimentaire et estime les calories et macronutriments pour une portion normale visible sur la photo. ' +
-                'Réponds UNIQUEMENT en JSON valide, sans markdown, sans explication : ' +
-                '{"name": "Nom du plat en français", "calories": 350, "protein": 25, "carbs": 30, "fat": 12}. ' +
-                'Si tu ne peux pas estimer les macros, mets null pour protein, carbs et fat.',
-            },
-            {
-              inline_data: {
-                mime_type: 'image/jpeg',
-                data: base64Image,
-              },
-            },
-          ],
-        },
-      ],
-      generationConfig: GENERATION_CONFIG,
-    }),
-  });
+const JSON_FORMAT_INSTRUCTIONS =
+  'Réponds UNIQUEMENT en JSON valide, sans markdown, sans explication : ' +
+  '{"name": "Nom du plat en français", "calories": 350, "protein": 25, "carbs": 30, "fat": 12}. ' +
+  'Si tu ne peux pas estimer les macros, mets null pour protein, carbs et fat.';
 
-  if (!response.ok) {
-    const err = await response.text();
-    throw new Error(`Gemini ${response.status}: ${err}`);
-  }
-
-  const data = await response.json();
-  const text: string = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
-
+/**
+ * Convertit la réponse texte de Gemini en `FoodAnalysis`.
+ * Lève une erreur si la réponse est illisible ou si Gemini signale `{"error": "..."}`.
+ */
+export function parseFoodAnalysis(text: string): FoodAnalysis {
   // Gemini peut parfois entourer le JSON de ```json ... ```
   const jsonMatch = text.match(/\{[\s\S]*?\}/);
   if (!jsonMatch) throw new Error('Réponse Gemini illisible : ' + text);
 
   const parsed = JSON.parse(jsonMatch[0]);
+  if (typeof parsed.error === 'string' && parsed.error.trim()) {
+    throw new Error(parsed.error.trim());
+  }
 
   const hasAllMacros =
     parsed.protein != null && parsed.carbs != null && parsed.fat != null;
@@ -143,4 +120,60 @@ export async function analyzeFoodPhoto(base64Image: string): Promise<FoodAnalysi
         }
       : null,
   };
+}
+
+/** Envoie une consigne + un média (image ou audio, en base64) à Gemini et parse l'estimation. */
+async function requestFoodAnalysis(prompt: string, mimeType: string, base64Data: string): Promise<FoodAnalysis> {
+  const response = await fetch(GEMINI_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [
+        {
+          parts: [
+            { text: prompt },
+            { inline_data: { mime_type: mimeType, data: base64Data } },
+          ],
+        },
+      ],
+      generationConfig: GENERATION_CONFIG,
+    }),
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`Gemini ${response.status}: ${err}`);
+  }
+
+  const data = await response.json();
+  const text: string = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+  return parseFoodAnalysis(text);
+}
+
+export async function analyzeFoodPhoto(base64Image: string): Promise<FoodAnalysis> {
+  return requestFoodAnalysis(
+    'Identifie ce plat alimentaire et estime les calories et macronutriments pour une portion normale visible sur la photo. ' +
+      JSON_FORMAT_INSTRUCTIONS,
+    'image/jpeg',
+    base64Image,
+  );
+}
+
+/**
+ * Estime calories et macros d'un repas décrit à voix haute (enregistrement m4a/AAC en base64).
+ * `name` contient le résumé de ce que Gemini a compris, pour que l'utilisateur le vérifie.
+ */
+export async function analyzeFoodVoice(base64Audio: string): Promise<FoodAnalysis> {
+  return requestFoodAnalysis(
+    "Dans cet enregistrement, une personne décrit en français ce qu'elle a mangé ou va manger. " +
+      "Identifie chaque aliment et sa quantité ; si une quantité n'est pas précisée, prends une portion standard. " +
+      'Estime le total des calories et macronutriments de l’ensemble du repas. ' +
+      'Dans "name", résume le repas en moins de 60 caractères avec les quantités retenues ' +
+      '(ex : "Riz (200 g) + blanc de poulet + pomme"). ' +
+      JSON_FORMAT_INSTRUCTIONS +
+      ' Si l\'enregistrement est inaudible ou ne décrit aucun aliment, réponds uniquement ' +
+      '{"error": "explication courte en français"}.',
+    'audio/m4a',
+    base64Audio,
+  );
 }
