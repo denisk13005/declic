@@ -1,3 +1,4 @@
+import '@/i18n'; // initialise les traductions avant tout écran
 import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';

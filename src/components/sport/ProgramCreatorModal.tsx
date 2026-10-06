@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTranslation } from 'react-i18next';
 import { FitnessGoal, PractitionerLevel, Gender } from '@/types';
 import {
   generateProgram,
@@ -49,10 +50,11 @@ const TECHNIQUE_CONFIG: { key: IntensificationTechnique; label: string; color: s
   { key: 'biset',      label: 'Biset',      color: '#A78BFA' },
 ];
 
-const GOAL_CONFIG: Record<FitnessGoal, { emoji: string; color: string; description: string }> = {
-  lose_fat:     { emoji: '🔥', color: '#F97316', description: 'Volume élevé, récupération courte' },
-  maintain:     { emoji: '⚖️', color: '#10B981', description: 'Équilibre force et endurance' },
-  build_muscle: { emoji: '💪', color: '#7C3AED', description: 'Charges lourdes, récupération longue' },
+// Description traduite : t(`workout.creator.goalDesc.${goal}`)
+const GOAL_CONFIG: Record<FitnessGoal, { emoji: string; color: string }> = {
+  lose_fat:     { emoji: '🔥', color: '#F97316' },
+  maintain:     { emoji: '⚖️', color: '#10B981' },
+  build_muscle: { emoji: '💪', color: '#7C3AED' },
 };
 
 const TECHNIQUE_BADGE: Record<IntensificationTechnique, { label: string; color: string } | null> = {
@@ -73,10 +75,11 @@ function ExerciseCard({ exercise, label, sets, reps, rest, showRest }: {
   rest: string;
   showRest: boolean;
 }) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
 
   function openYoutube() {
-    const query = encodeURIComponent(exercise.name + ' exercice musculation');
+    const query = encodeURIComponent(t('workout.session.youtubeQuery', { name: exercise.name }));
     Linking.openURL('https://www.youtube.com/results?search_query=' + query);
   }
 
@@ -86,7 +89,7 @@ function ExerciseCard({ exercise, label, sets, reps, rest, showRest }: {
         {label != null && <Text style={exStyles.pairLabel}>{label}</Text>}
         <View style={{ flex: 1 }}>
           <Text style={exStyles.name}>{exercise.name}</Text>
-          <Text style={exStyles.type}>{exercise.isCompound ? '🏋️ Compound' : '🎯 Isolation'}</Text>
+          <Text style={exStyles.type}>{t(exercise.isCompound ? 'workout.creator.compoundTag' : 'workout.creator.isolationTag')}</Text>
         </View>
         <View style={exStyles.stats}>
           <Text style={exStyles.sets}>{sets} × {reps}</Text>
@@ -105,7 +108,7 @@ function ExerciseCard({ exercise, label, sets, reps, rest, showRest }: {
           <Text style={exStyles.descText}>{exercise.description}</Text>
           <TouchableOpacity style={exStyles.ytBtn} onPress={openYoutube} activeOpacity={0.7}>
             <Ionicons name="logo-youtube" size={13} color="#EF4444" />
-            <Text style={exStyles.ytText}>Voir une démonstration</Text>
+            <Text style={exStyles.ytText}>{t('workout.session.watchDemo')}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -164,21 +167,22 @@ function ExerciseRow({ pe, isLast }: { pe: ProgramExercise; isLast: boolean }) {
 // ─── Carte jour ───────────────────────────────────────────────────────────────
 
 function DayCard({ day, isExpanded, onToggle }: { day: ProgramDay; isExpanded: boolean; onToggle: () => void }) {
+  const { t } = useTranslation();
   const techniqueCount = day.exercises.filter((e) => e.technique !== 'none').length;
   const minutes = estimateSessionMinutes(day);
   return (
     <View style={dayStyles.card}>
       <TouchableOpacity style={dayStyles.header} onPress={onToggle} activeOpacity={0.7}>
         <View style={dayStyles.badge}>
-          <Text style={dayStyles.badgeText}>J{day.dayNumber}</Text>
+          <Text style={dayStyles.badgeText}>{t('sport.dayBadge', { n: day.dayNumber })}</Text>
         </View>
         <View style={{ flex: 1 }}>
           <Text style={dayStyles.label}>{day.label}</Text>
           <Text style={dayStyles.focus} numberOfLines={1}>{day.focus}</Text>
         </View>
         <View style={dayStyles.meta}>
-          <Text style={dayStyles.metaText}>{day.exercises.length} ex.</Text>
-          <Text style={dayStyles.metaDuration}>⏱ {minutes} min</Text>
+          <Text style={dayStyles.metaText}>{t('workout.creator.exCount', { count: day.exercises.length })}</Text>
+          <Text style={dayStyles.metaDuration}>{t('workout.creator.minutes', { m: minutes })}</Text>
           {techniqueCount > 0 && (
             <View style={dayStyles.techniquesBadge}>
               <Text style={dayStyles.techniquesBadgeText}>⚡{techniqueCount}</Text>
@@ -202,6 +206,7 @@ function DayCard({ day, isExpanded, onToggle }: { day: ProgramDay; isExpanded: b
 // ─── Modal principal ───────────────────────────────────────────────────────────
 
 export default function ProgramCreatorModal({ visible, onClose }: Props) {
+  const { t } = useTranslation();
   const C = useAppColors();
   const { saveProgram, program: savedProgram } = useProgramStore();
   const { profile } = useProfileStore();
@@ -238,7 +243,7 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
   }
 
   function openYoutube(name: string) {
-    const query = encodeURIComponent(name + ' exercice musculation');
+    const query = encodeURIComponent(t('workout.session.youtubeQuery', { name }));
     Linking.openURL('https://www.youtube.com/results?search_query=' + query);
   }
 
@@ -357,14 +362,14 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
     // Mode custom : utiliser les exercices choisis manuellement
     const days: ProgramDay[] = adjustedCustomExercises.map((exList, i) => ({
       dayNumber: i + 1,
-      label: `Séance ${i + 1}`,
+      label: t('workout.creator.sessionLabel', { n: i + 1 }),
       focus: exList.length > 0
         ? [...new Set(exList.map((pe) => MUSCLE_GROUP_LABELS[pe.exercise.muscleGroup]))].join(', ')
-        : 'Aucun exercice',
+        : t('workout.creator.noExercise'),
       exercises: exList,
     }));
-    return { sessionsPerWeek: sessions, goal, level, gender, availableEquipment: availableEquipmentArray, splitName: 'Programme personnalisé', days };
-  }, [mode, sessions, goal, level, gender, availableEquipmentArray, adjustedCustomExercises]);
+    return { sessionsPerWeek: sessions, goal, level, gender, availableEquipment: availableEquipmentArray, splitName: t('workout.creator.customSplitName'), days };
+  }, [mode, sessions, goal, level, gender, availableEquipmentArray, adjustedCustomExercises, t]);
 
   const totalTechniques = preview.days.reduce(
     (s, d) => s + d.exercises.filter((e) => e.technique !== 'none').length,
@@ -377,11 +382,11 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
 
   function handleSave() {
     Alert.alert(
-      savedProgram ? 'Remplacer le programme ?' : 'Sauvegarder le programme',
-      savedProgram ? 'Tu as déjà un programme. Le remplacer ?' : 'Ce programme sera enregistré dans l\'onglet Sport.',
+      t(savedProgram ? 'workout.creator.replaceTitle' : 'workout.creator.saveTitle'),
+      t(savedProgram ? 'workout.creator.replaceMessage' : 'workout.creator.saveMessage'),
       [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Confirmer', onPress: () => { saveProgram(preview); handleClose(); } },
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('workout.creator.confirm'), onPress: () => { saveProgram(preview); handleClose(); } },
       ]
     );
   }
@@ -423,8 +428,8 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
               </TouchableOpacity>
             )}
             <Text style={styles.title}>
-              {step === 'config' ? 'Créer mon programme'
-                : step === 'customizer' ? 'Mes exercices'
+              {step === 'config' ? t('workout.creator.titleCreate')
+                : step === 'customizer' ? t('workout.creator.titleCustomizer')
                 : preview.splitName}
             </Text>
           </View>
@@ -434,7 +439,7 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.configContent}>
 
               {/* Mode */}
-              <Text style={styles.sectionLabel}>Type de programme</Text>
+              <Text style={styles.sectionLabel}>{t('workout.creator.programType')}</Text>
               <View style={styles.modeRow}>
                 {(['auto', 'custom'] as const).map((m) => {
                   const isSelected = mode === m;
@@ -451,10 +456,10 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
                         color={isSelected ? C.primary : COLORS.textTertiary}
                       />
                       <Text style={[styles.modeLabel, isSelected && { color: C.primary }]}>
-                        {m === 'auto' ? 'Automatique' : 'Personnalisé'}
+                        {t(m === 'auto' ? 'workout.creator.modeAuto' : 'workout.creator.modeCustom')}
                       </Text>
                       <Text style={styles.modeDesc}>
-                        {m === 'auto' ? 'Programme optimisé généré par l\'app' : 'Tu choisis tes exercices par séance'}
+                        {t(m === 'auto' ? 'workout.creator.modeAutoDesc' : 'workout.creator.modeCustomDesc')}
                       </Text>
                     </TouchableOpacity>
                   );
@@ -462,12 +467,12 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
               </View>
 
               {/* Matériel disponible */}
-              <Text style={styles.sectionLabel}>Matériel disponible</Text>
+              <Text style={styles.sectionLabel}>{t('workout.creator.equipment')}</Text>
               <View style={styles.equipPresetRow}>
                 {([
-                  { label: 'Salle complète', eq: ALL_EQUIPMENT },
-                  { label: 'Maison équipée', eq: ['bodyweight', 'dumbbells', 'pull_up_bar', 'resistance_band'] as EquipmentType[] },
-                  { label: 'Corps uniquement', eq: ['bodyweight'] as EquipmentType[] },
+                  { label: t('workout.creator.presetGym'), eq: ALL_EQUIPMENT },
+                  { label: t('workout.creator.presetHome'), eq: ['bodyweight', 'dumbbells', 'pull_up_bar', 'resistance_band'] as EquipmentType[] },
+                  { label: t('workout.creator.presetBodyweight'), eq: ['bodyweight'] as EquipmentType[] },
                 ] as const).map(({ label, eq }) => {
                   const isPreset = eq.length === availableEquipment.size && eq.every((e) => availableEquipment.has(e as EquipmentType));
                   return (
@@ -508,7 +513,7 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
               </View>
 
               {/* Genre */}
-              <Text style={styles.sectionLabel}>Profil</Text>
+              <Text style={styles.sectionLabel}>{t('workout.creator.profile')}</Text>
               <View style={styles.genderRow}>
                 {(['male', 'female'] as Gender[]).map((g) => {
                   const info = GENDER_INFO[g];
@@ -538,7 +543,7 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
               </View>
 
               {/* Niveau */}
-              <Text style={styles.sectionLabel}>Niveau de pratique</Text>
+              <Text style={styles.sectionLabel}>{t('workout.creator.level')}</Text>
               <View style={styles.levelRow}>
                 {(['beginner', 'intermediate', 'advanced'] as PractitionerLevel[]).map((lv) => {
                   const info = LEVEL_INFO[lv];
@@ -562,7 +567,7 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
               <Text style={styles.levelDesc}>{LEVEL_INFO[level].description}</Text>
 
               {/* Séances / semaine */}
-              <Text style={styles.sectionLabel}>Séances par semaine</Text>
+              <Text style={styles.sectionLabel}>{t('workout.creator.sessionsPerWeek')}</Text>
               <Text style={styles.sectionSub}>{SPLIT_INFO[sessions].description}</Text>
               <View style={styles.sessionsRow}>
                 {[1, 2, 3, 4, 5, 6].map((n) => (
@@ -573,13 +578,13 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
                     activeOpacity={0.7}
                   >
                     <Text style={[styles.sessionChipNum, sessions === n && { color: C.primary }]}>{n}</Text>
-                    <Text style={[styles.sessionChipSub, sessions === n && { color: C.primaryLight }]}>j/sem</Text>
+                    <Text style={[styles.sessionChipSub, sessions === n && { color: C.primaryLight }]}>{t('workout.creator.daysPerWeekShort')}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
 
               {/* Objectif */}
-              <Text style={styles.sectionLabel}>Objectif</Text>
+              <Text style={styles.sectionLabel}>{t('workout.creator.goal')}</Text>
               <View style={styles.goalList}>
                 {(['lose_fat', 'maintain', 'build_muscle'] as FitnessGoal[]).map((g) => {
                   const cfg = GOAL_CONFIG[g];
@@ -594,7 +599,7 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
                       <Text style={styles.goalEmoji}>{cfg.emoji}</Text>
                       <View style={{ flex: 1 }}>
                         <Text style={[styles.goalLabel, isSelected && { color: cfg.color }]}>{GOAL_LABELS[g]}</Text>
-                        <Text style={styles.goalDesc}>{cfg.description}</Text>
+                        <Text style={styles.goalDesc}>{t(`workout.creator.goalDesc.${g}`)}</Text>
                       </View>
                       {isSelected && <Ionicons name="checkmark-circle" size={20} color={cfg.color} />}
                     </TouchableOpacity>
@@ -606,19 +611,19 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
               {level !== 'beginner' && (
                 <View style={styles.techniquesInfo}>
                   <Text style={styles.techniquesInfoTitle}>
-                    {level === 'intermediate' ? '⚡ Techniques intermédiaires incluses' : '🔥 Techniques avancées incluses'}
+                    {t(level === 'intermediate' ? 'workout.creator.techIntermediate' : 'workout.creator.techAdvanced')}
                   </Text>
                   {level === 'intermediate' && (
                     <>
-                      <TechniqueInfoRow color="#F97316" label="Superset" desc="2 muscles antagonistes enchaînés sans repos" />
+                      <TechniqueInfoRow color="#F97316" label="Superset" desc={t('workout.creator.techDesc.supersetIntermediate')} />
                     </>
                   )}
                   {level === 'advanced' && (
                     <>
-                      <TechniqueInfoRow color="#F97316" label="Superset" desc="Muscles antagonistes (ex. biceps + triceps)" />
-                      <TechniqueInfoRow color="#A78BFA" label="Biset" desc="2 exercices même muscle enchaînés" />
-                      <TechniqueInfoRow color="#EF4444" label="Drop set" desc="Réduction de charge à l'échec (-20 à 30 %)" />
-                      <TechniqueInfoRow color="#60A5FA" label="Rest-pause" desc="À l'échec → 15 s → on continue" />
+                      <TechniqueInfoRow color="#F97316" label="Superset" desc={t('workout.creator.techDesc.superset')} />
+                      <TechniqueInfoRow color="#A78BFA" label="Biset" desc={t('workout.creator.techDesc.biset')} />
+                      <TechniqueInfoRow color="#EF4444" label="Drop set" desc={t('workout.creator.techDesc.dropset')} />
+                      <TechniqueInfoRow color="#60A5FA" label="Rest-pause" desc={t('workout.creator.techDesc.restPause')} />
                     </>
                   )}
                 </View>
@@ -628,7 +633,7 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
                 <LinearGradient colors={C.gradientPrimary} style={styles.generateBtn}>
                   <Ionicons name={mode === 'auto' ? 'sparkles' : 'arrow-forward'} size={18} color="#fff" />
                   <Text style={styles.generateBtnText}>
-                    {mode === 'auto' ? 'Générer mon programme' : 'Choisir mes exercices'}
+                    {t(mode === 'auto' ? 'workout.creator.generate' : 'workout.creator.chooseExercises')}
                   </Text>
                 </LinearGradient>
               </TouchableOpacity>
@@ -639,16 +644,16 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
             <>
               <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.configContent}>
                 <Text style={styles.sectionSub}>
-                  Ajoute les exercices de ton choix pour chaque séance
+                  {t('workout.creator.customizerHint')}
                 </Text>
                 {adjustedCustomExercises.map((dayExs, dayIdx) => (
                   <View key={dayIdx} style={styles.customizerDayCard}>
                     <View style={styles.customizerDayHeader}>
                       <View style={dayStyles.badge}>
-                        <Text style={dayStyles.badgeText}>J{dayIdx + 1}</Text>
+                        <Text style={dayStyles.badgeText}>{t('sport.dayBadge', { n: dayIdx + 1 })}</Text>
                       </View>
-                      <Text style={styles.customizerDayTitle}>Séance {dayIdx + 1}</Text>
-                      <Text style={styles.customizerDayCount}>{dayExs.length} ex.</Text>
+                      <Text style={styles.customizerDayTitle}>{t('workout.creator.sessionLabel', { n: dayIdx + 1 })}</Text>
+                      <Text style={styles.customizerDayCount}>{t('workout.creator.exCount', { count: dayExs.length })}</Text>
                     </View>
 
                     {dayExs.length > 0 && (
@@ -718,7 +723,7 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
                                     activeOpacity={0.7}
                                   >
                                     <Ionicons name="logo-youtube" size={13} color="#EF4444" />
-                                    <Text style={styles.customizerYtText}>Voir une démonstration</Text>
+                                    <Text style={styles.customizerYtText}>{t('workout.session.watchDemo')}</Text>
                                   </TouchableOpacity>
                                 </View>
                               )}
@@ -752,7 +757,7 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
                               {needsPair && (
                                 <View style={styles.pairRow}>
                                   <Text style={styles.pairLabel}>
-                                    {pe.technique === 'superset' ? 'Muscle antagoniste :' : 'Même muscle :'}
+                                    {t(pe.technique === 'superset' ? 'workout.creator.antagonistLabel' : 'workout.creator.sameMuscleLabel')}
                                   </Text>
 
                                   {pe.supersetWith ? (
@@ -789,8 +794,8 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
                                     // Aucun candidat valide dans la séance
                                     <Text style={styles.pairEmpty}>
                                       {pe.technique === 'superset'
-                                        ? `Ajoute un exercice antagoniste (${antagonists.map(g => MUSCLE_GROUP_LABELS[g]).join(', ')})`
-                                        : `Ajoute un autre exercice de ${MUSCLE_GROUP_LABELS[pe.exercise.muscleGroup]}`}
+                                        ? t('workout.creator.addAntagonist', { groups: antagonists.map(g => MUSCLE_GROUP_LABELS[g]).join(', ') })
+                                        : t('workout.creator.addSameMuscle', { group: MUSCLE_GROUP_LABELS[pe.exercise.muscleGroup] })}
                                     </Text>
                                   )}
                                 </View>
@@ -807,7 +812,7 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
                       activeOpacity={0.7}
                     >
                       <Ionicons name="add" size={16} color={C.primary} />
-                      <Text style={[styles.addExBtnText, { color: C.primary }]}>Ajouter des exercices</Text>
+                      <Text style={[styles.addExBtnText, { color: C.primary }]}>{t('workout.creator.addExercises')}</Text>
                     </TouchableOpacity>
                   </View>
                 ))}
@@ -815,7 +820,7 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
                 <TouchableOpacity onPress={() => { setExpandedDay(0); setStep('preview'); }} activeOpacity={0.85}>
                   <LinearGradient colors={C.gradientPrimary} style={styles.generateBtn}>
                     <Ionicons name="eye-outline" size={18} color="#fff" />
-                    <Text style={styles.generateBtnText}>Voir mon programme</Text>
+                    <Text style={styles.generateBtnText}>{t('workout.creator.seeProgram')}</Text>
                   </LinearGradient>
                 </TouchableOpacity>
               </ScrollView>
@@ -838,19 +843,19 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.previewContent}>
               {/* Résumé */}
               <View style={styles.previewSummary}>
-                <SummaryChip value={availableEquipment.size === ALL_EQUIPMENT.length ? '🏋️' : availableEquipment.size === 1 ? '🤸' : '🏠'} label={availableEquipment.size === ALL_EQUIPMENT.length ? 'Salle' : `${availableEquipment.size} mat.`} />
+                <SummaryChip value={availableEquipment.size === ALL_EQUIPMENT.length ? '🏋️' : availableEquipment.size === 1 ? '🤸' : '🏠'} label={availableEquipment.size === ALL_EQUIPMENT.length ? t('workout.creator.summaryGym') : t('workout.creator.summaryEquipCount', { count: availableEquipment.size })} />
                 <View style={styles.previewDiv} />
-                <SummaryChip value={String(sessions)} label="séances/sem" />
+                <SummaryChip value={String(sessions)} label={t('workout.creator.summarySessions')} />
                 <View style={styles.previewDiv} />
                 <SummaryChip value={LEVEL_INFO[level].emoji} label={LEVEL_INFO[level].label} />
                 <View style={styles.previewDiv} />
                 <SummaryChip value={GOAL_CONFIG[goal].emoji} label={GOAL_LABELS[goal]} />
                 <View style={styles.previewDiv} />
-                <SummaryChip value={`${avgMinutes} min`} label="/ séance" color="#60A5FA" />
+                <SummaryChip value={`${avgMinutes} min`} label={t('workout.creator.summaryPerSession')} color="#60A5FA" />
                 {totalTechniques > 0 && (
                   <>
                     <View style={styles.previewDiv} />
-                    <SummaryChip value={`⚡${totalTechniques}`} label="techniques" color="#F97316" />
+                    <SummaryChip value={`⚡${totalTechniques}`} label={t('workout.creator.summaryTechniques')} color="#F97316" />
                   </>
                 )}
               </View>
@@ -868,7 +873,7 @@ export default function ProgramCreatorModal({ visible, onClose }: Props) {
               <TouchableOpacity onPress={handleSave} activeOpacity={0.85}>
                 <LinearGradient colors={C.gradientPrimary} style={styles.generateBtn}>
                   <Ionicons name="save-outline" size={18} color="#fff" />
-                  <Text style={styles.generateBtnText}>Sauvegarder ce programme</Text>
+                  <Text style={styles.generateBtnText}>{t('workout.creator.saveProgram')}</Text>
                 </LinearGradient>
               </TouchableOpacity>
             </ScrollView>

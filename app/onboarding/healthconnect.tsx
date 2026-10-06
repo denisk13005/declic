@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import {
   checkHealthStatus as checkHCStatus,
   requestHealthPermissions as requestHCPermissions,
@@ -14,8 +15,6 @@ import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/the
 
 // Libellés adaptés à la plateforme (iOS : Apple Santé / Apple Watch — Android : Samsung Health)
 const isIos = Platform.OS === 'ios';
-const HEALTH_APP = isIos ? 'Apple Santé' : 'Samsung Health';
-const HEALTH_SOURCE = isIos ? 'Apple Watch / Santé' : 'Samsung Health';
 
 type HCStep =
   | 'idle'           // état initial
@@ -23,6 +22,9 @@ type HCStep =
   | 'denied';        // permissions refusées 2x → proposer Settings
 
 export default function HealthConnectScreen() {
+  const { t } = useTranslation();
+  const HEALTH_APP = isIos ? t('calories.healthAppIos') : 'Samsung Health';
+  const HEALTH_SOURCE = isIos ? t('onboarding.health.sourceIos') : 'Samsung Health';
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
@@ -77,27 +79,27 @@ export default function HealthConnectScreen() {
         </LinearGradient>
 
         <Text style={styles.title}>
-          {done ? 'Connecté !' : 'Calories brûlées'}
+          {done ? t('onboarding.health.connected') : t('onboarding.health.title')}
         </Text>
         <Text style={styles.subtitle}>
           {done
-            ? `Tes données ${HEALTH_APP} seront automatiquement synchronisées chaque jour dans ton suivi.`
-            : `Connecte ${HEALTH_APP} pour voir combien tu brûles réellement et adapter ton objectif calorique net.`}
+            ? t('onboarding.health.connectedSubtitle', { app: HEALTH_APP })
+            : t('onboarding.health.subtitle', { app: HEALTH_APP })}
         </Text>
 
         {/* Illustration */}
         {!done && (
           <View style={styles.features}>
-            <FeatureRow icon="fitness" text={`Calories brûlées au quotidien (${HEALTH_SOURCE})`} />
-            <FeatureRow icon="calculator" text="Objectif net = objectif − calories brûlées" />
-            <FeatureRow icon="trending-up" text="Ajuste automatiquement selon ton activité" />
+            <FeatureRow icon="fitness" text={t('onboarding.health.featureDaily', { source: HEALTH_SOURCE })} />
+            <FeatureRow icon="calculator" text={t('onboarding.health.featureNetGoal')} />
+            <FeatureRow icon="trending-up" text={t('onboarding.health.featureAdjust')} />
           </View>
         )}
 
         {done && (
           <View style={styles.successBadge}>
             <Ionicons name="checkmark-circle" size={48} color="#10B981" />
-            <Text style={styles.successText}>{HEALTH_APP} synchronisé</Text>
+            <Text style={styles.successText}>{t('onboarding.health.synced', { app: HEALTH_APP })}</Text>
           </View>
         )}
       </ScrollView>
@@ -114,7 +116,9 @@ export default function HealthConnectScreen() {
               >
                 <LinearGradient colors={['#F97316', '#EA580C']} style={styles.btn}>
                   <Ionicons name="settings-outline" size={20} color="#fff" />
-                  <Text style={styles.btnText}>Ouvrir les paramètres {isIos ? 'Santé' : 'HC'}</Text>
+                  <Text style={styles.btnText}>
+                    {t('onboarding.health.openSettings', { settings: isIos ? t('calories.healthSettingsIos') : 'HC' })}
+                  </Text>
                 </LinearGradient>
               </TouchableOpacity>
             ) : (
@@ -128,22 +132,22 @@ export default function HealthConnectScreen() {
                   <Ionicons name={step === 'needs_install' ? 'refresh-outline' : 'heart'} size={20} color="#fff" />
                   <Text style={styles.btnText}>
                     {loading
-                      ? 'Connexion…'
+                      ? t('onboarding.health.connecting')
                       : step === 'needs_install'
-                        ? 'J\'ai installé HC → Continuer'
-                        : `Connecter ${HEALTH_APP}`}
+                        ? t('onboarding.health.installedContinue')
+                        : t('onboarding.health.connect', { app: HEALTH_APP })}
                   </Text>
                 </LinearGradient>
               </TouchableOpacity>
             )}
             <TouchableOpacity onPress={finish} style={styles.skipBtn}>
-              <Text style={styles.skipText}>Pas maintenant</Text>
+              <Text style={styles.skipText}>{t('onboarding.notNow')}</Text>
             </TouchableOpacity>
           </>
         ) : (
           <TouchableOpacity onPress={finish} style={styles.btnWrapper} activeOpacity={0.9}>
             <LinearGradient colors={COLORS.gradientPrimary} style={styles.btn}>
-              <Text style={styles.btnText}>Continuer →</Text>
+              <Text style={styles.btnText}>{t('onboarding.continue')}</Text>
             </LinearGradient>
           </TouchableOpacity>
         )}

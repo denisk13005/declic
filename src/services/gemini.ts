@@ -1,5 +1,20 @@
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import { Macros } from '@/types';
+import i18n, { currentLanguage, AppLanguage } from '@/i18n';
+
+/**
+ * Langue dans laquelle Gemini doit écrire ce que l'utilisateur verra (noms de plats,
+ * messages d'erreur). Les consignes restent en français (testées et réglées ainsi) ;
+ * seule la langue de sortie change.
+ */
+const OUTPUT_LANGUAGE: Record<AppLanguage, string> = {
+  fr: 'français',
+  en: 'anglais',
+};
+
+function outputLanguage(): string {
+  return OUTPUT_LANGUAGE[currentLanguage()] ?? OUTPUT_LANGUAGE.fr;
+}
 
 const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY ?? '';
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
@@ -24,7 +39,7 @@ export async function prepareFoodPhoto(uri: string, width: number, height: numbe
   const image = await context.renderAsync();
   try {
     const result = await image.saveAsync({ base64: true, compress: 0.7, format: SaveFormat.JPEG });
-    if (!result.base64) throw new Error('Conversion de la photo impossible');
+    if (!result.base64) throw new Error(i18n.t('errors.photoConversion'));
     return result.base64;
   } finally {
     // Libère les objets natifs (sinon conservés jusqu'au GC)
@@ -46,10 +61,11 @@ export interface FoodSuggestion {
 }
 
 export async function searchFoodSuggestions(query: string, signal?: AbortSignal): Promise<FoodSuggestion[]> {
+  const lang = outputLanguage();
   const prompt =
-    `Liste 5 aliments français dont le nom correspond à "${query}". ` +
+    `Liste 5 aliments dont le nom correspond à "${query}". ` +
     'Réponds UNIQUEMENT en JSON valide, sans markdown : ' +
-    '[{"name":"Nom en français","caloriesPer100":165,"protein":31,"carbs":0,"fat":3.6}]. ' +
+    `[{"name":"Nom en ${lang}","caloriesPer100":165,"protein":31,"carbs":0,"fat":3.6}]. ` +
     'Valeurs pour 100g. Si macros inconnues, mets 0.';
 
   const response = await fetch(GEMINI_URL, {
@@ -87,10 +103,13 @@ export async function searchFoodSuggestions(query: string, signal?: AbortSignal)
   }
 }
 
-const JSON_FORMAT_INSTRUCTIONS =
-  'Réponds UNIQUEMENT en JSON valide, sans markdown, sans explication : ' +
-  '{"name": "Nom du plat en français", "calories": 350, "protein": 25, "carbs": 30, "fat": 12}. ' +
-  'Si tu ne peux pas estimer les macros, mets null pour protein, carbs et fat.';
+function jsonFormatInstructions(): string {
+  return (
+    'Réponds UNIQUEMENT en JSON valide, sans markdown, sans explication : ' +
+    `{"name": "Nom du plat en ${outputLanguage()}", "calories": 350, "protein": 25, "carbs": 30, "fat": 12}. ` +
+    'Si tu ne peux pas estimer les macros, mets null pour protein, carbs et fat.'
+  );
+}
 
 /**
  * Convertit la réponse texte de Gemini en `FoodAnalysis`.
@@ -99,7 +118,7 @@ const JSON_FORMAT_INSTRUCTIONS =
 export function parseFoodAnalysis(text: string): FoodAnalysis {
   // Gemini peut parfois entourer le JSON de ```json ... ```
   const jsonMatch = text.match(/\{[\s\S]*?\}/);
-  if (!jsonMatch) throw new Error('Réponse Gemini illisible : ' + text);
+  if (!jsonMatch) throw new Error(i18n.t('errors.aiUnreadable', { text }));
 
   const parsed = JSON.parse(jsonMatch[0]);
   if (typeof parsed.error === 'string' && parsed.error.trim()) {
@@ -110,7 +129,7 @@ export function parseFoodAnalysis(text: string): FoodAnalysis {
     parsed.protein != null && parsed.carbs != null && parsed.fat != null;
 
   return {
-    name: String(parsed.name ?? 'Aliment inconnu'),
+    name: String(parsed.name ?? i18n.t('errors.unknownFood')),
     calories: Math.round(Number(parsed.calories) || 0),
     macros: hasAllMacros
       ? {
@@ -122,8 +141,8 @@ export function parseFoodAnalysis(text: string): FoodAnalysis {
   };
 }
 
-/** Envoie une consigne + un média (image ou audio, en base64) à Gemini et parse l'estimation. */
-async function requestFoodAnalysis(prompt: string, mimeType: string, base64Data: string): Promise<FoodAnalysis> {
+/** Envoie une consigne + un média (image ou audio, en base64) à Gemini et renvoie sa réponse texte. */
+async function askGeminiWithMedia(prompt: string, mimeType: string, base64Data: string): Promise<string> {
   const response = await fetch(GEMINI_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -146,34 +165,95 @@ async function requestFoodAnalysis(prompt: string, mimeType: string, base64Data:
   }
 
   const data = await response.json();
-  const text: string = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
-  return parseFoodAnalysis(text);
+  return data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
 }
 
 export async function analyzeFoodPhoto(base64Image: string): Promise<FoodAnalysis> {
-  return requestFoodAnalysis(
+  const text = await askGeminiWithMedia(
     'Identifie ce plat alimentaire et estime les calories et macronutriments pour une portion normale visible sur la photo. ' +
-      JSON_FORMAT_INSTRUCTIONS,
+      jsonFormatInstructions(),
     'image/jpeg',
     base64Image,
   );
+  return parseFoodAnalysis(text);
+}
+
+/** Un aliment compris dans une description de repas, avec l'estimation de Gemini pour 100 g. */
+export interface MealItem {
+  /** Nom affiché, avec l'état de cuisson (ex : "Filet de poulet grillé") */
+  name: string;
+  /** Mots-clés pour la base Ciqual, aliment principal en premier (ex : "poulet filet grillé") */
+  search: string;
+  /** Quantité convertie en grammes */
+  grams: number;
+  /** Estimation Gemini pour 100 g : sert de secours et à départager les résultats Ciqual */
+  estimatePer100: { calories: number; macros: Macros | null };
 }
 
 /**
- * Estime calories et macros d'un repas décrit à voix haute (enregistrement m4a/AAC en base64).
- * `name` contient le résumé de ce que Gemini a compris, pour que l'utilisateur le vérifie.
+ * Convertit la réponse de Gemini en liste d'aliments.
+ * Ignore les aliments sans quantité exploitable ; lève une erreur si la liste est vide
+ * ou si Gemini signale `{"error": "..."}`.
  */
-export async function analyzeFoodVoice(base64Audio: string): Promise<FoodAnalysis> {
-  return requestFoodAnalysis(
-    "Dans cet enregistrement, une personne décrit en français ce qu'elle a mangé ou va manger. " +
-      "Identifie chaque aliment et sa quantité ; si une quantité n'est pas précisée, prends une portion standard. " +
-      'Estime le total des calories et macronutriments de l’ensemble du repas. ' +
-      'Dans "name", résume le repas en moins de 60 caractères avec les quantités retenues ' +
-      '(ex : "Riz (200 g) + blanc de poulet + pomme"). ' +
-      JSON_FORMAT_INSTRUCTIONS +
-      ' Si l\'enregistrement est inaudible ou ne décrit aucun aliment, réponds uniquement ' +
-      '{"error": "explication courte en français"}.',
+export function parseMealItems(text: string): MealItem[] {
+  // Greedy : l'objet contient un tableau d'objets imbriqués
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error(i18n.t('errors.aiUnreadable', { text }));
+
+  const parsed = JSON.parse(jsonMatch[0]);
+  if (typeof parsed.error === 'string' && parsed.error.trim()) {
+    throw new Error(parsed.error.trim());
+  }
+
+  const rawItems: any[] = Array.isArray(parsed.items) ? parsed.items : [];
+  const items = rawItems
+    .map((it): MealItem | null => {
+      const grams = Math.round(Number(it?.grams));
+      const calories = Number(it?.kcalPer100);
+      if (!it?.name || !(grams > 0) || !(calories >= 0)) return null;
+      const hasMacros = it.protein != null && it.carbs != null && it.fat != null;
+      return {
+        name: String(it.name).trim(),
+        search: String(it.search ?? it.name).trim(),
+        grams,
+        estimatePer100: {
+          calories,
+          macros: hasMacros
+            ? { protein: Number(it.protein) || 0, carbs: Number(it.carbs) || 0, fat: Number(it.fat) || 0 }
+            : null,
+        },
+      };
+    })
+    .filter((it): it is MealItem => it !== null);
+
+  if (items.length === 0) throw new Error(i18n.t('errors.voiceNoFood'));
+  return items;
+}
+
+/**
+ * Comprend un repas décrit à voix haute (enregistrement m4a/AAC en base64) et renvoie
+ * la liste des aliments avec leurs quantités. Le calcul des calories est fait ensuite
+ * par l'app avec la base Ciqual (cf. `mealEstimate.ts`), pour rester cohérent avec la saisie manuelle.
+ */
+export async function extractMealItemsFromVoice(base64Audio: string): Promise<MealItem[]> {
+  const lang = outputLanguage();
+  const text = await askGeminiWithMedia(
+    "Dans cet enregistrement, une personne décrit (dans n'importe quelle langue) ce qu'elle a mangé ou va manger. " +
+      'Liste chaque aliment séparément. Pour chacun : ' +
+      `"name" = nom court en ${lang} avec son état (ex. en français : "Filet de poulet grillé", "Riz blanc cuit", "Pomme crue") ; ` +
+      // La base locale (Ciqual) est en français : les mots-clés restent en français quelle que soit la langue parlée
+      '"search" = 2 à 4 mots-clés EN FRANÇAIS (même si la personne parle une autre langue), en minuscules, aliment principal en premier, tels qu\'on les trouve dans la table française Ciqual ' +
+      '(ex : "poulet filet grillé", "riz blanc cuit", "pomme crue", "yaourt nature") ; ' +
+      '"grams" = quantité convertie en grammes (portion standard si non précisée, ex : une pomme = 150) ; ' +
+      '"kcalPer100", "protein", "carbs", "fat" = valeurs nutritionnelles POUR 100 g, selon la table Ciqual. ' +
+      'Les aliments sont considérés cuits, tels que mangés, sauf si la personne dit "cru". ' +
+      'Réponds UNIQUEMENT en JSON valide, sans markdown : ' +
+      '{"items": [{"name": "Filet de poulet grillé", "search": "poulet filet grillé", "grams": 100, ' +
+      '"kcalPer100": 141, "protein": 30.1, "carbs": 0, "fat": 2}]}. ' +
+      "Si l'enregistrement est inaudible ou ne décrit aucun aliment, réponds uniquement " +
+      `{"error": "explication courte en ${lang}"}.`,
     'audio/m4a',
     base64Audio,
   );
+  return parseMealItems(text);
 }

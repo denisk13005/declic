@@ -3,11 +3,15 @@ import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
 
 const { width, height } = Dimensions.get('window');
 
+const PILLS = ['nutrition', 'streaks', 'stats', 'reminders'] as const;
+
 export default function WelcomeScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
 
   return (
@@ -23,14 +27,14 @@ export default function WelcomeScreen() {
         <View style={styles.hero}>
           <Text style={styles.logoEmoji}>⚡️</Text>
           <Text style={styles.appName}>Vitacairn</Text>
-          <Text style={styles.tagline}>Tes habitudes.{'\n'}Ton rythme.</Text>
+          <Text style={styles.tagline}>{t('onboarding.welcome.tagline')}</Text>
         </View>
 
         {/* Feature pills */}
         <View style={styles.pills}>
-          {['🍽️ Nutrition & poids', '🔥 Séries de jours', '📊 Stats claires', '🔔 Rappels malins'].map((p) => (
+          {PILLS.map((p) => (
             <View key={p} style={styles.pill}>
-              <Text style={styles.pillText}>{p}</Text>
+              <Text style={styles.pillText}>{t(`onboarding.welcome.pills.${p}`)}</Text>
             </View>
           ))}
         </View>
@@ -43,10 +47,10 @@ export default function WelcomeScreen() {
             style={styles.btnWrapper}
           >
             <LinearGradient colors={COLORS.gradientPrimary} style={styles.btn}>
-              <Text style={styles.btnText}>C'est parti 🚀</Text>
+              <Text style={styles.btnText}>{t('onboarding.welcome.cta')}</Text>
             </LinearGradient>
           </TouchableOpacity>
-          <Text style={styles.sub}>Gratuit · Sans compte requis</Text>
+          <Text style={styles.sub}>{t('onboarding.welcome.sub')}</Text>
         </View>
       </SafeAreaView>
     </View>

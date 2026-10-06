@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Platform, Alert, StyleSheet } from 'react-native';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { signInWithApple } from '@/services/firebase';
 import { RADIUS } from '@/constants/theme';
 
@@ -11,6 +12,7 @@ import { RADIUS } from '@/constants/theme';
  * @param type "signIn" (défaut) ou "signUp" pour le libellé du bouton.
  */
 export default function AppleSignInButton({ type = 'signIn' }: { type?: 'signIn' | 'signUp' }) {
+  const { t } = useTranslation();
   const router = useRouter();
   const [available, setAvailable] = useState(false);
 
@@ -31,7 +33,7 @@ export default function AppleSignInButton({ type = 'signIn' }: { type?: 'signIn'
       }
       // result === null → annulation utilisateur.
     } catch (err: any) {
-      Alert.alert('Connexion Apple échouée', err?.message ?? 'Une erreur est survenue.');
+      Alert.alert(t('auth.apple.failedTitle'), err?.message ?? t('auth.genericError'));
     }
   }
 

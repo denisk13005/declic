@@ -189,6 +189,14 @@ Réappliquer manuellement dans cet ordre :
 
 ---
 
+## Traductions (i18n)
+
+- **Aucun texte affiché en dur** : tout texte visible passe par `t('section.cle')` (`useTranslation()` de `react-i18next` dans un composant, `i18n.t()` depuis `@/i18n` ailleurs).
+- Ajouter chaque nouvelle clé dans **`src/i18n/locales/fr.json` ET `en.json`** (le test `__tests__/i18n/locales.test.ts` échoue sinon).
+- Langue = celle du téléphone, français par défaut. Dates : `dateLocale()` de `@/i18n`.
+
+---
+
 ## Variables d'environnement
 
 Toutes dans `.env` avec préfixe `EXPO_PUBLIC_` (obligatoire pour Expo).

@@ -8,7 +8,38 @@
 // Module natif (non transpilé hors device) : inutile pour le parsing
 jest.mock('expo-image-manipulator', () => ({ ImageManipulator: {}, SaveFormat: { JPEG: 'jpeg' } }));
 
-import { parseFoodAnalysis } from '@/services/gemini';
+import { parseFoodAnalysis, parseMealItems } from '@/services/gemini';
+
+describe('parseMealItems', () => {
+  it('parse une liste d’aliments avec estimation pour 100 g', () => {
+    const items = parseMealItems(
+      '```json\n{"items":[{"name":"Filet de poulet grillé","search":"poulet filet grillé","grams":100,"kcalPer100":141,"protein":30.1,"carbs":0,"fat":2},' +
+        '{"name":"Pomme crue","search":"pomme crue","grams":150,"kcalPer100":52,"protein":null,"carbs":12,"fat":0.2}]}\n```',
+    );
+    expect(items).toHaveLength(2);
+    expect(items[0]).toEqual({
+      name: 'Filet de poulet grillé',
+      search: 'poulet filet grillé',
+      grams: 100,
+      estimatePer100: { calories: 141, macros: { protein: 30.1, carbs: 0, fat: 2 } },
+    });
+    expect(items[1].estimatePer100.macros).toBeNull();
+  });
+
+  it('ignore les aliments sans quantité et utilise name si search manque', () => {
+    const items = parseMealItems('{"items":[{"name":"Sel","grams":0,"kcalPer100":0},{"name":"Banane","grams":120,"kcalPer100":90}]}');
+    expect(items).toHaveLength(1);
+    expect(items[0].search).toBe('Banane');
+  });
+
+  it('lève l’erreur fournie par Gemini', () => {
+    expect(() => parseMealItems('{"error":"Enregistrement inaudible."}')).toThrow('Enregistrement inaudible.');
+  });
+
+  it('lève une erreur si aucun aliment exploitable', () => {
+    expect(() => parseMealItems('{"items":[]}')).toThrow(/aucun aliment/);
+  });
+});
 
 describe('parseFoodAnalysis', () => {
   it('parse un JSON simple avec macros', () => {

@@ -10,6 +10,7 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useCalorieStore } from '@/stores/calorieStore';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
 
@@ -19,6 +20,7 @@ interface Props {
 }
 
 export default function GoalsModal({ visible, onClose }: Props) {
+  const { t } = useTranslation();
   const { goals, setGoals } = useCalorieStore();
 
   const [calories, setCalories] = useState(String(goals.calories));
@@ -63,11 +65,11 @@ export default function GoalsModal({ visible, onClose }: Props) {
         <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
         <View style={styles.sheet}>
           <View style={styles.handle} />
-          <Text style={styles.title}>Objectifs nutritionnels</Text>
+          <Text style={styles.title}>{t('goals.title')}</Text>
 
           <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
             {/* Calories */}
-            <Text style={styles.sectionLabel}>Calories / jour</Text>
+            <Text style={styles.sectionLabel}>{t('goals.caloriesPerDay')}</Text>
             <TextInput
               style={styles.input}
               value={calories}
@@ -79,12 +81,12 @@ export default function GoalsModal({ visible, onClose }: Props) {
             />
 
             {/* Macros */}
-            <Text style={styles.sectionLabel}>Macros / jour (optionnel)</Text>
-            <Text style={styles.hint}>Laisse vide pour ne pas suivre ce macro</Text>
+            <Text style={styles.sectionLabel}>{t('goals.macrosOptional')}</Text>
+            <Text style={styles.hint}>{t('goals.macrosHint')}</Text>
 
             <View style={styles.macroRow}>
               <View style={styles.macroField}>
-                <Text style={[styles.macroLabel, { color: '#60A5FA' }]}>Protéines (g)</Text>
+                <Text style={[styles.macroLabel, { color: '#60A5FA' }]}>{t('goals.proteinG')}</Text>
                 <TextInput
                   style={styles.input}
                   value={protein}
@@ -95,7 +97,7 @@ export default function GoalsModal({ visible, onClose }: Props) {
                 />
               </View>
               <View style={styles.macroField}>
-                <Text style={[styles.macroLabel, { color: '#FBBF24' }]}>Glucides (g)</Text>
+                <Text style={[styles.macroLabel, { color: '#FBBF24' }]}>{t('goals.carbsG')}</Text>
                 <TextInput
                   style={styles.input}
                   value={carbs}
@@ -106,7 +108,7 @@ export default function GoalsModal({ visible, onClose }: Props) {
                 />
               </View>
               <View style={styles.macroField}>
-                <Text style={[styles.macroLabel, { color: '#F472B6' }]}>Lipides (g)</Text>
+                <Text style={[styles.macroLabel, { color: '#F472B6' }]}>{t('goals.fatG')}</Text>
                 <TextInput
                   style={styles.input}
                   value={fat}
@@ -119,7 +121,7 @@ export default function GoalsModal({ visible, onClose }: Props) {
             </View>
 
             {/* Target weight */}
-            <Text style={styles.sectionLabel}>Poids cible (kg, optionnel)</Text>
+            <Text style={styles.sectionLabel}>{t('goals.targetWeight')}</Text>
             <TextInput
               style={styles.input}
               value={targetWeight}
@@ -132,7 +134,7 @@ export default function GoalsModal({ visible, onClose }: Props) {
           </ScrollView>
 
           <TouchableOpacity style={styles.btn} onPress={handleSave} activeOpacity={0.8}>
-            <Text style={styles.btnText}>Enregistrer</Text>
+            <Text style={styles.btnText}>{t('common.save')}</Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>

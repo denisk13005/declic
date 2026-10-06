@@ -10,6 +10,7 @@ import {
   Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { EXERCISES, Exercise, MuscleGroup, MUSCLE_GROUP_LABELS, EquipmentType } from '@/data/exercises';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
 
@@ -32,10 +33,11 @@ function ExerciseItem({
   isSelected: boolean;
   onToggle: () => void;
 }) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
 
   function openYoutube() {
-    const query = encodeURIComponent(exercise.name + ' exercice musculation');
+    const query = encodeURIComponent(t('workout.session.youtubeQuery', { name: exercise.name }));
     Linking.openURL('https://www.youtube.com/results?search_query=' + query);
   }
 
@@ -57,7 +59,7 @@ function ExerciseItem({
           <View style={itemStyles.tagRow}>
             <View style={[itemStyles.tag, { backgroundColor: exercise.isCompound ? '#7C3AED22' : '#F9731622' }]}>
               <Text style={[itemStyles.tagText, { color: exercise.isCompound ? '#A78BFA' : '#F97316' }]}>
-                {exercise.isCompound ? 'Compound' : 'Isolation'}
+                {t(exercise.isCompound ? 'workout.picker.compound' : 'workout.picker.isolation')}
               </Text>
             </View>
             <Text style={itemStyles.muscleLabel}>{MUSCLE_GROUP_LABELS[exercise.muscleGroup]}</Text>
@@ -82,7 +84,7 @@ function ExerciseItem({
           <Text style={itemStyles.descText}>{exercise.description}</Text>
           <TouchableOpacity style={itemStyles.ytBtn} onPress={openYoutube} activeOpacity={0.7}>
             <Ionicons name="logo-youtube" size={13} color="#EF4444" />
-            <Text style={itemStyles.ytText}>Voir une démonstration</Text>
+            <Text style={itemStyles.ytText}>{t('workout.session.watchDemo')}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -91,6 +93,7 @@ function ExerciseItem({
 }
 
 export default function ExercisePickerModal({ visible, onClose, onAdd, excludeIds = [], availableEquipment }: Props) {
+  const { t } = useTranslation();
   const [filter, setFilter] = useState<MuscleGroup | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
@@ -132,7 +135,7 @@ export default function ExercisePickerModal({ visible, onClose, onAdd, excludeId
           <View style={styles.handle} />
 
           <View style={styles.headerRow}>
-            <Text style={styles.title}>Choisir des exercices</Text>
+            <Text style={styles.title}>{t('workout.picker.title')}</Text>
             <TouchableOpacity onPress={handleClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               <Ionicons name="close" size={22} color={COLORS.textSecondary} />
             </TouchableOpacity>
@@ -149,7 +152,7 @@ export default function ExercisePickerModal({ visible, onClose, onAdd, excludeId
               style={[styles.chip, !filter && styles.chipActive]}
               onPress={() => setFilter(null)}
             >
-              <Text style={[styles.chipText, !filter && styles.chipTextActive]}>Tous</Text>
+              <Text style={[styles.chipText, !filter && styles.chipTextActive]}>{t('workout.picker.all')}</Text>
             </TouchableOpacity>
             {MUSCLE_GROUPS.map((mg) => (
               <TouchableOpacity
@@ -167,7 +170,7 @@ export default function ExercisePickerModal({ visible, onClose, onAdd, excludeId
           {/* Liste des exercices */}
           <ScrollView style={styles.list} showsVerticalScrollIndicator={false}>
             {filtered.length === 0 ? (
-              <Text style={styles.emptyText}>Tous les exercices de ce groupe sont déjà ajoutés</Text>
+              <Text style={styles.emptyText}>{t('workout.picker.allAdded')}</Text>
             ) : (
               filtered.map((exercise) => (
                 <ExerciseItem
@@ -187,7 +190,7 @@ export default function ExercisePickerModal({ visible, onClose, onAdd, excludeId
               <TouchableOpacity style={styles.addBtn} onPress={handleAdd} activeOpacity={0.8}>
                 <Ionicons name="add-circle-outline" size={18} color="#fff" />
                 <Text style={styles.addBtnText}>
-                  Ajouter {selected.size} exercice{selected.size > 1 ? 's' : ''}
+                  {t('workout.picker.addCount', { count: selected.size })}
                 </Text>
               </TouchableOpacity>
             </View>

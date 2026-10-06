@@ -20,6 +20,7 @@ import {
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Crypto from 'expo-crypto';
 import { FIREBASE_CONFIG, GOOGLE_WEB_CLIENT_ID } from '@/constants/firebaseConfig';
+import i18n from '@/i18n';
 
 // Éviter la double initialisation en dev (hot reload)
 const app = getApps().length === 0 ? initializeApp(FIREBASE_CONFIG) : getApps()[0];
@@ -49,7 +50,7 @@ export async function signInWithGoogle(): Promise<UserCredential | null> {
   const idToken = response.data.idToken;
   if (!idToken) {
     throw new Error(
-      "Google n'a pas renvoyé d'idToken. Vérifie le Web client ID et le SHA-1 dans Firebase.",
+      i18n.t('errors.googleNoToken'),
     );
   }
 
@@ -108,7 +109,7 @@ export async function signInWithApple(): Promise<UserCredential | null> {
 
   const { identityToken, fullName } = appleCredential;
   if (!identityToken) {
-    throw new Error("Apple n'a pas renvoyé d'identityToken.");
+    throw new Error(i18n.t('errors.appleNoToken'));
   }
 
   const provider = new OAuthProvider('apple.com');
@@ -162,7 +163,7 @@ async function freshAppleCredential(): Promise<AuthCredential | null> {
  */
 export async function deleteAccount(): Promise<void> {
   const user = auth.currentUser;
-  if (!user) throw new Error('Aucun compte connecté.');
+  if (!user) throw new Error(i18n.t('errors.noAccount'));
 
   const providerId = user.providerData[0]?.providerId;
 
@@ -176,7 +177,7 @@ export async function deleteAccount(): Promise<void> {
       throw e;
     }
     if (!cred) {
-      const e: any = new Error('Reconnexion annulée.');
+      const e: any = new Error(i18n.t('errors.reauthCancelled'));
       e.code = 'reauth-cancelled';
       throw e;
     }

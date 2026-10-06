@@ -3,6 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '@/constants/theme';
 import { Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
 type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -23,6 +24,7 @@ function TabIcon({
 }
 
 export default function TabsLayout() {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   // iOS : hauteur = contenu (60) + home indicator dynamique (0 sur iPhone SE, 34 sur les modèles à encoche/Dynamic Island).
   // Android : valeurs inchangées (plateforme testée sur Galaxy S10).
@@ -51,7 +53,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="home"
         options={{
-          title: "Aujourd'hui",
+          title: t('tabs.home'),
           tabBarIcon: ({ focused }) => (
             <TabIcon name={focused ? 'checkmark-circle' : 'checkmark-circle-outline'} focused={focused} />
           ),
@@ -60,7 +62,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="stats"
         options={{
-          title: 'Statistiques',
+          title: t('tabs.stats'),
           tabBarIcon: ({ focused }) => (
             <TabIcon name={focused ? 'bar-chart' : 'bar-chart-outline'} focused={focused} />
           ),
@@ -69,7 +71,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="calories"
         options={{
-          title: 'Calories',
+          title: t('tabs.calories'),
           tabBarIcon: ({ focused }) => (
             <TabIcon name={focused ? 'flame' : 'flame-outline'} focused={focused} />
           ),
@@ -78,7 +80,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="sport"
         options={{
-          title: 'Sport',
+          title: t('tabs.sport'),
           tabBarIcon: ({ focused }) => (
             <TabIcon name={focused ? 'barbell' : 'barbell-outline'} focused={focused} />
           ),
@@ -87,7 +89,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profil',
+          title: t('tabs.profile'),
           tabBarIcon: ({ focused }) => (
             <TabIcon name={focused ? 'person' : 'person-outline'} focused={focused} />
           ),

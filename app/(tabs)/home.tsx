@@ -15,7 +15,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
+import i18n, { dateLocale } from '@/i18n';
 import { useRouter } from 'expo-router';
 import { useHabitStore } from '@/stores/habitStore';
 import { useCalorieStore } from '@/stores/calorieStore';
@@ -60,20 +61,16 @@ function formatReminder(rt: NonNullable<Habit['reminderTime']>): string {
     return value === 1 ? `1h${window}` : `/${value}h${window}`;
   }
   if (unit === 'days' && value === 1) return formatTime(rt.hour, rt.minute);
-  if (unit === 'days') return `/${value}j`;
-  if (unit === 'weeks') return value === 1 ? '/sem.' : `/${value} sem.`;
-  if (unit === 'months') return value === 1 ? '/mois' : `/${value} mois`;
+  if (unit === 'days') return i18n.t('home.reminder.short.days', { count: value });
+  if (unit === 'weeks') return i18n.t('home.reminder.short.weeks', { count: value });
+  if (unit === 'months') return i18n.t('home.reminder.short.months', { count: value });
   return formatTime(rt.hour, rt.minute);
 }
 
 // ─── Sélecteur d'intervalle de rappel ─────────────────────────────────────────
 
-const REMINDER_UNITS: { value: ReminderUnit; label: string }[] = [
-  { value: 'hours',  label: 'Heures' },
-  { value: 'days',   label: 'Jours' },
-  { value: 'weeks',  label: 'Semaines' },
-  { value: 'months', label: 'Mois' },
-];
+// Libellé traduit : t(`home.reminder.units.${unit}`)
+const REMINDER_UNITS: ReminderUnit[] = ['hours', 'days', 'weeks', 'months'];
 
 function maxForUnit(unit: ReminderUnit): number {
   switch (unit) {
@@ -111,27 +108,28 @@ function ReminderConfig({
   onStartHourChange: (h: number) => void;
   onEndHourChange: (h: number) => void;
 }) {
+  const { t } = useTranslation();
   const max = maxForUnit(unit);
 
   return (
     <View style={rcStyles.box}>
       {/* Ligne 1 : "Toutes les N [unité]" */}
-      <Text style={rcStyles.rowLabel}>Toutes les</Text>
+      <Text style={rcStyles.rowLabel}>{t('home.reminder.every')}</Text>
       <View style={rcStyles.valueRow}>
         <TimeUnit value={value} max={max} onChange={(v) => onValueChange(Math.max(1, v))} />
         <View style={rcStyles.unitPills}>
           {REMINDER_UNITS.map((u) => (
             <TouchableOpacity
-              key={u.value}
-              style={[rcStyles.pill, unit === u.value && rcStyles.pillActive]}
+              key={u}
+              style={[rcStyles.pill, unit === u && rcStyles.pillActive]}
               onPress={() => {
-                onUnitChange(u.value);
+                onUnitChange(u);
                 onValueChange(1);
               }}
               activeOpacity={0.7}
             >
-              <Text style={[rcStyles.pillText, unit === u.value && rcStyles.pillTextActive]}>
-                {u.label}
+              <Text style={[rcStyles.pillText, unit === u && rcStyles.pillTextActive]}>
+                {t(`home.reminder.units.${u}`)}
               </Text>
             </TouchableOpacity>
           ))}
@@ -141,10 +139,10 @@ function ReminderConfig({
       {/* Plage horaire (uniquement pour "heures") */}
       {unit === 'hours' && (
         <>
-          <Text style={[rcStyles.rowLabel, { marginTop: SPACING.sm }]}>Plage horaire</Text>
+          <Text style={[rcStyles.rowLabel, { marginTop: SPACING.sm }]}>{t('home.reminder.timeWindow')}</Text>
           <View style={rcStyles.windowRow}>
             <View style={rcStyles.windowPicker}>
-              <Text style={rcStyles.windowLabel}>De</Text>
+              <Text style={rcStyles.windowLabel}>{t('home.reminder.from')}</Text>
               <TimeUnit
                 value={startHour}
                 max={23}
@@ -157,7 +155,7 @@ function ReminderConfig({
             </View>
             <Text style={rcStyles.windowSeparator}>→</Text>
             <View style={rcStyles.windowPicker}>
-              <Text style={rcStyles.windowLabel}>À</Text>
+              <Text style={rcStyles.windowLabel}>{t('home.reminder.to')}</Text>
               <TimeUnit
                 value={endHour}
                 max={23}
@@ -174,7 +172,7 @@ function ReminderConfig({
       {/* Heure fixe (pour jours, semaines, mois) */}
       {unit !== 'hours' && (
         <>
-          <Text style={[rcStyles.rowLabel, { marginTop: SPACING.sm }]}>À quelle heure</Text>
+          <Text style={[rcStyles.rowLabel, { marginTop: SPACING.sm }]}>{t('home.reminder.atWhatTime')}</Text>
           <TimePicker
             hour={hour}
             minute={minute}
@@ -186,13 +184,9 @@ function ReminderConfig({
 
       {/* Info contextuelle */}
       <Text style={rcStyles.hint}>
-        {unit === 'hours' && `Toutes les ${value}h de ${startHour}h à ${endHour}h`}
-        {unit === 'days'   && value === 1 && `Chaque jour à ${formatTime(hour, minute)}`}
-        {unit === 'days'   && value > 1   && `Tous les ${value} jours à ${formatTime(hour, minute)}`}
-        {unit === 'weeks'  && value === 1 && `Toutes les semaines à ${formatTime(hour, minute)}`}
-        {unit === 'weeks'  && value > 1   && `Toutes les ${value} semaines à ${formatTime(hour, minute)}`}
-        {unit === 'months' && value === 1 && `Chaque mois à ${formatTime(hour, minute)}`}
-        {unit === 'months' && value > 1   && `Tous les ${value} mois à ${formatTime(hour, minute)}`}
+        {unit === 'hours'
+          ? t('home.reminder.hint.hours', { value, start: startHour, end: endHour })
+          : t(`home.reminder.hint.${unit}`, { count: value, time: formatTime(hour, minute) })}
       </Text>
     </View>
   );
@@ -363,6 +357,7 @@ const tpStyles = StyleSheet.create({
 
 function DashboardCard() {
   const C = useAppColors();
+  const { t } = useTranslation();
   const router = useRouter();
   const { getTotalsForDate, goals } = useCalorieStore();
   const { sessions } = useSessionStore();
@@ -397,7 +392,7 @@ function DashboardCard() {
     const lastIdx = program.days.findIndex((d) => d.dayNumber === last.programDayNumber);
     const nextIdx = ((lastIdx >= 0 ? lastIdx : 0) + 1) % program.days.length;
     const nextDay = program.days[nextIdx];
-    return nextDay.exercises.length > 0 ? nextDay.label : 'Repos';
+    return nextDay.exercises.length > 0 ? nextDay.label : t('home.dashboard.rest');
   }, [sessions, program]);
 
   return (
@@ -412,7 +407,7 @@ function DashboardCard() {
         <Text style={[dashStyles.colValue, calorieExceeded && { color: COLORS.error }]}>
           {consumed}
         </Text>
-        <Text style={dashStyles.colGoal}>/ {goals.calories} kcal</Text>
+        <Text style={dashStyles.colGoal}>/ {goals.calories} {t('common.kcal')}</Text>
         <View style={dashStyles.miniTrack}>
           <View
             style={[
@@ -431,8 +426,8 @@ function DashboardCard() {
       {/* Streak */}
       <View style={dashStyles.col}>
         <Text style={{ fontSize: 16 }}>🔥</Text>
-        <Text style={dashStyles.colValue}>{bestStreak}j</Text>
-        <Text style={dashStyles.colGoal}>Meilleur streak</Text>
+        <Text style={dashStyles.colValue}>{t('home.dashboard.bestStreakValue', { count: bestStreak })}</Text>
+        <Text style={dashStyles.colGoal}>{t('home.dashboard.bestStreak')}</Text>
       </View>
 
       {nextSessionLabel != null && (
@@ -449,7 +444,7 @@ function DashboardCard() {
             <Text style={[dashStyles.colValue, { color: C.primary }]} numberOfLines={1}>
               {nextSessionLabel}
             </Text>
-            <Text style={dashStyles.colGoal}>Prochaine séance</Text>
+            <Text style={dashStyles.colGoal}>{t('home.dashboard.nextSession')}</Text>
           </TouchableOpacity>
         </>
       )}
@@ -514,6 +509,7 @@ function HabitCard({
   onToggle: (id: string) => void;
   onLongPress: (habit: Habit) => void;
 }) {
+  const { t } = useTranslation();
   const { getStats } = useHabitStore();
   const stats = useMemo(() => getStats(habit.id), [habit.completions, habit.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const today = format(new Date(), 'yyyy-MM-dd');
@@ -544,7 +540,7 @@ function HabitCard({
             <Text style={[styles.cardName, done && { color: '#fff' }]}>{habit.name}</Text>
             <View style={styles.cardMeta}>
               <Text style={styles.cardStreak}>
-                🔥 {stats.currentStreak} jour{stats.currentStreak !== 1 ? 's' : ''}
+                {t('home.streakDays', { count: stats.currentStreak })}
               </Text>
               {habit.reminderTime && (
                 <View style={styles.cardBell}>
@@ -589,6 +585,7 @@ function AddHabitModal({
   onAdd: (data: AddHabitData) => void;
 }) {
   const C = useAppColors();
+  const { t } = useTranslation();
   const HABIT_COLORS = [C.primary, C.accent, ...HABIT_COLORS_STATIC];
   const [name, setName] = useState('');
   const [emoji, setEmoji] = useState('🏃');
@@ -642,19 +639,19 @@ function AddHabitModal({
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.modalTitle}>Nouvelle habitude</Text>
+          <Text style={styles.modalTitle}>{t('home.habitForm.newTitle')}</Text>
 
           <TextInput
             style={styles.input}
             value={name}
             onChangeText={setName}
-            placeholder="Nom de l'habitude"
+            placeholder={t('home.habitForm.namePlaceholder')}
             placeholderTextColor={COLORS.textTertiary}
             maxLength={40}
             autoFocus
           />
 
-          <Text style={styles.sectionLabel}>Emoji</Text>
+          <Text style={styles.sectionLabel}>{t('home.habitForm.emoji')}</Text>
           <View style={styles.emojiRow}>
             {HABIT_EMOJIS.map((e) => (
               <TouchableOpacity
@@ -667,7 +664,7 @@ function AddHabitModal({
             ))}
           </View>
 
-          <Text style={styles.sectionLabel}>Couleur</Text>
+          <Text style={styles.sectionLabel}>{t('home.habitForm.color')}</Text>
           <View style={styles.colorRow}>
             {HABIT_COLORS.map((c) => (
               <TouchableOpacity
@@ -682,7 +679,7 @@ function AddHabitModal({
           <View style={styles.reminderToggleRow}>
             <View style={styles.reminderToggleLeft}>
               <Ionicons name="notifications-outline" size={18} color={COLORS.textSecondary} />
-              <Text style={styles.reminderToggleLabel}>Rappel</Text>
+              <Text style={styles.reminderToggleLabel}>{t('home.habitForm.reminder')}</Text>
             </View>
             <Switch
               value={reminderEnabled}
@@ -711,12 +708,12 @@ function AddHabitModal({
 
           <TouchableOpacity style={styles.addBtn} onPress={handleAdd}>
             <LinearGradient colors={C.gradientPrimary} style={styles.addBtnGradient}>
-              <Text style={styles.addBtnText}>Ajouter</Text>
+              <Text style={styles.addBtnText}>{t('common.add')}</Text>
             </LinearGradient>
           </TouchableOpacity>
 
           <TouchableOpacity onPress={() => { reset(); onClose(); }} style={styles.cancelBtn}>
-            <Text style={styles.cancelText}>Annuler</Text>
+            <Text style={styles.cancelText}>{t('common.cancel')}</Text>
           </TouchableOpacity>
         </ScrollView>
       </View>
@@ -744,6 +741,7 @@ function EditHabitSheet({
   onRemoveReminder: (habit: Habit) => void;
 }) {
   const C = useAppColors();
+  const { t } = useTranslation();
   const HABIT_COLORS = [C.primary, C.accent, ...HABIT_COLORS_STATIC];
   const [name, setName] = useState('');
   const [emoji, setEmoji] = useState('🏃');
@@ -806,18 +804,18 @@ function EditHabitSheet({
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.modalTitle}>Modifier l'habitude</Text>
+          <Text style={styles.modalTitle}>{t('home.habitForm.editTitle')}</Text>
 
           <TextInput
             style={styles.input}
             value={name}
             onChangeText={setName}
-            placeholder="Nom de l'habitude"
+            placeholder={t('home.habitForm.namePlaceholder')}
             placeholderTextColor={COLORS.textTertiary}
             maxLength={40}
           />
 
-          <Text style={styles.sectionLabel}>Emoji</Text>
+          <Text style={styles.sectionLabel}>{t('home.habitForm.emoji')}</Text>
           <View style={styles.emojiRow}>
             {HABIT_EMOJIS.map((e) => (
               <TouchableOpacity
@@ -830,7 +828,7 @@ function EditHabitSheet({
             ))}
           </View>
 
-          <Text style={styles.sectionLabel}>Couleur</Text>
+          <Text style={styles.sectionLabel}>{t('home.habitForm.color')}</Text>
           <View style={styles.colorRow}>
             {HABIT_COLORS.map((c) => (
               <TouchableOpacity
@@ -845,9 +843,9 @@ function EditHabitSheet({
           <View style={styles.reminderToggleRow}>
             <View style={styles.reminderToggleLeft}>
               <Ionicons name="notifications-outline" size={18} color={COLORS.textSecondary} />
-              <Text style={styles.reminderToggleLabel}>Rappel</Text>
+              <Text style={styles.reminderToggleLabel}>{t('home.habitForm.reminder')}</Text>
               {habit.reminderTime && !reminderEnabled && (
-                <Text style={styles.reminderBadgeOff}>Actif</Text>
+                <Text style={styles.reminderBadgeOff}>{t('home.habitForm.reminderActive')}</Text>
               )}
             </View>
             <Switch
@@ -876,7 +874,7 @@ function EditHabitSheet({
               />
               {hasReminderChanged && (
                 <Text style={styles.reminderChanged}>
-                  {habit.reminderTime ? 'Le rappel sera mis à jour.' : 'Un rappel sera planifié.'}
+                  {habit.reminderTime ? t('home.habitForm.reminderWillUpdate') : t('home.habitForm.reminderWillSchedule')}
                 </Text>
               )}
             </>
@@ -884,7 +882,7 @@ function EditHabitSheet({
 
           <TouchableOpacity style={styles.addBtn} onPress={handleSave}>
             <LinearGradient colors={C.gradientPrimary} style={styles.addBtnGradient}>
-              <Text style={styles.addBtnText}>Enregistrer</Text>
+              <Text style={styles.addBtnText}>{t('common.save')}</Text>
             </LinearGradient>
           </TouchableOpacity>
 
@@ -896,7 +894,7 @@ function EditHabitSheet({
               activeOpacity={0.7}
             >
               <Ionicons name="archive-outline" size={16} color={COLORS.textSecondary} />
-              <Text style={styles.dangerBtnText}>Archiver</Text>
+              <Text style={styles.dangerBtnText}>{t('home.habitForm.archive')}</Text>
             </TouchableOpacity>
             <View style={styles.dangerDivider} />
             <TouchableOpacity
@@ -905,12 +903,12 @@ function EditHabitSheet({
               activeOpacity={0.7}
             >
               <Ionicons name="trash-outline" size={16} color={COLORS.error} />
-              <Text style={[styles.dangerBtnText, { color: COLORS.error }]}>Supprimer</Text>
+              <Text style={[styles.dangerBtnText, { color: COLORS.error }]}>{t('common.delete')}</Text>
             </TouchableOpacity>
           </View>
 
           <TouchableOpacity onPress={onClose} style={styles.cancelBtn}>
-            <Text style={styles.cancelText}>Annuler</Text>
+            <Text style={styles.cancelText}>{t('common.cancel')}</Text>
           </TouchableOpacity>
         </ScrollView>
       </View>
@@ -922,6 +920,7 @@ function EditHabitSheet({
 
 export default function HomeScreen() {
   const C = useAppColors();
+  const { t } = useTranslation();
   const router = useRouter();
   const { habits, addHabit, updateHabit, archiveHabit, deleteHabit, toggleCompletion, getTodayCompletionRate, canAddHabit, setTemporaryUnlock } = useHabitStore();
   const { isPremium } = usePremium();
@@ -933,7 +932,7 @@ export default function HomeScreen() {
 
   const activeHabits = habits.filter((h) => !h.archived);
   const completionRate = getTodayCompletionRate();
-  const todayLabel = format(new Date(), 'EEEE d MMMM', { locale: fr });
+  const todayLabel = format(new Date(), t('home.dateFormat'), { locale: dateLocale() });
 
   const handleAdd = useCallback(
     async (data: AddHabitData) => {
@@ -955,20 +954,20 @@ export default function HomeScreen() {
       setAddModalVisible(true);
     });
     ad.addAdEventListener(AdEventType.ERROR, () => {
-      Alert.alert('Pub indisponible', 'Impossible de charger la pub, réessaie plus tard.');
+      Alert.alert(t('home.limit.adUnavailableTitle'), t('home.limit.adUnavailableMessage'));
     });
     ad.load();
-  }, [setTemporaryUnlock]);
+  }, [setTemporaryUnlock, t]);
 
   const handlePressAdd = () => {
     if (!canAddHabit(isPremium)) {
       Alert.alert(
-        'Habitude supplémentaire',
-        "Tu as atteint ta limite gratuite. Regarde une courte pub pour débloquer une habitude aujourd'hui, ou passe à Premium pour des habitudes illimitées.",
+        t('home.limit.title'),
+        t('home.limit.message'),
         [
-          { text: 'Regarder une pub', onPress: showRewardedAd },
-          { text: 'Passer à Premium', onPress: () => router.push('/paywall') },
-          { text: 'Annuler', style: 'cancel' },
+          { text: t('home.limit.watchAd'), onPress: showRewardedAd },
+          { text: t('home.limit.goPremium'), onPress: () => router.push('/paywall') },
+          { text: t('common.cancel'), style: 'cancel' },
         ]
       );
       return;
@@ -1010,7 +1009,7 @@ export default function HomeScreen() {
       <View style={styles.header}>
         <View>
           <Text style={styles.dateLabel}>{todayLabel}</Text>
-          <Text style={styles.title}>Mes habitudes</Text>
+          <Text style={styles.title}>{t('home.title')}</Text>
         </View>
         <TouchableOpacity onPress={handlePressAdd} style={styles.addIconBtn}>
           <LinearGradient colors={C.gradientPrimary} style={styles.addIconGradient}>
@@ -1032,7 +1031,7 @@ export default function HomeScreen() {
           )}
         </View>
         <Text style={styles.progressLabel}>
-          {Math.round(completionRate * 100)}% accompli
+          {t('home.completed', { pct: Math.round(completionRate * 100) })}
         </Text>
       </View>
 
@@ -1048,8 +1047,8 @@ export default function HomeScreen() {
         {activeHabits.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyEmoji}>✨</Text>
-            <Text style={styles.emptyTitle}>Aucune habitude pour l'instant</Text>
-            <Text style={styles.emptySubtitle}>Appuie sur + pour commencer</Text>
+            <Text style={styles.emptyTitle}>{t('home.emptyTitle')}</Text>
+            <Text style={styles.emptySubtitle}>{t('home.emptySubtitle')}</Text>
           </View>
         ) : (
           <>
@@ -1061,7 +1060,7 @@ export default function HomeScreen() {
                 onLongPress={handleLongPress}
               />
             ))}
-            <Text style={styles.longPressHint}>Appui long pour modifier</Text>
+            <Text style={styles.longPressHint}>{t('home.longPressHint')}</Text>
           </>
         )}
 
@@ -1069,7 +1068,7 @@ export default function HomeScreen() {
           <TouchableOpacity onPress={() => router.push('/paywall')} style={styles.upgradeNudge}>
             <LinearGradient colors={C.gradientPremium} style={styles.upgradeGradient}>
               <Ionicons name="star" size={16} color="#fff" />
-              <Text style={styles.upgradeText}>Passe à Premium pour des habitudes illimitées</Text>
+              <Text style={styles.upgradeText}>{t('home.upgradeBanner')}</Text>
               <Ionicons name="chevron-forward" size={16} color="#fff" />
             </LinearGradient>
           </TouchableOpacity>

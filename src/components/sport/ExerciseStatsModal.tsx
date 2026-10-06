@@ -13,9 +13,11 @@ import {
 import { LineChart, BarChart } from 'react-native-gifted-charts';
 import { Ionicons } from '@expo/vector-icons';
 import { useSessionStore, ExerciseHistory } from '@/stores/sessionStore';
+import { exerciseName } from '@/data/exercises';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
+import { dateLocale } from '@/i18n';
 
 interface Props {
   visible: boolean;
@@ -60,11 +62,14 @@ function StatBox({ label, value, sub, highlight }: { label: string; value: strin
 
 // ─── Modal principal ──────────────────────────────────────────────────────────
 export default function ExerciseStatsModal({ visible, onClose, initialExerciseId, initialExerciseName }: Props) {
+  const { t } = useTranslation();
   const { sessions, getHistoryForExercise } = useSessionStore();
 
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(initialExerciseId ?? null);
-  const [selectedName, setSelectedName] = useState<string | null>(initialExerciseName ?? null);
+  const [selectedName, setSelectedName] = useState<string | null>(
+    initialExerciseId && initialExerciseName ? exerciseName(initialExerciseId, initialExerciseName) : initialExerciseName ?? null
+  );
   const [graphMode, setGraphMode] = useState<GraphMode>('weight');
 
   // Tous les exercices loggés (unique)
@@ -72,7 +77,7 @@ export default function ExerciseStatsModal({ visible, onClose, initialExerciseId
     const map = new Map<string, string>();
     for (const session of sessions) {
       for (const log of session.exerciseLogs ?? []) {
-        if (!map.has(log.exerciseId)) map.set(log.exerciseId, log.exerciseName);
+        if (!map.has(log.exerciseId)) map.set(log.exerciseId, exerciseName(log.exerciseId, log.exerciseName));
       }
     }
     return Array.from(map.entries())
@@ -111,7 +116,7 @@ export default function ExerciseStatsModal({ visible, onClose, initialExerciseId
   // ── Données graphes (gifted-charts) ──────────────────────────────────────
   const weightLineData = history.map((h) => ({
     value: h.maxWeight ?? 0,
-    label: format(new Date(h.date + 'T12:00:00'), 'd/M'),
+    label: format(new Date(h.date + 'T12:00:00'), t('workout.stats.shortDateFormat')),
     dataPointText: h.maxWeight !== null ? `${h.maxWeight}` : '',
   }));
 
@@ -120,7 +125,7 @@ export default function ExerciseStatsModal({ visible, onClose, initialExerciseId
   // Et on affiche les sets individuels comme custom data points dans le tableau
   const volumeBarData = history.map((h) => ({
     value: Math.round(h.totalVolume),
-    label: format(new Date(h.date + 'T12:00:00'), 'd/M'),
+    label: format(new Date(h.date + 'T12:00:00'), t('workout.stats.shortDateFormat')),
     frontColor: '#F97316',
     topLabelComponent: () => (
       <Text style={{ color: COLORS.textTertiary, fontSize: 8, marginBottom: 2 }}>
@@ -175,11 +180,11 @@ export default function ExerciseStatsModal({ visible, onClose, initialExerciseId
             )}
             <View style={{ flex: 1 }}>
               <Text style={styles.title} numberOfLines={1}>
-                {selectedName ?? 'Performances'}
+                {selectedName ?? t('workout.stats.title')}
               </Text>
               {!selectedId && (
                 <Text style={styles.subtitle}>
-                  {allExercises.length} exercice{allExercises.length !== 1 ? 's' : ''} journalisé{allExercises.length !== 1 ? 's' : ''}
+                  {t('workout.stats.loggedCount', { count: allExercises.length })}
                 </Text>
               )}
             </View>
@@ -195,16 +200,16 @@ export default function ExerciseStatsModal({ visible, onClose, initialExerciseId
                 style={styles.searchInput}
                 value={search}
                 onChangeText={setSearch}
-                placeholder="Rechercher un exercice..."
+                placeholder={t('workout.stats.searchPlaceholder')}
                 placeholderTextColor={COLORS.textTertiary}
               />
               <ScrollView showsVerticalScrollIndicator={false}>
                 {filtered.length === 0 && (
                   <View style={styles.emptyState}>
                     <Ionicons name="barbell-outline" size={40} color={COLORS.textTertiary} />
-                    <Text style={styles.emptyTitle}>Aucune donnée</Text>
+                    <Text style={styles.emptyTitle}>{t('workout.stats.noData')}</Text>
                     <Text style={styles.emptySub}>
-                      Lance une séance et journalise tes séries pour voir tes performances ici.
+                      {t('workout.stats.noDataSub')}
                     </Text>
                   </View>
                 )}
@@ -233,8 +238,8 @@ export default function ExerciseStatsModal({ visible, onClose, initialExerciseId
                       <View style={{ flex: 1 }}>
                         <Text style={styles.exName}>{ex.name}</Text>
                         <Text style={styles.exMeta}>
-                          {sessCount} séance{sessCount !== 1 ? 's' : ''}
-                          {last?.maxWeight != null ? `  ·  record : ${last.maxWeight} kg` : ''}
+                          {t('workout.stats.sessionsCount', { count: sessCount })}
+                          {last?.maxWeight != null ? t('workout.stats.recordInline', { kg: last.maxWeight }) : ''}
                           {lastOrm != null ? `  ·  1RM ~${lastOrm} kg` : ''}
                         </Text>
                       </View>
@@ -259,20 +264,20 @@ export default function ExerciseStatsModal({ visible, onClose, initialExerciseId
             <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
               {history.length === 0 ? (
                 <View style={styles.emptyState}>
-                  <Text style={styles.emptySub}>Aucune donnée pour cet exercice.</Text>
+                  <Text style={styles.emptySub}>{t('workout.stats.noDataExercise')}</Text>
                 </View>
               ) : (
                 <>
                   {/* Stat boxes ligne 1 */}
                   <View style={statStyles.row}>
-                    <StatBox label="Séances" value={String(totalSessions)} />
+                    <StatBox label={t('workout.stats.sessions')} value={String(totalSessions)} />
                     <StatBox
-                      label="Record charge"
-                      value={bestWeight !== null ? `${bestWeight} kg` : 'Corps'}
+                      label={t('workout.stats.bestLoad')}
+                      value={bestWeight !== null ? `${bestWeight} kg` : t('workout.stats.bodyweight')}
                       highlight={bestWeight !== null}
                     />
                     <StatBox
-                      label="1RM estimé"
+                      label={t('workout.stats.est1rm')}
                       value={orm !== null ? `${orm} kg` : '—'}
                       sub="Epley"
                       highlight={orm !== null}
@@ -281,14 +286,14 @@ export default function ExerciseStatsModal({ visible, onClose, initialExerciseId
 
                   {/* Stat boxes ligne 2 */}
                   <View style={statStyles.row}>
-                    <StatBox label="Séries tot." value={String(totalSets)} />
-                    <StatBox label="Reps tot." value={String(totalReps)} />
+                    <StatBox label={t('workout.stats.totalSets')} value={String(totalSets)} />
+                    <StatBox label={t('workout.stats.totalReps')} value={String(totalReps)} />
                     <StatBox
-                      label="Progression"
+                      label={t('workout.stats.progression')}
                       value={progression !== null ? `${progression > 0 ? '+' : ''}${progression}%` : '—'}
                       highlight={progression !== null && progression > 0}
                     />
-                    <StatBox label="Vol. moy." value={avgVolume > 0 ? `${avgVolume} kg` : '—'} />
+                    <StatBox label={t('workout.stats.avgVolume')} value={avgVolume > 0 ? `${avgVolume} kg` : '—'} />
                   </View>
 
                   {/* Toggle */}
@@ -300,7 +305,7 @@ export default function ExerciseStatsModal({ visible, onClose, initialExerciseId
                       <Ionicons name="barbell-outline" size={13}
                         color={graphMode === 'weight' ? COLORS.primaryLight : COLORS.textSecondary} />
                       <Text style={[styles.toggleText, graphMode === 'weight' && styles.toggleTextActive]}>
-                        Charge max
+                        {t('workout.stats.maxLoad')}
                       </Text>
                     </TouchableOpacity>
                     <TouchableOpacity
@@ -310,7 +315,7 @@ export default function ExerciseStatsModal({ visible, onClose, initialExerciseId
                       <Ionicons name="layers-outline" size={13}
                         color={graphMode === 'volume' ? '#F97316' : COLORS.textSecondary} />
                       <Text style={[styles.toggleText, graphMode === 'volume' && styles.toggleTextActive]}>
-                        Volume total
+                        {t('workout.stats.totalVolume')}
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -343,7 +348,7 @@ export default function ExerciseStatsModal({ visible, onClose, initialExerciseId
                         yAxisLabelSuffix=" kg"
                       />
                       <Text style={styles.chartLegend}>
-                        — Charge max par séance  ╌ Charge min
+                        {t('workout.stats.weightLegend')}
                       </Text>
                     </View>
                   )}
@@ -362,12 +367,12 @@ export default function ExerciseStatsModal({ visible, onClose, initialExerciseId
                         roundedTop
                         yAxisLabelSuffix=" kg"
                       />
-                      <Text style={styles.chartLegend}>Volume = poids × reps (toutes séries)</Text>
+                      <Text style={styles.chartLegend}>{t('workout.stats.volumeLegend')}</Text>
                     </View>
                   )}
 
                   {/* ── Historique détaillé ── */}
-                  <Text style={styles.sectionLabel}>Détail des séances</Text>
+                  <Text style={styles.sectionLabel}>{t('workout.stats.sessionDetail')}</Text>
                   {[...history].reverse().map((h, i) => {
                     const sessionOrm = h.sets
                       .filter((s) => s.weight !== null && s.reps > 0)
@@ -380,7 +385,7 @@ export default function ExerciseStatsModal({ visible, onClose, initialExerciseId
                       <View key={i} style={styles.sessionCard}>
                         <View style={styles.sessionHeader}>
                           <Text style={styles.sessionDate}>
-                            {format(new Date(h.date + 'T12:00:00'), 'EEEE d MMM', { locale: fr })}
+                            {format(new Date(h.date + 'T12:00:00'), t('workout.stats.sessionDateFormat'), { locale: dateLocale() })}
                           </Text>
                           <View style={styles.sessionBadges}>
                             {h.maxWeight !== null && (
@@ -402,10 +407,10 @@ export default function ExerciseStatsModal({ visible, onClose, initialExerciseId
                         <View style={styles.setTable}>
                           <View style={styles.setTableHeader}>
                             <Text style={[styles.setCol, styles.setColNum]}>#</Text>
-                            <Text style={[styles.setCol, { flex: 1 }]}>Poids</Text>
-                            <Text style={[styles.setCol, { flex: 1 }]}>Reps</Text>
-                            <Text style={[styles.setCol, { flex: 1.2 }]}>1RM est.</Text>
-                            <Text style={[styles.setCol, { flex: 1 }]}>Volume</Text>
+                            <Text style={[styles.setCol, { flex: 1 }]}>{t('workout.stats.colWeight')}</Text>
+                            <Text style={[styles.setCol, { flex: 1 }]}>{t('workout.stats.colReps')}</Text>
+                            <Text style={[styles.setCol, { flex: 1.2 }]}>{t('workout.stats.col1rm')}</Text>
+                            <Text style={[styles.setCol, { flex: 1 }]}>{t('workout.stats.colVolume')}</Text>
                           </View>
                           {h.sets.map((s, j) => {
                             const setOrm = s.weight !== null ? epley1RM(s.weight, s.reps) : null;
@@ -414,7 +419,7 @@ export default function ExerciseStatsModal({ visible, onClose, initialExerciseId
                               <View key={j} style={[styles.setTableRow, j % 2 === 1 && styles.setTableRowAlt]}>
                                 <Text style={[styles.setCol, styles.setColNum, styles.setVal]}>{j + 1}</Text>
                                 <Text style={[styles.setCol, { flex: 1 }, styles.setVal]}>
-                                  {s.weight !== null ? `${s.weight} kg` : 'Corps'}
+                                  {s.weight !== null ? `${s.weight} kg` : t('workout.stats.bodyweight')}
                                 </Text>
                                 <Text style={[styles.setCol, { flex: 1 }, styles.setVal]}>{s.reps}</Text>
                                 <Text style={[styles.setCol, { flex: 1.2 }, styles.setVal, { color: COLORS.primaryLight }]}>
@@ -428,7 +433,11 @@ export default function ExerciseStatsModal({ visible, onClose, initialExerciseId
                           })}
                           <View style={styles.setTableFooter}>
                             <Text style={styles.setFooterText}>
-                              {h.sets.length} séries · {h.sets.reduce((s, r) => s + r.reps, 0)} reps · vol. {Math.round(h.totalVolume)} kg
+                              {t('workout.stats.footer', {
+                                sets: h.sets.length,
+                                reps: h.sets.reduce((s, r) => s + r.reps, 0),
+                                volume: Math.round(h.totalVolume),
+                              })}
                             </Text>
                           </View>
                         </View>

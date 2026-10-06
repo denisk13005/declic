@@ -12,6 +12,7 @@ import {
   Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ProgramDay, estimateSessionMinutes } from '@/utils/programGenerator';
 import { useSessionStore } from '@/stores/sessionStore';
@@ -19,6 +20,7 @@ import { useWorkoutStore } from '@/stores/workoutStore';
 import { useProfileStore } from '@/stores/profileStore';
 import { ExerciseLog, SetLog } from '@/types';
 import { computeWorkoutCalories } from '@/utils/workout';
+import { exerciseName, exerciseDescription } from '@/data/exercises';
 import { useAppColors } from '@/hooks/useAppColors';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
 
@@ -63,13 +65,14 @@ function SetTable({
   onAddSet: (exerciseId: string) => void;
   onRemoveSet: (exerciseId: string, setIndex: number) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <View style={setStyles.container}>
       {/* En-tête colonnes */}
       <View style={setStyles.header}>
         <Text style={[setStyles.colLabel, { width: 32 }]}>#</Text>
-        <Text style={[setStyles.colLabel, { flex: 1 }]}>Poids (kg)</Text>
-        <Text style={[setStyles.colLabel, { flex: 1 }]}>Reps</Text>
+        <Text style={[setStyles.colLabel, { flex: 1 }]}>{t('workout.session.weightKg')}</Text>
+        <Text style={[setStyles.colLabel, { flex: 1 }]}>{t('workout.session.reps')}</Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -113,7 +116,7 @@ function SetTable({
 
       <TouchableOpacity style={setStyles.addSetBtn} onPress={() => onAddSet(exerciseId)} activeOpacity={0.7}>
         <Ionicons name="add" size={14} color={COLORS.primary} />
-        <Text style={setStyles.addSetText}>Ajouter une série</Text>
+        <Text style={setStyles.addSetText}>{t('workout.session.addSet')}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -144,11 +147,12 @@ function ExerciseCard({
   onAddSet: (exerciseId: string) => void;
   onRemoveSet: (exerciseId: string, setIndex: number) => void;
 }) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
 
   function openYoutube(name: string) {
-    const query = encodeURIComponent(name + ' exercice musculation');
+    const query = encodeURIComponent(t('workout.session.youtubeQuery', { name }));
     Linking.openURL('https://www.youtube.com/results?search_query=' + query);
   }
 
@@ -159,6 +163,12 @@ function ExerciseCard({
 
   const setsA = logDraft[pe.exercise.id] ?? [];
   const setsB = pe.supersetWith ? (logDraft[pe.supersetWith.id] ?? []) : [];
+
+  // Noms / descriptions traduits (le programme sauvegardé garde la langue de création)
+  const nameA = exerciseName(pe.exercise.id, pe.exercise.name);
+  const descA = exerciseDescription(pe.exercise.id, pe.exercise.description);
+  const nameB = pe.supersetWith ? exerciseName(pe.supersetWith.id, pe.supersetWith.name) : '';
+  const descB = pe.supersetWith ? exerciseDescription(pe.supersetWith.id, pe.supersetWith.description) : '';
 
   const doneA = setsA.filter((s) => parseInt(s.reps) > 0).length;
   const doneB = isSuperset ? setsB.filter((s) => parseInt(s.reps) > 0).length : 0;
@@ -190,20 +200,20 @@ function ExerciseCard({
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             {isSuperset && <Text style={cardStyles.labelBadge}>A</Text>}
             <Text style={[cardStyles.exName, isDoneA && cardStyles.exNameDone]} numberOfLines={1}>
-              {pe.exercise.name}
+              {nameA}
             </Text>
           </View>
           {isSuperset && pe.supersetWith && (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
               <Text style={cardStyles.labelBadge}>B</Text>
               <Text style={[cardStyles.exName, isDoneB && cardStyles.exNameDone]} numberOfLines={1}>
-                {pe.supersetWith.name}
+                {nameB}
               </Text>
             </View>
           )}
           <Text style={cardStyles.exMeta}>
             {pe.sets} × {pe.reps}{pe.rest ? `  ·  ${pe.rest}` : ''}
-            {doneA > 0 || doneB > 0 ? `  ·  ${isSuperset ? `${doneA}+${doneB}` : doneA}/${setsA.length} séries` : ''}
+            {doneA > 0 || doneB > 0 ? `  ·  ${t('workout.session.setsDone', { done: isSuperset ? `${doneA}+${doneB}` : doneA, total: setsA.length })}` : ''}
           </Text>
         </View>
 
@@ -230,21 +240,21 @@ function ExerciseCard({
       {/* Description / démonstration exercice */}
       {showInfo && (
         <View style={cardStyles.infoBox}>
-          <Text style={cardStyles.infoLabel}>{isSuperset ? `A — ${pe.exercise.name}` : pe.exercise.name}</Text>
-          <Text style={cardStyles.infoText}>{pe.exercise.description}</Text>
-          <TouchableOpacity style={cardStyles.ytBtn} onPress={() => openYoutube(pe.exercise.name)} activeOpacity={0.7}>
+          <Text style={cardStyles.infoLabel}>{isSuperset ? `A — ${nameA}` : nameA}</Text>
+          <Text style={cardStyles.infoText}>{descA}</Text>
+          <TouchableOpacity style={cardStyles.ytBtn} onPress={() => openYoutube(nameA)} activeOpacity={0.7}>
             <Ionicons name="logo-youtube" size={13} color="#EF4444" />
-            <Text style={cardStyles.ytText}>Voir une démonstration</Text>
+            <Text style={cardStyles.ytText}>{t('workout.session.watchDemo')}</Text>
           </TouchableOpacity>
 
           {isSuperset && pe.supersetWith && (
             <>
               <View style={cardStyles.infoDivider} />
-              <Text style={cardStyles.infoLabel}>B — {pe.supersetWith.name}</Text>
-              <Text style={cardStyles.infoText}>{pe.supersetWith.description}</Text>
-              <TouchableOpacity style={cardStyles.ytBtn} onPress={() => openYoutube(pe.supersetWith!.name)} activeOpacity={0.7}>
+              <Text style={cardStyles.infoLabel}>B — {nameB}</Text>
+              <Text style={cardStyles.infoText}>{descB}</Text>
+              <TouchableOpacity style={cardStyles.ytBtn} onPress={() => openYoutube(nameB)} activeOpacity={0.7}>
                 <Ionicons name="logo-youtube" size={13} color="#EF4444" />
-                <Text style={cardStyles.ytText}>Voir une démonstration</Text>
+                <Text style={cardStyles.ytText}>{t('workout.session.watchDemo')}</Text>
               </TouchableOpacity>
             </>
           )}
@@ -256,7 +266,7 @@ function ExerciseCard({
         <View style={cardStyles.body}>
           {/* Exercice A */}
           <Text style={cardStyles.exLabel}>
-            {isSuperset ? `A — ${pe.exercise.name}` : pe.exercise.name}
+            {isSuperset ? `A — ${nameA}` : nameA}
           </Text>
           <SetTable
             exerciseId={pe.exercise.id}
@@ -270,7 +280,7 @@ function ExerciseCard({
           {isSuperset && pe.supersetWith && (
             <>
               <View style={cardStyles.separator} />
-              <Text style={cardStyles.exLabel}>B — {pe.supersetWith.name}</Text>
+              <Text style={cardStyles.exLabel}>B — {nameB}</Text>
               <SetTable
                 exerciseId={pe.supersetWith.id}
                 sets={setsB}
@@ -294,6 +304,7 @@ function ExerciseCard({
 // ─── Modal principal ──────────────────────────────────────────────────────────
 
 export default function WorkoutSessionModal({ visible, day, date, onClose }: Props) {
+  const { t } = useTranslation();
   const C = useAppColors();
   const { saveSession, getSessionForDate } = useSessionStore();
   const { addWorkout, removeWorkout } = useWorkoutStore();
@@ -367,6 +378,7 @@ export default function WorkoutSessionModal({ visible, day, date, onClose }: Pro
   const pct = total > 0 ? doneCount / total : 0;
 
   function handleSave() {
+    if (!day) return;
     // Construit les ExerciseLogs depuis le draft
     const exerciseLogs: ExerciseLog[] = [];
 
@@ -379,7 +391,7 @@ export default function WorkoutSessionModal({ visible, day, date, onClose }: Pro
         }))
         .filter((s) => s.reps > 0);
       if (parsedA.length > 0) {
-        exerciseLogs.push({ exerciseId: pe.exercise.id, exerciseName: pe.exercise.name, sets: parsedA });
+        exerciseLogs.push({ exerciseId: pe.exercise.id, exerciseName: exerciseName(pe.exercise.id, pe.exercise.name), sets: parsedA });
       }
 
       if (pe.supersetWith && (pe.technique === 'superset' || pe.technique === 'biset')) {
@@ -391,7 +403,7 @@ export default function WorkoutSessionModal({ visible, day, date, onClose }: Pro
           }))
           .filter((s) => s.reps > 0);
         if (parsedB.length > 0) {
-          exerciseLogs.push({ exerciseId: pe.supersetWith.id, exerciseName: pe.supersetWith.name, sets: parsedB });
+          exerciseLogs.push({ exerciseId: pe.supersetWith.id, exerciseName: exerciseName(pe.supersetWith.id, pe.supersetWith.name), sets: parsedB });
         }
       }
     }
@@ -450,7 +462,7 @@ export default function WorkoutSessionModal({ visible, day, date, onClose }: Pro
             {/* Header */}
             <View style={styles.headerRow}>
               <View style={styles.dayBadge}>
-                <Text style={styles.dayBadgeText}>J{day.dayNumber}</Text>
+                <Text style={styles.dayBadgeText}>{t('sport.dayBadge', { n: day.dayNumber })}</Text>
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.title}>{day.label}</Text>
@@ -508,7 +520,7 @@ export default function WorkoutSessionModal({ visible, day, date, onClose }: Pro
                   color="#fff"
                 />
                 <Text style={styles.saveBtnText}>
-                  {pct === 1 ? 'Séance complète ! Sauvegarder' : `Sauvegarder (${doneCount}/${total})`}
+                  {pct === 1 ? t('workout.session.completeSave') : t('workout.session.saveProgress', { done: doneCount, total })}
                 </Text>
               </LinearGradient>
             </TouchableOpacity>

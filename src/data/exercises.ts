@@ -1,4 +1,5 @@
 import { PractitionerLevel } from '@/types';
+import i18n, { translatedRecord } from '@/i18n';
 
 export type MuscleGroup =
   | 'chest'
@@ -12,18 +13,10 @@ export type MuscleGroup =
   | 'calves'
   | 'abs';
 
-export const MUSCLE_GROUP_LABELS: Record<MuscleGroup, string> = {
-  chest:      'Pectoraux',
-  back:       'Dos',
-  shoulders:  'Épaules',
-  biceps:     'Biceps',
-  triceps:    'Triceps',
-  quads:      'Quadriceps',
-  hamstrings: 'Ischio-jambiers',
-  glutes:     'Fessiers',
-  calves:     'Mollets',
-  abs:        'Abdominaux',
-};
+export const MUSCLE_GROUP_LABELS = translatedRecord<MuscleGroup>(
+  ['chest', 'back', 'shoulders', 'biceps', 'triceps', 'quads', 'hamstrings', 'glutes', 'calves', 'abs'],
+  'muscleGroups',
+);
 
 /**
  * Groupes musculaires antagonistes pour les supersets.
@@ -52,15 +45,10 @@ export type EquipmentType =
   | 'cables'          // machine à câbles / poulies
   | 'machines';       // machines guidées (leg press, pec deck…)
 
-export const EQUIPMENT_LABELS: Record<EquipmentType, string> = {
-  bodyweight:      'Poids de corps',
-  dumbbells:       'Haltères',
-  barbell:         'Barre + rack',
-  pull_up_bar:     'Barre de traction',
-  resistance_band: 'Élastiques',
-  cables:          'Câbles / poulies',
-  machines:        'Machines',
-};
+export const EQUIPMENT_LABELS = translatedRecord<EquipmentType>(
+  ['bodyweight', 'dumbbells', 'barbell', 'pull_up_bar', 'resistance_band', 'cables', 'machines'],
+  'equipment',
+);
 
 export const EQUIPMENT_EMOJI: Record<EquipmentType, string> = {
   bodyweight:      '🤸',
@@ -78,19 +66,20 @@ export const ALL_EQUIPMENT: EquipmentType[] = [
 
 export interface Exercise {
   id: string;
-  name: string;
+  /** Nom traduit (getter i18n : exercises.<id>.name) */
+  readonly name: string;
   muscleGroup: MuscleGroup;
   isCompound: boolean;
   minLevel: PractitionerLevel;
   /** Famille de mouvement — deux exercices de la même famille ne doivent pas être dans la même séance */
   family: string;
-  /** Conseil technique court en français */
-  description: string;
+  /** Conseil technique court, traduit (getter i18n : exercises.<id>.description) */
+  readonly description: string;
   /** Matériel principal requis pour réaliser l'exercice */
   equipment: EquipmentType;
 }
 
-type RawExercise = Omit<Exercise, 'equipment'>;
+type RawExercise = Omit<Exercise, 'equipment' | 'name' | 'description'>;
 
 const LEVEL_ORDER: Record<PractitionerLevel, number> = {
   beginner: 0,
@@ -104,195 +93,195 @@ export function isAvailableForLevel(exercise: Exercise, level: PractitionerLevel
 
 const RAW_EXERCISES: RawExercise[] = [
   // ─── Pectoraux ───────────────────────────────────────────────────────────────
-  { id: 'push_up',          name: 'Pompes',                       muscleGroup: 'chest',      isCompound: true,  minLevel: 'beginner',     family: 'chest_press_flat',    description: "Corps aligné de la tête aux talons, coudes à 45° du buste. Descends jusqu'à ce que la poitrine frôle le sol puis pousse explosif." },
-  { id: 'pec_deck',         name: 'Pec deck (machine)',           muscleGroup: 'chest',      isCompound: false, minLevel: 'beginner',     family: 'chest_fly',           description: "Assis sur la machine, referme les bras en arc de cercle devant toi. Contrôle lentement le retour pour étirer les pectoraux." },
-  { id: 'cable_fly',        name: 'Croisé poulie',                muscleGroup: 'chest',      isCompound: false, minLevel: 'beginner',     family: 'chest_fly',           description: "Debout entre deux poulies, ramène les câbles devant toi en arc de cercle. Garde une légère flexion des coudes tout le long." },
-  { id: 'bench_press_db',   name: 'Développé couché haltères',    muscleGroup: 'chest',      isCompound: true,  minLevel: 'beginner',     family: 'chest_press_flat',    description: "Allongé sur le banc, haltères au niveau de la poitrine, coudes à 75°. Pousse vers le haut en amenant les haltères sans les toucher en haut. Plus d'amplitude que la barre." },
-  { id: 'bench_press',      name: 'Développé couché barre',       muscleGroup: 'chest',      isCompound: true,  minLevel: 'intermediate', family: 'chest_press_flat',    description: "Omoplates serrées sur le banc, barre descendue vers le bas des pectoraux. Coudes à 75°, pousse verticalement sans décoller les fesses." },
-  { id: 'incline_press',    name: 'Développé incliné haltères',   muscleGroup: 'chest',      isCompound: true,  minLevel: 'intermediate', family: 'chest_press_incline', description: "Banc incliné à 30-45°, haltères au niveau de la poitrine haute. Pousse vers le haut en concentrant le travail sur le haut des pectoraux." },
-  { id: 'incline_press_bb', name: 'Développé incliné barre',      muscleGroup: 'chest',      isCompound: true,  minLevel: 'intermediate', family: 'chest_press_incline', description: "Banc incliné 30-45°, barre descendue vers le haut de la poitrine. Charge plus lourde possible qu'aux haltères pour stimuler les pectoraux supérieurs." },
-  { id: 'dips_chest',       name: 'Dips (pectoraux)',             muscleGroup: 'chest',      isCompound: true,  minLevel: 'intermediate', family: 'chest_dips',          description: "Incline le buste vers l'avant (30-45°) pour cibler les pectoraux. Descends jusqu'à 90° de flexion du coude, pousse en contractant la poitrine." },
-  { id: 'fly_dumbbell',     name: 'Écarté haltères',              muscleGroup: 'chest',      isCompound: false, minLevel: 'intermediate', family: 'chest_fly',           description: "Allongé, descends les haltères en arc de cercle jusqu'à sentir l'étirement des pectoraux. Remonte sans verrouiller les coudes." },
-  { id: 'decline_press',    name: 'Développé décliné haltères',   muscleGroup: 'chest',      isCompound: true,  minLevel: 'advanced',     family: 'chest_press_decline', description: "Banc décliné, cible le bas des pectoraux. Garde les coudes à 75° du buste et pousse en direction du plafond." },
-  { id: 'guillotine_press', name: 'Développé couché cou',         muscleGroup: 'chest',      isCompound: true,  minLevel: 'advanced',     family: 'chest_press_flat',    description: "Barre descendue vers la gorge, prise large. Maximise l'étirement pectoral mais exige des épaules saines. Utilise une parade." },
+  { id: 'push_up',          muscleGroup: 'chest',      isCompound: true,  minLevel: 'beginner',     family: 'chest_press_flat' },
+  { id: 'pec_deck',         muscleGroup: 'chest',      isCompound: false, minLevel: 'beginner',     family: 'chest_fly' },
+  { id: 'cable_fly',        muscleGroup: 'chest',      isCompound: false, minLevel: 'beginner',     family: 'chest_fly' },
+  { id: 'bench_press_db',   muscleGroup: 'chest',      isCompound: true,  minLevel: 'beginner',     family: 'chest_press_flat' },
+  { id: 'bench_press',      muscleGroup: 'chest',      isCompound: true,  minLevel: 'intermediate', family: 'chest_press_flat' },
+  { id: 'incline_press',    muscleGroup: 'chest',      isCompound: true,  minLevel: 'intermediate', family: 'chest_press_incline' },
+  { id: 'incline_press_bb', muscleGroup: 'chest',      isCompound: true,  minLevel: 'intermediate', family: 'chest_press_incline' },
+  { id: 'dips_chest',       muscleGroup: 'chest',      isCompound: true,  minLevel: 'intermediate', family: 'chest_dips' },
+  { id: 'fly_dumbbell',     muscleGroup: 'chest',      isCompound: false, minLevel: 'intermediate', family: 'chest_fly' },
+  { id: 'decline_press',    muscleGroup: 'chest',      isCompound: true,  minLevel: 'advanced',     family: 'chest_press_decline' },
+  { id: 'guillotine_press', muscleGroup: 'chest',      isCompound: true,  minLevel: 'advanced',     family: 'chest_press_flat' },
 
   // ─── Dos ─────────────────────────────────────────────────────────────────────
-  { id: 'lat_pulldown',     name: 'Tirage poulie haute',          muscleGroup: 'back',       isCompound: true,  minLevel: 'beginner',     family: 'vertical_pull',       description: "Prise large, tire la barre vers le haut de la poitrine en ramenant les coudes vers le bas et l'arrière. Initie le mouvement avec les dorsaux." },
-  { id: 'seated_row',       name: 'Rowing poulie basse',          muscleGroup: 'back',       isCompound: false, minLevel: 'beginner',     family: 'horizontal_row',      description: "Assis, dos droit, tire la poignée vers le nombril. Serre les omoplates ensemble en fin de mouvement, contrôle le retour." },
-  { id: 'face_pull',        name: 'Face pull',                    muscleGroup: 'back',       isCompound: false, minLevel: 'beginner',     family: 'face_pull',           description: "Poulie haute, tire la corde vers le visage en écartant les mains de chaque côté de la tête. Excellent pour la santé des épaules." },
-  { id: 'pull_up',          name: 'Tractions',                    muscleGroup: 'back',       isCompound: true,  minLevel: 'intermediate', family: 'vertical_pull',       description: "Prise pronation légèrement plus large que les épaules. Initie avec les dorsaux, tire jusqu'au menton au-dessus de la barre. Corps gainé." },
-  { id: 'barbell_row',      name: 'Rowing barre',                 muscleGroup: 'back',       isCompound: true,  minLevel: 'intermediate', family: 'horizontal_row',      description: "Buste incliné à 45°, genoux légèrement fléchis. Tire la barre vers le bas du sternum en gardant le dos plat et les coudes proches du corps." },
-  { id: 'one_arm_row',      name: 'Rowing haltère unilatéral',    muscleGroup: 'back',       isCompound: false, minLevel: 'intermediate', family: 'horizontal_row',      description: "Un genou et une main sur le banc. Tire l'haltère vers la hanche avec une légère rotation du buste. Coude haut en fin de mouvement." },
-  { id: 'deadlift',         name: 'Soulevé de terre',             muscleGroup: 'back',       isCompound: true,  minLevel: 'intermediate', family: 'hip_hinge',           description: "Pieds largeur de hanches, barre sur les tibias. Pousse le sol sans arrondir le dos, garde la barre très proche du corps tout le long." },
-  { id: 'chest_supported',  name: 'Rowing prise neutre incliné',  muscleGroup: 'back',       isCompound: false, minLevel: 'intermediate', family: 'horizontal_row',      description: "Poitrine appuyée sur un banc incliné, tire les haltères vers les hanches. Élimine la compensation lombaire pour isoler le dos." },
-  { id: 'chin_up',          name: 'Tractions prise supination',   muscleGroup: 'back',       isCompound: true,  minLevel: 'intermediate', family: 'vertical_pull',       description: "Prise supination (paumes vers soi), largeur d'épaules. Tire jusqu'au menton au-dessus de la barre. Sollicite plus les biceps que les tractions pronation." },
-  { id: 'tbar_row',         name: 'Rowing T-bar',                 muscleGroup: 'back',       isCompound: true,  minLevel: 'intermediate', family: 'horizontal_row',      description: "Barre dans un landmine, poignée en V, buste incliné à 45°. Tire vers le sternum en serrant les omoplates. Permet de charger lourd en sécurité." },
-  { id: 'pullover_db',      name: 'Pullover haltère',             muscleGroup: 'back',       isCompound: false, minLevel: 'intermediate', family: 'pullover',            description: "Allongé en travers du banc, haltère tenu à deux mains. Passe les bras tendus derrière la tête en gardant les coudes légèrement fléchis. Étirement des dorsaux." },
-  { id: 'pendlay_row',      name: 'Pendlay Row',                  muscleGroup: 'back',       isCompound: true,  minLevel: 'advanced',     family: 'horizontal_row',      description: "Barre au sol, buste horizontal. Tire de façon explosive vers le bas du sternum et repose la barre au sol à chaque répétition." },
-  { id: 'meadows_row',      name: 'Meadows Row',                  muscleGroup: 'back',       isCompound: false, minLevel: 'advanced',     family: 'horizontal_row',      description: "Barre dans un landmine, position perpendiculaire. Tire vers la hanche avec rotation du buste. Grande amplitude de mouvement." },
+  { id: 'lat_pulldown',     muscleGroup: 'back',       isCompound: true,  minLevel: 'beginner',     family: 'vertical_pull' },
+  { id: 'seated_row',       muscleGroup: 'back',       isCompound: false, minLevel: 'beginner',     family: 'horizontal_row' },
+  { id: 'face_pull',        muscleGroup: 'back',       isCompound: false, minLevel: 'beginner',     family: 'face_pull' },
+  { id: 'pull_up',          muscleGroup: 'back',       isCompound: true,  minLevel: 'intermediate', family: 'vertical_pull' },
+  { id: 'barbell_row',      muscleGroup: 'back',       isCompound: true,  minLevel: 'intermediate', family: 'horizontal_row' },
+  { id: 'one_arm_row',      muscleGroup: 'back',       isCompound: false, minLevel: 'intermediate', family: 'horizontal_row' },
+  { id: 'deadlift',         muscleGroup: 'back',       isCompound: true,  minLevel: 'intermediate', family: 'hip_hinge' },
+  { id: 'chest_supported',  muscleGroup: 'back',       isCompound: false, minLevel: 'intermediate', family: 'horizontal_row' },
+  { id: 'chin_up',          muscleGroup: 'back',       isCompound: true,  minLevel: 'intermediate', family: 'vertical_pull' },
+  { id: 'tbar_row',         muscleGroup: 'back',       isCompound: true,  minLevel: 'intermediate', family: 'horizontal_row' },
+  { id: 'pullover_db',      muscleGroup: 'back',       isCompound: false, minLevel: 'intermediate', family: 'pullover' },
+  { id: 'pendlay_row',      muscleGroup: 'back',       isCompound: true,  minLevel: 'advanced',     family: 'horizontal_row' },
+  { id: 'meadows_row',      muscleGroup: 'back',       isCompound: false, minLevel: 'advanced',     family: 'horizontal_row' },
 
   // ─── Épaules ─────────────────────────────────────────────────────────────────
-  { id: 'lateral_raise',    name: 'Élévations latérales',         muscleGroup: 'shoulders',  isCompound: false, minLevel: 'beginner',     family: 'lateral_raise',       description: "Haltères en prise neutre, lève les bras sur les côtés jusqu'à l'horizontale. Légère flexion du coude, pouce légèrement baissé." },
-  { id: 'dumbbell_press',   name: 'Développé épaules haltères',   muscleGroup: 'shoulders',  isCompound: true,  minLevel: 'beginner',     family: 'overhead_press',      description: "Assis ou debout, coudes à 90° en bas. Pousse les haltères au-dessus de la tête sans verrouiller les coudes. Gainage serré." },
-  { id: 'front_raise',      name: 'Élévations frontales',         muscleGroup: 'shoulders',  isCompound: false, minLevel: 'beginner',     family: 'front_raise',         description: "Lève un bras (ou les deux) devant toi jusqu'à l'horizontale. Garde le buste droit et évite de balancer." },
-  { id: 'ohp',              name: 'Développé militaire barre',    muscleGroup: 'shoulders',  isCompound: true,  minLevel: 'intermediate', family: 'overhead_press',      description: "Barre au niveau des clavicules, serre les fessiers et le gainage. Pousse verticalement au-dessus de la tête, barre dans l'axe." },
-  { id: 'arnold_press',     name: 'Arnold Press',                 muscleGroup: 'shoulders',  isCompound: true,  minLevel: 'intermediate', family: 'overhead_press',      description: "Haltères devant le visage prise supination. En montant, ouvre les coudes et tourne les poignets vers l'extérieur. Travaille les 3 faisceaux." },
-  { id: 'rear_delt_fly',    name: 'Oiseau haltères (deltoïde post.)',muscleGroup: 'shoulders', isCompound: false, minLevel: 'beginner',     family: 'rear_delt',           description: "Penché en avant, bras légèrement fléchis, ouvre les bras en croix jusqu'à l'horizontale. Cible le deltoïde postérieur souvent négligé." },
-  { id: 'upright_row',      name: 'Rowing menton',                muscleGroup: 'shoulders',  isCompound: false, minLevel: 'intermediate', family: 'upright_row',         description: "Barre ou haltères le long du corps, tire vers le menton en gardant les coudes hauts. Attention si tu as des antécédents d'épaules." },
-  { id: 'machine_shoulder', name: 'Développé épaules machine',    muscleGroup: 'shoulders',  isCompound: true,  minLevel: 'beginner',     family: 'overhead_press',      description: "Assis dans la machine, pousse les poignées au-dessus de la tête. Idéal pour débuter : pas d'équilibre à gérer, concentre-toi sur la contraction." },
-  { id: 'cable_lateral',    name: 'Élévations latérales poulie',  muscleGroup: 'shoulders',  isCompound: false, minLevel: 'intermediate', family: 'lateral_raise',       description: "Poulie basse sur le côté, lève le bras en arc jusqu'à l'horizontale. La tension constante de la poulie cible mieux le deltoïde médian." },
-  { id: 'behind_neck_press',name: 'Développé nuque',              muscleGroup: 'shoulders',  isCompound: true,  minLevel: 'advanced',     family: 'overhead_press',      description: "Barre derrière la nuque, pousse vers le haut. Réservé aux pratiquants avec une excellente mobilité et sans fragilité aux épaules." },
+  { id: 'lateral_raise',    muscleGroup: 'shoulders',  isCompound: false, minLevel: 'beginner',     family: 'lateral_raise' },
+  { id: 'dumbbell_press',   muscleGroup: 'shoulders',  isCompound: true,  minLevel: 'beginner',     family: 'overhead_press' },
+  { id: 'front_raise',      muscleGroup: 'shoulders',  isCompound: false, minLevel: 'beginner',     family: 'front_raise' },
+  { id: 'ohp',              muscleGroup: 'shoulders',  isCompound: true,  minLevel: 'intermediate', family: 'overhead_press' },
+  { id: 'arnold_press',     muscleGroup: 'shoulders',  isCompound: true,  minLevel: 'intermediate', family: 'overhead_press' },
+  { id: 'rear_delt_fly',    muscleGroup: 'shoulders', isCompound: false, minLevel: 'beginner',     family: 'rear_delt' },
+  { id: 'upright_row',      muscleGroup: 'shoulders',  isCompound: false, minLevel: 'intermediate', family: 'upright_row' },
+  { id: 'machine_shoulder', muscleGroup: 'shoulders',  isCompound: true,  minLevel: 'beginner',     family: 'overhead_press' },
+  { id: 'cable_lateral',    muscleGroup: 'shoulders',  isCompound: false, minLevel: 'intermediate', family: 'lateral_raise' },
+  { id: 'behind_neck_press',muscleGroup: 'shoulders',  isCompound: true,  minLevel: 'advanced',     family: 'overhead_press' },
 
   // ─── Biceps ──────────────────────────────────────────────────────────────────
-  { id: 'dumbbell_curl',    name: 'Curl haltères alterné',        muscleGroup: 'biceps',     isCompound: false, minLevel: 'beginner',     family: 'supinated_curl',      description: "En alternant, amène l'haltère jusqu'à l'épaule avec supination du poignet en haut. Coude fixe contre le corps, contrôle la descente." },
-  { id: 'hammer_curl',      name: 'Curl marteau',                 muscleGroup: 'biceps',     isCompound: false, minLevel: 'beginner',     family: 'neutral_curl',        description: "Prise neutre (pouces vers le haut), amène l'haltère à l'épaule. Travaille le brachial et le brachioradial en plus du biceps." },
-  { id: 'cable_curl',       name: 'Curl poulie basse',            muscleGroup: 'biceps',     isCompound: false, minLevel: 'beginner',     family: 'supinated_curl',      description: "Poulie basse, curl avec barre droite ou EZ. La tension constante de la poulie maximise le travail du biceps en bas du mouvement." },
-  { id: 'barbell_curl',     name: 'Curl barre',                   muscleGroup: 'biceps',     isCompound: false, minLevel: 'intermediate', family: 'supinated_curl',      description: "Barre droite ou EZ, flex les deux bras en gardant les coudes fixes contre le corps. Contrôle lentement la descente." },
-  { id: 'incline_curl',     name: 'Curl incliné haltères',        muscleGroup: 'biceps',     isCompound: false, minLevel: 'intermediate', family: 'incline_curl',        description: "Allongé sur banc incliné, les bras pendent derrière. L'étirement de la longue portion du biceps en position basse est maximal." },
-  { id: 'preacher_curl',    name: 'Curl pupitre (Scott curl)',    muscleGroup: 'biceps',     isCompound: false, minLevel: 'intermediate', family: 'preacher_curl',       description: "Bras appuyés sur le coussin incliné du pupitre. Le bras est stabilisé, impossible de tricher. Cible intensément le biceps court." },
-  { id: 'concentration_curl',name: 'Curl concentré',             muscleGroup: 'biceps',     isCompound: false, minLevel: 'intermediate', family: 'concentration_curl',  description: "Assis, coude appuyé contre l'intérieur de la cuisse. Curl en supinant le poignet au sommet. Pic de contraction maximal sur le biceps." },
-  { id: 'spider_curl',      name: 'Spider curl',                  muscleGroup: 'biceps',     isCompound: false, minLevel: 'advanced',     family: 'spider_curl',         description: "Poitrine appuyée sur un banc incliné, bras tombant verticalement. Isole parfaitement le biceps sans compensation des épaules." },
-  { id: 'bayesian_curl',    name: 'Bayesian curl (poulie haute)', muscleGroup: 'biceps',     isCompound: false, minLevel: 'advanced',     family: 'cable_curl_high',     description: "Poulie haute dans le dos, flex le coude vers l'avant. La tension maximale se produit en position d'étirement, très efficace." },
+  { id: 'dumbbell_curl',    muscleGroup: 'biceps',     isCompound: false, minLevel: 'beginner',     family: 'supinated_curl' },
+  { id: 'hammer_curl',      muscleGroup: 'biceps',     isCompound: false, minLevel: 'beginner',     family: 'neutral_curl' },
+  { id: 'cable_curl',       muscleGroup: 'biceps',     isCompound: false, minLevel: 'beginner',     family: 'supinated_curl' },
+  { id: 'barbell_curl',     muscleGroup: 'biceps',     isCompound: false, minLevel: 'intermediate', family: 'supinated_curl' },
+  { id: 'incline_curl',     muscleGroup: 'biceps',     isCompound: false, minLevel: 'intermediate', family: 'incline_curl' },
+  { id: 'preacher_curl',    muscleGroup: 'biceps',     isCompound: false, minLevel: 'intermediate', family: 'preacher_curl' },
+  { id: 'concentration_curl',muscleGroup: 'biceps',     isCompound: false, minLevel: 'intermediate', family: 'concentration_curl' },
+  { id: 'spider_curl',      muscleGroup: 'biceps',     isCompound: false, minLevel: 'advanced',     family: 'spider_curl' },
+  { id: 'bayesian_curl',    muscleGroup: 'biceps',     isCompound: false, minLevel: 'advanced',     family: 'cable_curl_high' },
 
   // ─── Triceps ─────────────────────────────────────────────────────────────────
-  { id: 'tricep_pushdown',  name: 'Pushdown poulie (corde)',       muscleGroup: 'triceps',    isCompound: false, minLevel: 'beginner',     family: 'tricep_pushdown',     description: "Poulie haute avec corde, coudes fixes aux flancs. Pousse vers le bas jusqu'à extension complète, écarte la corde en bas." },
-  { id: 'overhead_ext',     name: 'Extension triceps haltère',    muscleGroup: 'triceps',    isCompound: false, minLevel: 'beginner',     family: 'overhead_tricep',     description: "Haltère au-dessus de la tête, fléchis les coudes derrière la tête. Cible la longue portion. Garde les coudes pointés vers le plafond." },
-  { id: 'dips_triceps',     name: 'Dips banc (triceps)',          muscleGroup: 'triceps',    isCompound: true,  minLevel: 'beginner',     family: 'tricep_dips',         description: "Mains sur le banc derrière, buste vertical et proche du banc. Fléchis les coudes à 90° et remonte sans verrouiller." },
-  { id: 'skull_crusher',    name: 'Barre au front (EZ)',          muscleGroup: 'triceps',    isCompound: false, minLevel: 'intermediate', family: 'overhead_tricep',     description: "Allongé, barre EZ descend vers le front ou derrière la tête. Coudes fixes pointés vers le plafond, extension complète en haut." },
-  { id: 'close_grip_bench', name: 'Développé serré',              muscleGroup: 'triceps',    isCompound: true,  minLevel: 'intermediate', family: 'close_grip_press',    description: "Développé couché prise serrée (largeur d'épaules). Garde les coudes proches du corps. Excellent pour le volume des triceps." },
-  { id: 'dips_parallel',    name: 'Dips barres parallèles',       muscleGroup: 'triceps',    isCompound: true,  minLevel: 'intermediate', family: 'tricep_dips',         description: "Entre les barres, buste vertical pour cibler les triceps. Extension complète en haut, 90° de flexion en bas. Ajoute du poids si trop facile." },
-  { id: 'tricep_kickback',  name: 'Kickback haltères',            muscleGroup: 'triceps',    isCompound: false, minLevel: 'beginner',     family: 'tricep_kickback',     description: "Penché en avant, bras collé au corps, étends le coude vers l'arrière jusqu'à l'extension complète. Garde le bras fixe, seul l'avant-bras bouge." },
-  { id: 'cable_overhead_t', name: 'Extension triceps poulie haute',muscleGroup: 'triceps',   isCompound: false, minLevel: 'intermediate', family: 'overhead_tricep',     description: "Tourné face à la poulie haute, corde derrière la tête. Étends les coudes vers l'avant en maintenant les bras fixes. Cible la longue portion." },
-  { id: 'tate_press',       name: 'Tate Press',                   muscleGroup: 'triceps',    isCompound: false, minLevel: 'advanced',     family: 'close_grip_press',    description: "Haltères sur la poitrine, coudes pointés vers le haut et vers l'extérieur. Étends les coudes vers le plafond en pivotant les poignets." },
-  { id: 'jm_press',         name: 'JM Press',                     muscleGroup: 'triceps',    isCompound: false, minLevel: 'advanced',     family: 'overhead_tricep',     description: "Hybride entre skull crusher et développé serré. La barre descend vers la gorge, coudes à 45°. Technique avancée à fort volume triceps." },
+  { id: 'tricep_pushdown',  muscleGroup: 'triceps',    isCompound: false, minLevel: 'beginner',     family: 'tricep_pushdown' },
+  { id: 'overhead_ext',     muscleGroup: 'triceps',    isCompound: false, minLevel: 'beginner',     family: 'overhead_tricep' },
+  { id: 'dips_triceps',     muscleGroup: 'triceps',    isCompound: true,  minLevel: 'beginner',     family: 'tricep_dips' },
+  { id: 'skull_crusher',    muscleGroup: 'triceps',    isCompound: false, minLevel: 'intermediate', family: 'overhead_tricep' },
+  { id: 'close_grip_bench', muscleGroup: 'triceps',    isCompound: true,  minLevel: 'intermediate', family: 'close_grip_press' },
+  { id: 'dips_parallel',    muscleGroup: 'triceps',    isCompound: true,  minLevel: 'intermediate', family: 'tricep_dips' },
+  { id: 'tricep_kickback',  muscleGroup: 'triceps',    isCompound: false, minLevel: 'beginner',     family: 'tricep_kickback' },
+  { id: 'cable_overhead_t', muscleGroup: 'triceps',   isCompound: false, minLevel: 'intermediate', family: 'overhead_tricep' },
+  { id: 'tate_press',       muscleGroup: 'triceps',    isCompound: false, minLevel: 'advanced',     family: 'close_grip_press' },
+  { id: 'jm_press',         muscleGroup: 'triceps',    isCompound: false, minLevel: 'advanced',     family: 'overhead_tricep' },
 
   // ─── Quadriceps ──────────────────────────────────────────────────────────────
-  { id: 'leg_press',        name: 'Presse à cuisses',             muscleGroup: 'quads',      isCompound: true,  minLevel: 'beginner',     family: 'leg_press',           description: "Pieds largeur de hanches sur la plateforme. Descends jusqu'à 90° et pousse sans verrouiller les genoux en haut. Dos plaqué au dossier." },
-  { id: 'leg_extension',    name: 'Leg extension',                muscleGroup: 'quads',      isCompound: false, minLevel: 'beginner',     family: 'leg_extension',       description: "Assis sur la machine, étends les jambes jusqu'à la position haute en contractant les quadriceps. Contrôle lentement la descente." },
-  { id: 'goblet_squat',     name: 'Squat gobelet',                muscleGroup: 'quads',      isCompound: true,  minLevel: 'beginner',     family: 'machine_squat',       description: "Haltère tenu à deux mains contre la poitrine, pieds largeur d'épaules. Descends en gardant le buste vertical. Excellent pour apprendre le squat." },
-  { id: 'lunge',            name: 'Fentes haltères',              muscleGroup: 'quads',      isCompound: true,  minLevel: 'beginner',     family: 'lunge',               description: "Pas en avant, genou arrière à 2 cm du sol. Genou avant dans l'axe du pied, buste droit. Pousse sur le pied avant pour revenir." },
-  { id: 'walking_lunge',    name: 'Fentes marchées',              muscleGroup: 'quads',      isCompound: true,  minLevel: 'intermediate', family: 'lunge',               description: "Avance pas par pas en fente, alternant les jambes. Plus dynamique que les fentes statiques. Ajoute des haltères ou une barre pour progresser." },
-  { id: 'step_up',          name: 'Step-up haltères',             muscleGroup: 'quads',      isCompound: true,  minLevel: 'beginner',     family: 'step_up',             description: "Pose un pied sur un banc, pousse pour monter en gardant le buste droit. Travaille le quadriceps et les fessiers de façon unilatérale." },
-  { id: 'squat',            name: 'Squat barre',                  muscleGroup: 'quads',      isCompound: true,  minLevel: 'intermediate', family: 'back_squat',          description: "Barre sur les trapèzes, pieds largeur d'épaules. Descends jusqu'à la parallèle en gardant le buste droit et les genoux dans l'axe des pieds." },
-  { id: 'bulgarian_squat',  name: 'Squat bulgare',                muscleGroup: 'quads',      isCompound: true,  minLevel: 'intermediate', family: 'lunge',               description: "Pied arrière sur le banc, pied avant avancé. Descends en gardant le buste droit. Excellent pour corriger les déséquilibres." },
-  { id: 'hack_squat',       name: 'Hack squat (machine)',         muscleGroup: 'quads',      isCompound: true,  minLevel: 'intermediate', family: 'machine_squat',       description: "Dos calé sur la machine, pieds légèrement en avant. Descends à 90° minimum. Plus sûr pour le dos que le squat barre." },
-  { id: 'front_squat',      name: 'Squat avant',                  muscleGroup: 'quads',      isCompound: true,  minLevel: 'advanced',     family: 'back_squat',          description: "Barre sur les clavicules, buste très vertical. Exige une bonne mobilité des chevilles et des épaules. Cible intensément les quadriceps." },
-  { id: 'sissy_squat',      name: 'Sissy squat',                  muscleGroup: 'quads',      isCompound: false, minLevel: 'advanced',     family: 'leg_extension',       description: "Talons surélevés, incline le buste en arrière en fléchissant les genoux vers l'avant. Isolation intense des quadriceps." },
+  { id: 'leg_press',        muscleGroup: 'quads',      isCompound: true,  minLevel: 'beginner',     family: 'leg_press' },
+  { id: 'leg_extension',    muscleGroup: 'quads',      isCompound: false, minLevel: 'beginner',     family: 'leg_extension' },
+  { id: 'goblet_squat',     muscleGroup: 'quads',      isCompound: true,  minLevel: 'beginner',     family: 'machine_squat' },
+  { id: 'lunge',            muscleGroup: 'quads',      isCompound: true,  minLevel: 'beginner',     family: 'lunge' },
+  { id: 'walking_lunge',    muscleGroup: 'quads',      isCompound: true,  minLevel: 'intermediate', family: 'lunge' },
+  { id: 'step_up',          muscleGroup: 'quads',      isCompound: true,  minLevel: 'beginner',     family: 'step_up' },
+  { id: 'squat',            muscleGroup: 'quads',      isCompound: true,  minLevel: 'intermediate', family: 'back_squat' },
+  { id: 'bulgarian_squat',  muscleGroup: 'quads',      isCompound: true,  minLevel: 'intermediate', family: 'lunge' },
+  { id: 'hack_squat',       muscleGroup: 'quads',      isCompound: true,  minLevel: 'intermediate', family: 'machine_squat' },
+  { id: 'front_squat',      muscleGroup: 'quads',      isCompound: true,  minLevel: 'advanced',     family: 'back_squat' },
+  { id: 'sissy_squat',      muscleGroup: 'quads',      isCompound: false, minLevel: 'advanced',     family: 'leg_extension' },
 
   // ─── Ischio-jambiers ─────────────────────────────────────────────────────────
-  { id: 'leg_curl',         name: 'Leg curl couché',              muscleGroup: 'hamstrings', isCompound: false, minLevel: 'beginner',     family: 'leg_curl',            description: "Couché sur la machine, ramène les talons vers les fessiers. Hanche plaquée contre le banc. Contrôle lentement la descente." },
-  { id: 'rdl',              name: 'Soulevé de terre roumain',     muscleGroup: 'hamstrings', isCompound: true,  minLevel: 'intermediate', family: 'hip_hinge_hamstring', description: "Barre le long des jambes, penche le buste en gardant les genoux légèrement fléchis. Descends jusqu'à l'étirement des ischio, puis remonte." },
-  { id: 'good_morning',     name: 'Good morning',                 muscleGroup: 'hamstrings', isCompound: true,  minLevel: 'intermediate', family: 'hip_hinge_hamstring', description: "Barre sur les trapèzes, penche le buste en avant jusqu'à l'horizontale. Dos plat, genoux légèrement fléchis. Remonte en poussant les hanches en avant." },
-  { id: 'seated_leg_curl',  name: 'Leg curl assis',               muscleGroup: 'hamstrings', isCompound: false, minLevel: 'intermediate', family: 'leg_curl',            description: "Assis sur la machine, jambes fléchies sous le siège. La position assise allonge les ischio en haut pour un étirement plus complet." },
-  { id: 'nordic_curl',      name: 'Curl nordique',                muscleGroup: 'hamstrings', isCompound: false, minLevel: 'advanced',     family: 'nordic_curl',         description: "Genoux au sol, pieds retenus. Incline le buste vers l'avant en résistant avec les ischio. Exercice excentrique très intense." },
-  { id: 'lying_leg_curl',   name: 'Leg curl poulie basse',        muscleGroup: 'hamstrings', isCompound: false, minLevel: 'advanced',     family: 'leg_curl',            description: "Couché à plat, poulie basse attachée aux chevilles. La tension constante de la poulie optimise le travail des ischio sur tout l'arc." },
+  { id: 'leg_curl',         muscleGroup: 'hamstrings', isCompound: false, minLevel: 'beginner',     family: 'leg_curl' },
+  { id: 'rdl',              muscleGroup: 'hamstrings', isCompound: true,  minLevel: 'intermediate', family: 'hip_hinge_hamstring' },
+  { id: 'good_morning',     muscleGroup: 'hamstrings', isCompound: true,  minLevel: 'intermediate', family: 'hip_hinge_hamstring' },
+  { id: 'seated_leg_curl',  muscleGroup: 'hamstrings', isCompound: false, minLevel: 'intermediate', family: 'leg_curl' },
+  { id: 'nordic_curl',      muscleGroup: 'hamstrings', isCompound: false, minLevel: 'advanced',     family: 'nordic_curl' },
+  { id: 'lying_leg_curl',   muscleGroup: 'hamstrings', isCompound: false, minLevel: 'advanced',     family: 'leg_curl' },
 
   // ─── Fessiers ────────────────────────────────────────────────────────────────
-  { id: 'glute_bridge',     name: 'Pont fessier',                 muscleGroup: 'glutes',     isCompound: false, minLevel: 'beginner',     family: 'hip_thrust',          description: "Allongé sur le dos, pieds à plat. Soulève les hanches en contractant fort les fessiers en haut. Maintiens 1 seconde en haut." },
-  { id: 'sumo_squat',       name: 'Squat sumo haltère',           muscleGroup: 'glutes',     isCompound: true,  minLevel: 'beginner',     family: 'sumo_squat',          description: "Écartement large, pieds en canard, haltère entre les jambes. Le large écartement sollicite davantage les fessiers et les adducteurs." },
-  { id: 'cable_kickback',   name: 'Kickback poulie',              muscleGroup: 'glutes',     isCompound: false, minLevel: 'beginner',     family: 'glute_isolation',     description: "Poulie basse attachée à la cheville, buste légèrement incliné. Kick la jambe vers l'arrière-haut en contractant le fessier." },
-  { id: 'hip_thrust',       name: 'Hip thrust barre',             muscleGroup: 'glutes',     isCompound: true,  minLevel: 'intermediate', family: 'hip_thrust',          description: "Épaules sur le banc, barre sur les hanches. Pousse les hanches vers le plafond en contractant fort les fessiers. Maintiens 1 seconde en haut." },
-  { id: 'rdl_glutes',       name: 'SDT roumain focus fessiers',   muscleGroup: 'glutes',     isCompound: true,  minLevel: 'intermediate', family: 'hip_hinge_glutes',    description: "RDL classique mais avec intention de contraction des fessiers en haut du mouvement. Pousse les hanches en avant en serrant les fessiers." },
-  { id: 'banded_abduction', name: 'Abduction élastique',          muscleGroup: 'glutes',     isCompound: false, minLevel: 'intermediate', family: 'glute_isolation',     description: "Élastique autour des genoux, écarte les jambes contre la résistance. Active les fessiers moyens, souvent négligés." },
-  { id: 'single_hip_thrust',name: 'Hip thrust unilatéral',        muscleGroup: 'glutes',     isCompound: true,  minLevel: 'advanced',     family: 'hip_thrust',          description: "Hip thrust sur une seule jambe pour corriger les déséquilibres gauche/droite. Double la résistance sur le fessier travaillé." },
+  { id: 'glute_bridge',     muscleGroup: 'glutes',     isCompound: false, minLevel: 'beginner',     family: 'hip_thrust' },
+  { id: 'sumo_squat',       muscleGroup: 'glutes',     isCompound: true,  minLevel: 'beginner',     family: 'sumo_squat' },
+  { id: 'cable_kickback',   muscleGroup: 'glutes',     isCompound: false, minLevel: 'beginner',     family: 'glute_isolation' },
+  { id: 'hip_thrust',       muscleGroup: 'glutes',     isCompound: true,  minLevel: 'intermediate', family: 'hip_thrust' },
+  { id: 'rdl_glutes',       muscleGroup: 'glutes',     isCompound: true,  minLevel: 'intermediate', family: 'hip_hinge_glutes' },
+  { id: 'banded_abduction', muscleGroup: 'glutes',     isCompound: false, minLevel: 'intermediate', family: 'glute_isolation' },
+  { id: 'single_hip_thrust',muscleGroup: 'glutes',     isCompound: true,  minLevel: 'advanced',     family: 'hip_thrust' },
 
   // ─── Mollets ─────────────────────────────────────────────────────────────────
-  { id: 'standing_calf',    name: 'Mollets debout (machine)',      muscleGroup: 'calves',     isCompound: false, minLevel: 'beginner',     family: 'calf_raise',          description: "Debout sur la machine, monte sur la pointe des pieds en contractant les mollets. Descends en étirement complet et remonte explosif." },
-  { id: 'seated_calf',      name: 'Mollets assis',                 muscleGroup: 'calves',     isCompound: false, minLevel: 'beginner',     family: 'calf_raise',          description: "Assis, genoux à 90°, charge sur les genoux. Cible le soléaire (profond). Étirement complet en bas et contraction en haut." },
-  { id: 'donkey_calf',      name: 'Mollets âne',                   muscleGroup: 'calves',     isCompound: false, minLevel: 'advanced',     family: 'calf_raise',          description: "Buste horizontal appuyé, monte sur la pointe des pieds. La position penchée allonge le gastrocnémien pour un étirement maximal." },
+  { id: 'standing_calf',    muscleGroup: 'calves',     isCompound: false, minLevel: 'beginner',     family: 'calf_raise' },
+  { id: 'seated_calf',      muscleGroup: 'calves',     isCompound: false, minLevel: 'beginner',     family: 'calf_raise' },
+  { id: 'donkey_calf',      muscleGroup: 'calves',     isCompound: false, minLevel: 'advanced',     family: 'calf_raise' },
 
   // ─── Abdominaux ──────────────────────────────────────────────────────────────
-  { id: 'plank',            name: 'Gainage planche',              muscleGroup: 'abs',        isCompound: false, minLevel: 'beginner',     family: 'plank',               description: "Corps aligné, appui sur les avant-bras et les orteils. Contracte abdos, fessiers et épaules. Respire normalement sans creuser le dos." },
-  { id: 'side_plank',       name: 'Gainage latéral',              muscleGroup: 'abs',        isCompound: false, minLevel: 'beginner',     family: 'plank',               description: "Appui sur un avant-bras, corps latéralement aligné. Cible les obliques. Garde les hanches hautes, ne les laisse pas tomber." },
-  { id: 'bicycle_crunch',   name: 'Crunch vélo',                  muscleGroup: 'abs',        isCompound: false, minLevel: 'beginner',     family: 'crunch',              description: "Couché sur le dos, amène coude droit vers genou gauche et vice-versa en alternant. Active les obliques et le droit de l'abdomen simultanément." },
-  { id: 'crunch',           name: 'Crunch',                       muscleGroup: 'abs',        isCompound: false, minLevel: 'beginner',     family: 'crunch',              description: "Allongé sur le dos, soulève les épaules vers les genoux. Lombaires au sol, pas de tirage sur la nuque. Expire en contractant." },
-  { id: 'leg_raise',        name: 'Relevé de jambes',             muscleGroup: 'abs',        isCompound: false, minLevel: 'beginner',     family: 'leg_raise',           description: "Allongé ou suspendu, lève les jambes tendues jusqu'à 90°. Plaque les lombaires au sol (ou gainage si suspendu). Contrôle la descente." },
-  { id: 'cable_crunch',     name: 'Crunch poulie',                muscleGroup: 'abs',        isCompound: false, minLevel: 'intermediate', family: 'crunch',              description: "À genoux, poulie haute, flex le buste vers le sol en amenant les coudes vers les genoux. Garde les hanches fixes, tout le mouvement vient des abdos." },
-  { id: 'russian_twist',    name: 'Russian twist',                muscleGroup: 'abs',        isCompound: false, minLevel: 'intermediate', family: 'rotation',            description: "Assis en V (dos incliné), tourne le buste de droite à gauche. Ajoute un disque ou un haltère pour augmenter l'intensité." },
-  { id: 'ab_wheel',         name: 'Roulette abdominale',          muscleGroup: 'abs',        isCompound: false, minLevel: 'intermediate', family: 'ab_wheel',            description: "À genoux, roule la roulette vers l'avant sans creuser le dos. Reviens en contractant fort les abdos. Ne va pas plus loin que tu peux contrôler." },
-  { id: 'dragon_flag',      name: 'Dragon flag',                  muscleGroup: 'abs',        isCompound: false, minLevel: 'advanced',     family: 'dragon_flag',         description: "Sur un banc, corps rigide appuyé sur les épaules. Descends les jambes tendues vers le sol et remonte. Exercice de Bruce Lee, très intense." },
-  { id: 'hanging_leg_raise',name: 'Relevé de jambes suspendu',    muscleGroup: 'abs',        isCompound: false, minLevel: 'advanced',     family: 'leg_raise',           description: "Suspendu à une barre, lève les jambes tendues jusqu'à l'horizontale (ou plus). Évite le balancement, contrôle la descente." },
+  { id: 'plank',            muscleGroup: 'abs',        isCompound: false, minLevel: 'beginner',     family: 'plank' },
+  { id: 'side_plank',       muscleGroup: 'abs',        isCompound: false, minLevel: 'beginner',     family: 'plank' },
+  { id: 'bicycle_crunch',   muscleGroup: 'abs',        isCompound: false, minLevel: 'beginner',     family: 'crunch' },
+  { id: 'crunch',           muscleGroup: 'abs',        isCompound: false, minLevel: 'beginner',     family: 'crunch' },
+  { id: 'leg_raise',        muscleGroup: 'abs',        isCompound: false, minLevel: 'beginner',     family: 'leg_raise' },
+  { id: 'cable_crunch',     muscleGroup: 'abs',        isCompound: false, minLevel: 'intermediate', family: 'crunch' },
+  { id: 'russian_twist',    muscleGroup: 'abs',        isCompound: false, minLevel: 'intermediate', family: 'rotation' },
+  { id: 'ab_wheel',         muscleGroup: 'abs',        isCompound: false, minLevel: 'intermediate', family: 'ab_wheel' },
+  { id: 'dragon_flag',      muscleGroup: 'abs',        isCompound: false, minLevel: 'advanced',     family: 'dragon_flag' },
+  { id: 'hanging_leg_raise',muscleGroup: 'abs',        isCompound: false, minLevel: 'advanced',     family: 'leg_raise' },
 
   // ─── Pectoraux (ajouts) ───────────────────────────────────────────────────
-  { id: 'machine_chest_press',   name: 'Développé couché machine',       muscleGroup: 'chest',      isCompound: true,  minLevel: 'beginner',     family: 'chest_press_flat',    description: "Machine guidée, idéale pour débuter ou finir une séance. Ajuste le siège pour que les poignées soient au niveau de la poitrine basse." },
-  { id: 'diamond_push_up',       name: 'Pompes diamant',                 muscleGroup: 'chest',      isCompound: true,  minLevel: 'intermediate', family: 'chest_press_narrow',  description: "Mains rapprochées formant un losange sous la poitrine. Sollicite intensément les triceps et le faisceau sternal des pectoraux." },
-  { id: 'push_up_feet_elevated', name: 'Pompes pieds surélevés',         muscleGroup: 'chest',      isCompound: true,  minLevel: 'intermediate', family: 'chest_press_incline', description: "Pieds posés sur un banc, corps incliné tête vers le sol. Cible le haut des pectoraux comme un développé incliné." },
-  { id: 'low_cable_fly',         name: 'Écarté poulie basse',            muscleGroup: 'chest',      isCompound: false, minLevel: 'intermediate', family: 'chest_fly',           description: "Poulies basses, tire les câbles vers le haut et vers le centre en arc de cercle. Cible le haut des pectoraux avec une tension constante." },
-  { id: 'push_up_ring',          name: 'Pompes sur anneaux',             muscleGroup: 'chest',      isCompound: true,  minLevel: 'advanced',     family: 'chest_press_flat',    description: "Mains sur les anneaux de gymnastique, instabilité maximale qui active profondément les pectoraux et les stabilisateurs. Rotation des poignets vers l'intérieur en haut." },
-  { id: 'landmine_press',        name: 'Landmine press',                 muscleGroup: 'chest',      isCompound: true,  minLevel: 'intermediate', family: 'chest_press_incline', description: "Barre dans un landmine, prise en coupe à une ou deux mains, pousse en arc de cercle vers le haut. Sollicite le haut des pectoraux et les épaules." },
-  { id: 'cable_fly_mid',         name: 'Croisé poulie milieu',           muscleGroup: 'chest',      isCompound: false, minLevel: 'beginner',     family: 'chest_fly',           description: "Poulies à hauteur des épaules, ramène les câbles devant toi en arc de cercle. Variation qui cible le centre des pectoraux." },
+  { id: 'machine_chest_press',   muscleGroup: 'chest',      isCompound: true,  minLevel: 'beginner',     family: 'chest_press_flat' },
+  { id: 'diamond_push_up',       muscleGroup: 'chest',      isCompound: true,  minLevel: 'intermediate', family: 'chest_press_narrow' },
+  { id: 'push_up_feet_elevated', muscleGroup: 'chest',      isCompound: true,  minLevel: 'intermediate', family: 'chest_press_incline' },
+  { id: 'low_cable_fly',         muscleGroup: 'chest',      isCompound: false, minLevel: 'intermediate', family: 'chest_fly' },
+  { id: 'push_up_ring',          muscleGroup: 'chest',      isCompound: true,  minLevel: 'advanced',     family: 'chest_press_flat' },
+  { id: 'landmine_press',        muscleGroup: 'chest',      isCompound: true,  minLevel: 'intermediate', family: 'chest_press_incline' },
+  { id: 'cable_fly_mid',         muscleGroup: 'chest',      isCompound: false, minLevel: 'beginner',     family: 'chest_fly' },
 
   // ─── Dos (ajouts) ────────────────────────────────────────────────────────
-  { id: 'narrow_lat_pulldown',   name: 'Tirage poulie serrée',           muscleGroup: 'back',       isCompound: true,  minLevel: 'beginner',     family: 'vertical_pull',       description: "Poulie haute avec poignée en V ou prise serrée. Plus d'amplitude en bas, soulage les épaules. Tire vers le bas du sternum." },
-  { id: 'machine_row',           name: 'Rowing machine',                 muscleGroup: 'back',       isCompound: true,  minLevel: 'beginner',     family: 'horizontal_row',      description: "Machine guidée, poitrine appuyée. Tire les poignées vers toi en serrant les omoplates. Idéal pour apprendre sans compensation lombaire." },
-  { id: 'rack_pull',             name: 'Rack pull',                      muscleGroup: 'back',       isCompound: true,  minLevel: 'intermediate', family: 'hip_hinge',           description: "Soulevé de terre partiel depuis hauteur des genoux. Permet de surcharger lourd pour développer la force du haut du dos et des trapèzes." },
-  { id: 'weighted_pull_up',      name: 'Tractions lestées',              muscleGroup: 'back',       isCompound: true,  minLevel: 'advanced',     family: 'vertical_pull',       description: "Tractions avec ceinture de lest ou haltère entre les pieds. Idéal pour progresser une fois les tractions bodyweight maîtrisées." },
-  { id: 'seal_row',              name: 'Seal row',                       muscleGroup: 'back',       isCompound: true,  minLevel: 'advanced',     family: 'horizontal_row',      description: "Poitrine allongée sur un banc surélevé, tire les haltères ou la barre vers le bas du sternum. Élimine totalement la compensation lombaire." },
-  { id: 'straight_arm_pulldown', name: 'Tirage bras tendus poulie',      muscleGroup: 'back',       isCompound: false, minLevel: 'intermediate', family: 'pullover',            description: "Poulie haute, bras tendus, amène la barre jusqu'aux hanches en gardant les coudes légèrement fléchis. Isole les dorsaux sans les biceps." },
-  { id: 'cable_row_single',      name: 'Rowing poulie unilatéral',       muscleGroup: 'back',       isCompound: false, minLevel: 'intermediate', family: 'horizontal_row',      description: "Poulie basse, tire d'un bras vers la hanche en rotation légère du buste. Corrige les déséquilibres gauche/droite." },
-  { id: 'assisted_pull_up',      name: 'Tractions assistées machine',    muscleGroup: 'back',       isCompound: true,  minLevel: 'beginner',     family: 'vertical_pull',       description: "Machine à contre-poids qui réduit ton poids corporel. Permet d'apprendre le geste des tractions avec une charge adaptée à ton niveau." },
+  { id: 'narrow_lat_pulldown',   muscleGroup: 'back',       isCompound: true,  minLevel: 'beginner',     family: 'vertical_pull' },
+  { id: 'machine_row',           muscleGroup: 'back',       isCompound: true,  minLevel: 'beginner',     family: 'horizontal_row' },
+  { id: 'rack_pull',             muscleGroup: 'back',       isCompound: true,  minLevel: 'intermediate', family: 'hip_hinge' },
+  { id: 'weighted_pull_up',      muscleGroup: 'back',       isCompound: true,  minLevel: 'advanced',     family: 'vertical_pull' },
+  { id: 'seal_row',              muscleGroup: 'back',       isCompound: true,  minLevel: 'advanced',     family: 'horizontal_row' },
+  { id: 'straight_arm_pulldown', muscleGroup: 'back',       isCompound: false, minLevel: 'intermediate', family: 'pullover' },
+  { id: 'cable_row_single',      muscleGroup: 'back',       isCompound: false, minLevel: 'intermediate', family: 'horizontal_row' },
+  { id: 'assisted_pull_up',      muscleGroup: 'back',       isCompound: true,  minLevel: 'beginner',     family: 'vertical_pull' },
 
   // ─── Épaules (ajouts) ────────────────────────────────────────────────────
-  { id: 'machine_lateral_raise', name: 'Élévations latérales machine',   muscleGroup: 'shoulders',  isCompound: false, minLevel: 'beginner',     family: 'lateral_raise',       description: "Machine guidée pour les élévations. La trajectoire fixe aide à cibler le deltoïde médian sans compensation. Contrôle le retour." },
-  { id: 'cable_rear_delt',       name: 'Oiseau poulie basse',            muscleGroup: 'shoulders',  isCompound: false, minLevel: 'beginner',     family: 'rear_delt',           description: "Poulie basse de côté ou en croix, tire vers l'arrière-haut en arc de cercle. Tension constante sur le deltoïde postérieur." },
-  { id: 'lu_raise',              name: 'Lu raises',                      muscleGroup: 'shoulders',  isCompound: false, minLevel: 'intermediate', family: 'front_raise',         description: "Combinaison frontale + élévation latérale + coup de corps en une seule répétition. Popularisé par Lu Xiaojun, travaille tout le deltoïde." },
-  { id: 'handstand_push_up',     name: 'Pompes en équilibre (HSPU)',     muscleGroup: 'shoulders',  isCompound: true,  minLevel: 'advanced',     family: 'overhead_press',      description: "En appui renversé contre un mur, fléchis les coudes jusqu'à ce que la tête touche le sol. Force et coordination maximales." },
-  { id: 'z_press',               name: 'Z-press',                        muscleGroup: 'shoulders',  isCompound: true,  minLevel: 'intermediate', family: 'overhead_press',      description: "Assis au sol jambes tendues devant toi, pousse la barre ou les haltères au-dessus de la tête. Exige une excellente mobilité des hanches et du dos." },
+  { id: 'machine_lateral_raise', muscleGroup: 'shoulders',  isCompound: false, minLevel: 'beginner',     family: 'lateral_raise' },
+  { id: 'cable_rear_delt',       muscleGroup: 'shoulders',  isCompound: false, minLevel: 'beginner',     family: 'rear_delt' },
+  { id: 'lu_raise',              muscleGroup: 'shoulders',  isCompound: false, minLevel: 'intermediate', family: 'front_raise' },
+  { id: 'handstand_push_up',     muscleGroup: 'shoulders',  isCompound: true,  minLevel: 'advanced',     family: 'overhead_press' },
+  { id: 'z_press',               muscleGroup: 'shoulders',  isCompound: true,  minLevel: 'intermediate', family: 'overhead_press' },
 
   // ─── Biceps (ajouts) ─────────────────────────────────────────────────────
-  { id: 'reverse_curl',          name: 'Curl reverse',                   muscleGroup: 'biceps',     isCompound: false, minLevel: 'intermediate', family: 'reverse_curl',        description: "Prise pronation (dos de la main vers le haut), curl classique. Cible le brachioradial et la longue portion du biceps en position étirée." },
-  { id: 'zottman_curl',          name: 'Curl Zottman',                   muscleGroup: 'biceps',     isCompound: false, minLevel: 'intermediate', family: 'neutral_curl',        description: "Monte en supination puis tourne en pronation pour la descente. Combine le curl classique et le reverse curl dans un seul mouvement." },
-  { id: 'drag_curl',             name: 'Drag curl',                      muscleGroup: 'biceps',     isCompound: false, minLevel: 'intermediate', family: 'supinated_curl',      description: "Tire la barre le long du corps en reculant les coudes en arrière. Recrute plus la longue portion du biceps qu'un curl classique." },
-  { id: 'cross_body_cable_curl', name: 'Curl câble croisé',              muscleGroup: 'biceps',     isCompound: false, minLevel: 'advanced',     family: 'cable_curl_high',     description: "Poulie haute sur le côté opposé, curl vers ton visage. La rotation de l'humérus crée un pic de contraction exceptionnel sur la courte portion." },
-  { id: 'waiter_curl',           name: 'Waiter curl',                    muscleGroup: 'biceps',     isCompound: false, minLevel: 'beginner',     family: 'supinated_curl',      description: "Tiens un seul haltère à deux mains en coupe, coudes collés contre le corps. Maintient une supination maximale tout au long du mouvement." },
+  { id: 'reverse_curl',          muscleGroup: 'biceps',     isCompound: false, minLevel: 'intermediate', family: 'reverse_curl' },
+  { id: 'zottman_curl',          muscleGroup: 'biceps',     isCompound: false, minLevel: 'intermediate', family: 'neutral_curl' },
+  { id: 'drag_curl',             muscleGroup: 'biceps',     isCompound: false, minLevel: 'intermediate', family: 'supinated_curl' },
+  { id: 'cross_body_cable_curl', muscleGroup: 'biceps',     isCompound: false, minLevel: 'advanced',     family: 'cable_curl_high' },
+  { id: 'waiter_curl',           muscleGroup: 'biceps',     isCompound: false, minLevel: 'beginner',     family: 'supinated_curl' },
 
   // ─── Triceps (ajouts) ────────────────────────────────────────────────────
-  { id: 'pushdown_bar',          name: 'Pushdown barre droite',          muscleGroup: 'triceps',    isCompound: false, minLevel: 'beginner',     family: 'tricep_pushdown',     description: "Poulie haute avec barre droite, coudes fixes aux flancs. Extension complète en bas. Permet de charger plus lourd que la corde." },
-  { id: 'single_arm_cable_ext',  name: 'Extension triceps poulie uni.',  muscleGroup: 'triceps',    isCompound: false, minLevel: 'intermediate', family: 'overhead_tricep',     description: "Poulie haute, un bras derrière la tête, étends le coude. Corrige les déséquilibres et augmente l'amplitude de la longue portion." },
-  { id: 'cable_kickback_tri',    name: 'Kickback câble triceps',         muscleGroup: 'triceps',    isCompound: false, minLevel: 'intermediate', family: 'tricep_kickback',     description: "Poulie basse, penché en avant, coude fixe au flanc. Étends le bras vers l'arrière jusqu'à l'extension complète. Tension constante vs haltère." },
-  { id: 'band_pushdown',         name: 'Pushdown élastique',             muscleGroup: 'triceps',    isCompound: false, minLevel: 'beginner',     family: 'tricep_pushdown',     description: "Élastique accroché en hauteur, pushdown classique. Idéal en finisher haute répétition pour le pump des triceps." },
-  { id: 'bench_dip_weighted',    name: 'Dips banc lesté',                muscleGroup: 'triceps',    isCompound: true,  minLevel: 'intermediate', family: 'tricep_dips',         description: "Dips sur banc avec un disque de poids posé sur les cuisses. Augmente la résistance quand les dips bodyweight deviennent trop faciles." },
+  { id: 'pushdown_bar',          muscleGroup: 'triceps',    isCompound: false, minLevel: 'beginner',     family: 'tricep_pushdown' },
+  { id: 'single_arm_cable_ext',  muscleGroup: 'triceps',    isCompound: false, minLevel: 'intermediate', family: 'overhead_tricep' },
+  { id: 'cable_kickback_tri',    muscleGroup: 'triceps',    isCompound: false, minLevel: 'intermediate', family: 'tricep_kickback' },
+  { id: 'band_pushdown',         muscleGroup: 'triceps',    isCompound: false, minLevel: 'beginner',     family: 'tricep_pushdown' },
+  { id: 'bench_dip_weighted',    muscleGroup: 'triceps',    isCompound: true,  minLevel: 'intermediate', family: 'tricep_dips' },
 
   // ─── Quadriceps (ajouts) ─────────────────────────────────────────────────
-  { id: 'reverse_lunge',         name: 'Fentes arrière haltères',        muscleGroup: 'quads',      isCompound: true,  minLevel: 'beginner',     family: 'lunge',               description: "Recule un pied en fente, genou arrière à 2 cm du sol. Plus stable que les fentes avant, moins de stress sur le genou avant." },
-  { id: 'single_leg_press',      name: 'Presse unilatérale',             muscleGroup: 'quads',      isCompound: true,  minLevel: 'intermediate', family: 'leg_press',           description: "Presse à cuisses sur une jambe pour corriger les déséquilibres. Réduis la charge à 50-60 % de ta charge bilatérale." },
-  { id: 'high_foot_leg_press',   name: 'Presse pieds hauts',             muscleGroup: 'quads',      isCompound: true,  minLevel: 'intermediate', family: 'leg_press',           description: "Pieds placés haut sur la plateforme, descends profondément. Transfère davantage de charge sur les ischio et les fessiers." },
-  { id: 'belt_squat',            name: 'Belt squat',                     muscleGroup: 'quads',      isCompound: true,  minLevel: 'advanced',     family: 'back_squat',          description: "Charge suspendue à une ceinture de hanches. Squat profond sans charge sur le rachis, idéal pour les personnes ayant des problèmes de dos." },
-  { id: 'split_squat',           name: 'Split squat',                    muscleGroup: 'quads',      isCompound: true,  minLevel: 'beginner',     family: 'lunge',               description: "Position de fente statique, descends et remonte sans avancer le pied. Travail unilatéral simple et efficace pour les quadriceps." },
-  { id: 'leg_press_close',       name: 'Presse pieds rapprochés',        muscleGroup: 'quads',      isCompound: true,  minLevel: 'intermediate', family: 'leg_press',           description: "Pieds rapprochés au centre de la plateforme. Cible davantage le vaste latéral et le droit fémoral." },
+  { id: 'reverse_lunge',         muscleGroup: 'quads',      isCompound: true,  minLevel: 'beginner',     family: 'lunge' },
+  { id: 'single_leg_press',      muscleGroup: 'quads',      isCompound: true,  minLevel: 'intermediate', family: 'leg_press' },
+  { id: 'high_foot_leg_press',   muscleGroup: 'quads',      isCompound: true,  minLevel: 'intermediate', family: 'leg_press' },
+  { id: 'belt_squat',            muscleGroup: 'quads',      isCompound: true,  minLevel: 'advanced',     family: 'back_squat' },
+  { id: 'split_squat',           muscleGroup: 'quads',      isCompound: true,  minLevel: 'beginner',     family: 'lunge' },
+  { id: 'leg_press_close',       muscleGroup: 'quads',      isCompound: true,  minLevel: 'intermediate', family: 'leg_press' },
 
   // ─── Ischio-jambiers (ajouts) ────────────────────────────────────────────
-  { id: 'hyperextension',        name: 'Hyperextension (dos)',           muscleGroup: 'hamstrings', isCompound: true,  minLevel: 'beginner',     family: 'hip_hinge_hamstring', description: "Sur le banc romains, penche le buste en avant et remonte jusqu'à l'alignement. Travaille ischio, fessiers et lombaires. Garde le dos plat." },
-  { id: 'single_leg_rdl',        name: 'SDT roumain unilatéral',         muscleGroup: 'hamstrings', isCompound: true,  minLevel: 'intermediate', family: 'hip_hinge_hamstring', description: "RDL sur une jambe, haltère dans la main opposée. Améliore l'équilibre et corrige les déséquilibres. Garde le dos plat et le bassin horizontal." },
-  { id: 'glute_ham_raise',       name: 'Glute-Ham Raise',                muscleGroup: 'hamstrings', isCompound: false, minLevel: 'advanced',     family: 'nordic_curl',         description: "Machine GHR, fléchis le buste en contractant les ischio en fin de mouvement. Combine la flexion du genou et l'extension de la hanche pour les ischio." },
-  { id: 'standing_leg_curl',     name: 'Leg curl debout (machine)',      muscleGroup: 'hamstrings', isCompound: false, minLevel: 'beginner',     family: 'leg_curl',            description: "Machine debout, fléchis le genou pour ramener le talon vers la fesse. Travail unilatéral permettant d'identifier et corriger les déséquilibres." },
-  { id: 'banded_good_morning',   name: 'Good morning élastique',         muscleGroup: 'hamstrings', isCompound: true,  minLevel: 'beginner',     family: 'hip_hinge_hamstring', description: "Élastique sous les pieds et sur la nuque, incline le buste vers l'avant. Version débutante du good morning pour apprendre le hip hinge." },
+  { id: 'hyperextension',        muscleGroup: 'hamstrings', isCompound: true,  minLevel: 'beginner',     family: 'hip_hinge_hamstring' },
+  { id: 'single_leg_rdl',        muscleGroup: 'hamstrings', isCompound: true,  minLevel: 'intermediate', family: 'hip_hinge_hamstring' },
+  { id: 'glute_ham_raise',       muscleGroup: 'hamstrings', isCompound: false, minLevel: 'advanced',     family: 'nordic_curl' },
+  { id: 'standing_leg_curl',     muscleGroup: 'hamstrings', isCompound: false, minLevel: 'beginner',     family: 'leg_curl' },
+  { id: 'banded_good_morning',   muscleGroup: 'hamstrings', isCompound: true,  minLevel: 'beginner',     family: 'hip_hinge_hamstring' },
 
   // ─── Fessiers (ajouts) ───────────────────────────────────────────────────
-  { id: 'clamshell',             name: 'Clamshell (palourde)',           muscleGroup: 'glutes',     isCompound: false, minLevel: 'beginner',     family: 'glute_isolation',     description: "Allongé sur le côté, genoux fléchis, ouvre le genou supérieur comme une palourde. Cible le fessier moyen et les rotateurs externes. Ajoute un élastique." },
-  { id: 'fire_hydrant',          name: 'Fire hydrant',                   muscleGroup: 'glutes',     isCompound: false, minLevel: 'beginner',     family: 'glute_isolation',     description: "À quatre pattes, élève un genou fléchi sur le côté jusqu'à l'horizontale. Cible le fessier moyen. Garde le bassin stable, ne laisse pas le dos se creuser." },
-  { id: 'cable_pull_through',    name: 'Cable pull-through',             muscleGroup: 'glutes',     isCompound: true,  minLevel: 'intermediate', family: 'hip_hinge_glutes',    description: "Dos à la poulie basse, attraphe la corde entre les jambes. Hip hinge vers l'avant puis poussée des hanches en avant en contractant fessiers et ischio." },
-  { id: 'reverse_hyper',         name: 'Reverse hyperextension',        muscleGroup: 'glutes',     isCompound: true,  minLevel: 'intermediate', family: 'hip_hinge_glutes',    description: "Haut du corps sur le banc, lève les jambes tendues vers l'arrière. Cible fessiers et lombaires en décompressant les disques vertébraux." },
-  { id: 'sumo_squat_bb',         name: 'Squat sumo barre',              muscleGroup: 'glutes',     isCompound: true,  minLevel: 'intermediate', family: 'sumo_squat',          description: "Écartement très large, pieds pointés à 45°, barre sur les trapèzes. Sollicite davantage fessiers et adducteurs qu'un squat conventionnel." },
-  { id: 'donkey_kick',           name: 'Donkey kick',                   muscleGroup: 'glutes',     isCompound: false, minLevel: 'beginner',     family: 'glute_isolation',     description: "À quatre pattes, pousse un pied vers le plafond en gardant le genou fléchi à 90°. Contraction maximale du fessier en haut. Ajoute un élastique." },
+  { id: 'clamshell',             muscleGroup: 'glutes',     isCompound: false, minLevel: 'beginner',     family: 'glute_isolation' },
+  { id: 'fire_hydrant',          muscleGroup: 'glutes',     isCompound: false, minLevel: 'beginner',     family: 'glute_isolation' },
+  { id: 'cable_pull_through',    muscleGroup: 'glutes',     isCompound: true,  minLevel: 'intermediate', family: 'hip_hinge_glutes' },
+  { id: 'reverse_hyper',         muscleGroup: 'glutes',     isCompound: true,  minLevel: 'intermediate', family: 'hip_hinge_glutes' },
+  { id: 'sumo_squat_bb',         muscleGroup: 'glutes',     isCompound: true,  minLevel: 'intermediate', family: 'sumo_squat' },
+  { id: 'donkey_kick',           muscleGroup: 'glutes',     isCompound: false, minLevel: 'beginner',     family: 'glute_isolation' },
 
   // ─── Mollets (ajouts) ────────────────────────────────────────────────────
-  { id: 'single_calf_raise',     name: 'Mollets unilatéral',             muscleGroup: 'calves',     isCompound: false, minLevel: 'intermediate', family: 'calf_raise',          description: "Sur une jambe, monte sur la pointe du pied avec ton poids corporel ou en tenant un haltère. Double la résistance et améliore l'équilibre." },
-  { id: 'barbell_calf_raise',    name: 'Mollets barre',                  muscleGroup: 'calves',     isCompound: false, minLevel: 'intermediate', family: 'calf_raise',          description: "Barre sur les trapèzes, monte sur la pointe des pieds. Permet de charger plus lourd qu'à la machine ou au poids de corps." },
-  { id: 'step_calf_raise',       name: 'Mollets sur marche',             muscleGroup: 'calves',     isCompound: false, minLevel: 'beginner',     family: 'calf_raise',          description: "Pointe du pied sur le bord d'une marche, talon dans le vide. L'amplitude supplémentaire en bas offre un étirement maximal des gastrocnémiens." },
-  { id: 'tibia_raise',           name: 'Tibia raise',                    muscleGroup: 'calves',     isCompound: false, minLevel: 'beginner',     family: 'calf_raise',          description: "Dos au mur, relève la pointe des pieds en gardant les talons au sol. Travaille le tibial antérieur, antagoniste souvent négligé des mollets." },
+  { id: 'single_calf_raise',     muscleGroup: 'calves',     isCompound: false, minLevel: 'intermediate', family: 'calf_raise' },
+  { id: 'barbell_calf_raise',    muscleGroup: 'calves',     isCompound: false, minLevel: 'intermediate', family: 'calf_raise' },
+  { id: 'step_calf_raise',       muscleGroup: 'calves',     isCompound: false, minLevel: 'beginner',     family: 'calf_raise' },
+  { id: 'tibia_raise',           muscleGroup: 'calves',     isCompound: false, minLevel: 'beginner',     family: 'calf_raise' },
 
   // ─── Abdominaux (ajouts) ─────────────────────────────────────────────────
-  { id: 'hollow_body',           name: 'Hollow body hold',               muscleGroup: 'abs',        isCompound: false, minLevel: 'intermediate', family: 'plank',               description: "Allongé, lombaires plaquées au sol, bras et jambes en l'air tendus à quelques cm du sol. Corps en forme de banane inversée. Position clé de la gym." },
-  { id: 'toes_to_bar',           name: 'Toes to bar',                    muscleGroup: 'abs',        isCompound: false, minLevel: 'advanced',     family: 'leg_raise',           description: "Suspendu à la barre, lève les orteils jusqu'à toucher la barre. Contrôle le balancement, initie le mouvement avec les abdos pas les épaules." },
-  { id: 'pallof_press',          name: 'Pallof press',                   muscleGroup: 'abs',        isCompound: false, minLevel: 'intermediate', family: 'rotation',            description: "De côté par rapport à une poulie, étends les bras devant toi et résiste à la rotation. Travaille l'anti-rotation, fondamental pour la stabilité du core." },
-  { id: 'wood_chop',             name: 'Wood chop (bûcheron)',           muscleGroup: 'abs',        isCompound: false, minLevel: 'intermediate', family: 'rotation',            description: "Poulie haute ou basse, rotation diagonale du buste de façon contrôlée. Travaille les obliques en rotation, mouvement fonctionnel." },
-  { id: 'decline_crunch',        name: 'Crunch décliné',                 muscleGroup: 'abs',        isCompound: false, minLevel: 'intermediate', family: 'crunch',              description: "Sur banc décliné, crunch vers les genoux. La déclinaison augmente l'amplitude et la difficulté. Ajoute un disque tenu sur la poitrine." },
-  { id: 'flutter_kicks',         name: 'Flutter kicks',                  muscleGroup: 'abs',        isCompound: false, minLevel: 'beginner',     family: 'leg_raise',           description: "Allongé sur le dos, jambes légèrement au-dessus du sol, bats des pieds en alternance. Lombaires plaquées au sol, travail constant des bas abdos." },
-  { id: 'mountain_climber',      name: 'Mountain climbers',              muscleGroup: 'abs',        isCompound: true,  minLevel: 'beginner',     family: 'plank',               description: "En position de pompe, ramène les genoux vers la poitrine en alternant rapidement. Combine gainage et cardio. Garde les hanches basses." },
-  { id: 'l_sit',                 name: 'L-sit',                          muscleGroup: 'abs',        isCompound: false, minLevel: 'advanced',     family: 'plank',               description: "En appui sur des barres parallèles ou au sol, lève les jambes tendues à l'horizontale et maintiens. Exige une force abdominale et des fléchisseurs de hanche exceptionnelle." },
-  { id: 'dead_bug',              name: 'Dead bug',                       muscleGroup: 'abs',        isCompound: false, minLevel: 'beginner',     family: 'plank',               description: "Sur le dos, bras et genoux à 90°. Étends bras opposé et jambe opposée simultanément en gardant les lombaires plaquées. Excellent pour la proprioception du core." },
-  { id: 'v_up',                  name: 'V-up',                           muscleGroup: 'abs',        isCompound: false, minLevel: 'intermediate', family: 'crunch',              description: "Simultanément, lève les jambes tendues et le buste pour former un V. Touche les orteils avec les doigts. Contracte fort les abdos en haut." },
+  { id: 'hollow_body',           muscleGroup: 'abs',        isCompound: false, minLevel: 'intermediate', family: 'plank' },
+  { id: 'toes_to_bar',           muscleGroup: 'abs',        isCompound: false, minLevel: 'advanced',     family: 'leg_raise' },
+  { id: 'pallof_press',          muscleGroup: 'abs',        isCompound: false, minLevel: 'intermediate', family: 'rotation' },
+  { id: 'wood_chop',             muscleGroup: 'abs',        isCompound: false, minLevel: 'intermediate', family: 'rotation' },
+  { id: 'decline_crunch',        muscleGroup: 'abs',        isCompound: false, minLevel: 'intermediate', family: 'crunch' },
+  { id: 'flutter_kicks',         muscleGroup: 'abs',        isCompound: false, minLevel: 'beginner',     family: 'leg_raise' },
+  { id: 'mountain_climber',      muscleGroup: 'abs',        isCompound: true,  minLevel: 'beginner',     family: 'plank' },
+  { id: 'l_sit',                 muscleGroup: 'abs',        isCompound: false, minLevel: 'advanced',     family: 'plank' },
+  { id: 'dead_bug',              muscleGroup: 'abs',        isCompound: false, minLevel: 'beginner',     family: 'plank' },
+  { id: 'v_up',                  muscleGroup: 'abs',        isCompound: false, minLevel: 'intermediate', family: 'crunch' },
 ];
 
 // Matériel requis par exercice (défaut : 'machines' si absent)
@@ -362,10 +351,32 @@ const EXERCISE_EQUIPMENT: Record<string, EquipmentType> = {
   dead_bug: 'bodyweight', v_up: 'bodyweight',
 };
 
-export const EXERCISES: Exercise[] = RAW_EXERCISES.map((e) => ({
-  ...e,
-  equipment: EXERCISE_EQUIPMENT[e.id] ?? 'machines',
-}));
+// Nom et description traduits à la lecture (fichiers src/i18n/locales/*.json, section exercises)
+export const EXERCISES: Exercise[] = RAW_EXERCISES.map((e) =>
+  Object.defineProperties(
+    { ...e, equipment: EXERCISE_EQUIPMENT[e.id] ?? 'machines' },
+    {
+      name: { get: () => i18n.t(`exercises.${e.id}.name`), enumerable: true },
+      description: { get: () => i18n.t(`exercises.${e.id}.description`), enumerable: true },
+    },
+  ) as Exercise
+);
+
+/**
+ * Nom traduit d'un exercice enregistré (programme, historique de séances).
+ * Les données sauvegardées gardent le nom au moment de l'enregistrement : on le retraduit
+ * via l'id quand l'exercice est connu, sinon on garde le nom stocké.
+ */
+export function exerciseName(id: string, storedName: string): string {
+  const key = `exercises.${id}.name`;
+  return i18n.exists(key) ? i18n.t(key) : storedName;
+}
+
+/** Description traduite d'un exercice enregistré (même principe que `exerciseName`). */
+export function exerciseDescription(id: string, storedDescription: string): string {
+  const key = `exercises.${id}.description`;
+  return i18n.exists(key) ? i18n.t(key) : storedDescription;
+}
 
 export function getAvailableExercises(group: MuscleGroup, level: PractitionerLevel, availableEquipment?: Set<EquipmentType>): Exercise[] {
   return EXERCISES.filter((e) =>

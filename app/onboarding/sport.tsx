@@ -9,6 +9,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useProgramStore } from '@/stores/programStore';
 import { generateProgram, EquipmentType, ALL_EQUIPMENT } from '@/utils/programGenerator';
 import { EQUIPMENT_LABELS, EQUIPMENT_EMOJI } from '@/data/exercises';
@@ -19,21 +20,18 @@ const ACCENT: [string, string] = ['#F97316', '#DC2626'];
 
 // ─── Données d'option ────────────────────────────────────────────────────────
 
-const GENDER_OPTIONS: { value: Gender; label: string; emoji: string }[] = [
-  { value: 'male',   label: 'Homme', emoji: '♂️' },
-  { value: 'female', label: 'Femme', emoji: '♀️' },
+// Libellés traduits : fitness.gender.*, fitness.level.*, fitness.levelDesc.*, tdee.goal.*
+const GENDER_OPTIONS: { value: Gender; emoji: string }[] = [
+  { value: 'male',   emoji: '♂️' },
+  { value: 'female', emoji: '♀️' },
 ];
 
-const LEVEL_OPTIONS: { value: PractitionerLevel; label: string; desc: string }[] = [
-  { value: 'beginner',     label: 'Débutant',      desc: '< 1 an de pratique' },
-  { value: 'intermediate', label: 'Intermédiaire',  desc: '1–3 ans de pratique' },
-  { value: 'advanced',     label: 'Avancé',         desc: '3+ ans de pratique' },
-];
+const LEVEL_OPTIONS: PractitionerLevel[] = ['beginner', 'intermediate', 'advanced'];
 
-const GOAL_OPTIONS: { value: FitnessGoal; label: string; emoji: string }[] = [
-  { value: 'lose_fat',      label: 'Perte de gras',    emoji: '🔥' },
-  { value: 'maintain',      label: 'Maintien',          emoji: '⚖️' },
-  { value: 'build_muscle',  label: 'Prise de muscle',   emoji: '💪' },
+const GOAL_OPTIONS: { value: FitnessGoal; emoji: string }[] = [
+  { value: 'lose_fat',      emoji: '🔥' },
+  { value: 'maintain',      emoji: '⚖️' },
+  { value: 'build_muscle',  emoji: '💪' },
 ];
 
 const EQUIPMENT_ORDER: EquipmentType[] = [
@@ -72,6 +70,7 @@ function OptionChip({
 // ─── Écran principal ─────────────────────────────────────────────────────────
 
 export default function SportOnboardingScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { saveProgram } = useProgramStore();
 
@@ -108,16 +107,16 @@ export default function SportOnboardingScreen() {
         <LinearGradient colors={ACCENT} style={styles.iconBg}>
           <Text style={styles.iconEmoji}>💪</Text>
         </LinearGradient>
-        <Text style={styles.title}>Ton programme sur mesure</Text>
-        <Text style={styles.subtitle}>Configure tes préférences pour générer ton programme.</Text>
+        <Text style={styles.title}>{t('onboarding.sport.title')}</Text>
+        <Text style={styles.subtitle}>{t('onboarding.sport.subtitle')}</Text>
 
         {/* Genre */}
-        <SectionTitle>Genre</SectionTitle>
+        <SectionTitle>{t('onboarding.sport.gender')}</SectionTitle>
         <View style={styles.row}>
           {GENDER_OPTIONS.map((o) => (
             <OptionChip
               key={o.value}
-              label={`${o.emoji} ${o.label}`}
+              label={`${o.emoji} ${t(`fitness.gender.${o.value}`)}`}
               selected={gender === o.value}
               onPress={() => setGender(o.value)}
             />
@@ -125,35 +124,35 @@ export default function SportOnboardingScreen() {
         </View>
 
         {/* Niveau */}
-        <SectionTitle>Niveau</SectionTitle>
+        <SectionTitle>{t('onboarding.sport.level')}</SectionTitle>
         <View style={styles.column}>
-          {LEVEL_OPTIONS.map((o) => (
+          {LEVEL_OPTIONS.map((lvl) => (
             <TouchableOpacity
-              key={o.value}
-              style={[styles.levelRow, level === o.value && styles.levelRowActive]}
-              onPress={() => setLevel(o.value)}
+              key={lvl}
+              style={[styles.levelRow, level === lvl && styles.levelRowActive]}
+              onPress={() => setLevel(lvl)}
               activeOpacity={0.8}
             >
               <View style={styles.levelDot}>
-                {level === o.value && <View style={styles.levelDotFill} />}
+                {level === lvl && <View style={styles.levelDotFill} />}
               </View>
               <View>
-                <Text style={[styles.levelLabel, level === o.value && styles.levelLabelActive]}>
-                  {o.label}
+                <Text style={[styles.levelLabel, level === lvl && styles.levelLabelActive]}>
+                  {t(`fitness.level.${lvl}`)}
                 </Text>
-                <Text style={styles.levelDesc}>{o.desc}</Text>
+                <Text style={styles.levelDesc}>{t(`fitness.levelDesc.${lvl}`)}</Text>
               </View>
             </TouchableOpacity>
           ))}
         </View>
 
         {/* Objectif */}
-        <SectionTitle>Objectif</SectionTitle>
+        <SectionTitle>{t('onboarding.sport.goal')}</SectionTitle>
         <View style={styles.row}>
           {GOAL_OPTIONS.map((o) => (
             <OptionChip
               key={o.value}
-              label={`${o.emoji} ${o.label}`}
+              label={`${o.emoji} ${t(`tdee.goal.${o.value}`)}`}
               selected={goal === o.value}
               onPress={() => setGoal(o.value)}
               accent
@@ -162,7 +161,7 @@ export default function SportOnboardingScreen() {
         </View>
 
         {/* Jours / semaine */}
-        <SectionTitle>Jours par semaine</SectionTitle>
+        <SectionTitle>{t('onboarding.sport.daysPerWeek')}</SectionTitle>
         <View style={styles.sessionsRow}>
           {[1, 2, 3, 4, 5, 6].map((n) => (
             <TouchableOpacity
@@ -179,7 +178,7 @@ export default function SportOnboardingScreen() {
         </View>
 
         {/* Équipement */}
-        <SectionTitle>Équipement disponible</SectionTitle>
+        <SectionTitle>{t('onboarding.sport.equipment')}</SectionTitle>
         <View style={styles.equipmentGrid}>
           {EQUIPMENT_ORDER.map((eq) => {
             const selected = equipment.includes(eq);
@@ -206,7 +205,7 @@ export default function SportOnboardingScreen() {
           activeOpacity={0.9}
         >
           <LinearGradient colors={COLORS.gradientPrimary} style={styles.btn}>
-            <Text style={styles.btnText}>Générer mon programme →</Text>
+            <Text style={styles.btnText}>{t('onboarding.sport.generate')}</Text>
           </LinearGradient>
         </TouchableOpacity>
 

@@ -1,4 +1,5 @@
 import { Alert } from 'react-native';
+import i18n from '@/i18n';
 import { useHabitStore } from '@/stores/habitStore';
 import { Habit, ReminderUnit } from '@/types';
 import {
@@ -31,9 +32,9 @@ export function useHabitNotifications() {
     const granted = await requestNotificationPermission();
     if (!granted) {
       Alert.alert(
-        'Permission refusée',
-        'Active les notifications pour Vitacairn dans les paramètres de ton téléphone.',
-        [{ text: 'OK' }]
+        i18n.t('common.permissionDenied'),
+        i18n.t('notifications.permissionDeniedMessage'),
+        [{ text: i18n.t('common.ok') }]
       );
       return false;
     }

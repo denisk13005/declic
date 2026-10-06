@@ -3,49 +3,35 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
 
+// Textes : t(`onboarding.nutrition.${key}.title|desc`)
 const FEATURES = [
-  {
-    emoji: '🍽️',
-    title: 'Suivi calorique complet',
-    desc: '4 repas par jour. Ajoute un aliment en 3 secondes — base Ciqual, scan code-barres ou photo IA.',
-    gradient: ['#10B981', '#059669'] as const,
-  },
-  {
-    emoji: '🔍',
-    title: '62 000 aliments référencés',
-    desc: 'Base officielle ANSES Ciqual 2025 + Open Food Facts. Recherche instantanée, hors-ligne.',
-    gradient: ['#7C3AED', '#5B21B6'] as const,
-  },
-  {
-    emoji: '⚖️',
-    title: 'Courbe de poids',
-    desc: 'Note ton poids chaque jour et suis ta progression vers ton objectif.',
-    gradient: ['#F59E0B', '#D97706'] as const,
-  },
+  { key: 'tracking', emoji: '🍽️', gradient: ['#10B981', '#059669'] as const },
+  { key: 'database', emoji: '🔍', gradient: ['#7C3AED', '#5B21B6'] as const },
+  { key: 'weight', emoji: '⚖️', gradient: ['#F59E0B', '#D97706'] as const },
 ];
 
 export default function NutritionOnboardingScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.title}>Nutrition au quotidien</Text>
-        <Text style={styles.subtitle}>
-          Suis tes calories et macros sans prise de tête.
-        </Text>
+        <Text style={styles.title}>{t('onboarding.nutrition.title')}</Text>
+        <Text style={styles.subtitle}>{t('onboarding.nutrition.subtitle')}</Text>
 
         <View style={styles.cards}>
           {FEATURES.map((f) => (
-            <View key={f.title} style={styles.card}>
+            <View key={f.key} style={styles.card}>
               <LinearGradient colors={f.gradient} style={styles.cardIcon}>
                 <Text style={styles.cardEmoji}>{f.emoji}</Text>
               </LinearGradient>
               <View style={styles.cardText}>
-                <Text style={styles.cardTitle}>{f.title}</Text>
-                <Text style={styles.cardDesc}>{f.desc}</Text>
+                <Text style={styles.cardTitle}>{t(`onboarding.nutrition.${f.key}.title`)}</Text>
+                <Text style={styles.cardDesc}>{t(`onboarding.nutrition.${f.key}.desc`)}</Text>
               </View>
             </View>
           ))}
@@ -54,10 +40,10 @@ export default function NutritionOnboardingScreen() {
         {/* Modèle freemium */}
         <View style={styles.freemiumBox}>
           <Text style={styles.freemiumText}>
-            <Text style={styles.freemiumHighlight}>Gratuit</Text>
-            {' '}— nutrition complète + 1 habitude{'\n'}
-            <Text style={styles.freemiumHighlight}>Premium</Text>
-            {' '}— habitudes illimitées, sans publicité
+            <Text style={styles.freemiumHighlight}>{t('onboarding.nutrition.free')}</Text>
+            {t('onboarding.nutrition.freeDesc')}{'\n'}
+            <Text style={styles.freemiumHighlight}>{t('onboarding.nutrition.premium')}</Text>
+            {t('onboarding.nutrition.premiumDesc')}
           </Text>
         </View>
       </ScrollView>
@@ -69,7 +55,7 @@ export default function NutritionOnboardingScreen() {
           activeOpacity={0.9}
         >
           <LinearGradient colors={COLORS.gradientPrimary} style={styles.btn}>
-            <Text style={styles.btnText}>Suivant →</Text>
+            <Text style={styles.btnText}>{t('onboarding.next')}</Text>
           </LinearGradient>
         </TouchableOpacity>
 

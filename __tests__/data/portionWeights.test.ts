@@ -6,6 +6,7 @@
  */
 
 import { lookupPortionWeight } from '@/data/portionWeights';
+import i18n from '@/i18n';
 
 describe('lookupPortionWeight — correspondances attendues', () => {
   it('retourne 60g pour un oeuf', () => {
@@ -88,6 +89,15 @@ describe('lookupPortionWeight — normalisation des accents', () => {
     const r = lookupPortionWeight('Echalote, crue');
     expect(r).not.toBeNull();
     expect(r!.grams).toBe(30);
+  });
+});
+
+describe('lookupPortionWeight — libellé traduit', () => {
+  afterAll(() => i18n.changeLanguage('fr'));
+
+  it('renvoie le libellé dans la langue de l\'app (mots-clés toujours français)', async () => {
+    await i18n.changeLanguage('en');
+    expect(lookupPortionWeight('Pomme de terre, vapeur')!.hint).toBe('medium potato');
   });
 });
 

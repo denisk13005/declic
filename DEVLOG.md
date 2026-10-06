@@ -1,5 +1,43 @@
 # Déclic — Dev Log
 
+## 2026-10-06 — Internationalisation (i18n) : mise en place + nutrition (EN COURS)
+
+- **Objectif** : commercialisation internationale. Aucune trad. existante, ~650 textes en dur dans 76 fichiers.
+- **Libs** (`npx expo install`) : `i18next` 26, `react-i18next` 17, `expo-localization` ~55.0.19 (module natif → **rebuild requis**). Patch Expo CLI `gradle.js` vérifié intact.
+- **`src/i18n/index.ts`** : init i18next ; langue = celle du téléphone (`getLocales()`), `fr` par défaut et en fallback de clé manquante ; `dateLocale()` pour date-fns ; importé en premier dans `app/_layout.tsx`.
+- **Textes** : `src/i18n/locales/fr.json` (référence) + `en.json`, sections `common`, `meals`, `calories`, `addEntry`, `voice`, `entryDetail`. Pluriels via `_one` / `_other` + `count`. Hors composant : `i18n.t()`.
+- **Migrés** : `app/(tabs)/calories.tsx` (+ modale calories brûlées), `EntryDetailModal`, `AddEntryModal` (+ scanner), `VoiceMealInput`, `mealEstimate.estimateSourceLabel`.
+- **Tests** : `jest.setup.js` mocke `expo-localization` (fr) ; nouveau `__tests__/i18n/locales.test.ts` (mêmes clés, mêmes variables `{{…}}`, pas de texte vide entre fr et en). 98/98.
+- **Migrés ensuite** : paywall, profil (+ `WeightChartCard`, `TDEECard`, `PhysicalProfileModal`, `ThemePickerModal`), accueil/habitudes, auth, onboarding, bibliothèque, objectifs, poids, `UpdateGate`, stats, sport (`sport.tsx`, `AddWorkoutModal`, `WorkoutSessionModal`, `ExerciseStatsModal`, `ExercisePickerModal`). Tables de libellés traduites via getters (`translatedRecord`, `WORKOUT_META.label`, `THEMES[id].name`) → appelants inchangés. Nombres formatés selon la langue (`toLocaleString(currentLanguage())`).
+- **Petits bugs corrigés au passage** : `WeightChartCard` affichait toujours « Idéal (IMC 22) » même quand l'IMC idéal est ajusté pour un sportif ; `WorkoutSessionModal.handleSave` (4 erreurs TS `day` possiblement null).
+- **Création de programme** : `ProgramCreatorModal` traduit ; `programGenerator.ts` (focus des séances via `focusOf()`, noms de jours/splits, notes de technique, `LEVEL_INFO`/`GENDER_INFO`/`SPLIT_INFO` en getters) ; `exercises.ts` : les 151 noms + conseils sont sortis du code vers la section `exercises` des JSON (anglais rédigé), `MUSCLE_GROUP_LABELS`/`EQUIPMENT_LABELS` traduits. `exerciseName(id, nomStocké)` / `exerciseDescription` retraduisent les exercices des **programmes et historiques déjà enregistrés** (séance + perfs). Les libellés de jours/focus d'un programme déjà sauvegardé restent dans la langue de création.
+- **Test** `__tests__/i18n/programGenerator.test.ts` : génère tous les programmes (1-6 séances × objectifs × niveaux × sexe) en fr et en en, vérifie qu'aucune clé ne manque. 102/102.
+- **Notifications** (`notifications.ts`, `useHabitNotifications`) : textes des rappels habitudes/repas/séances, boutons montre (« Fait ! »), canaux Android, jours de la semaine. ⚠️ Le texte d'une notification est figé au moment où elle est planifiée : les rappels déjà programmés restent en français jusqu'à ce qu'ils soient re-planifiés (modif du rappel).
+- **Messages d'erreur visibles** (section `errors`) : scan code-barres (`openFoodFacts`), Gemini (réponse illisible, aucun aliment reconnu), Firebase (Google/Apple, suppression de compte), titre de l'export RGPD.
+- **Gemini** (`gemini.ts`) : consignes toujours en français (réglées/testées ainsi) mais la **langue de sortie** suit l'app (`outputLanguage()`) : nom du plat (photo), noms des aliments et message d'erreur (voix). Les mots-clés `search` de la voix restent **en français** quelle que soit la langue parlée (base Ciqual française) ; la dictée accepte toute langue.
+- **Barre d'onglets** (`app/(tabs)/_layout.tsx`, oubliée, signalée au test sur device) : section `tabs`. Test device en anglais OK pour le reste.
+- **Portions** (`portionWeights.ts`) : 105 libellés → section `portions` (anglais rédigé), mots-clés inchangés (français, comparés aux noms Ciqual). Test ajouté. 103/103.
+- **Reste** : données en dur (`portionWeights` hints, programmes sport) ; prompts Gemini dans la langue de l'utilisateur ; base d'aliments (traduction des noms Ciqual) ; `app.config.js` (textes de permissions iOS par langue) ; fiches stores + pages légales.
+- ⚠️ Rien de commité à la demande de l'user.
+
+## 2026-10-05 — Détail d'un aliment / repas au toucher (écran Calories)
+
+- **Besoin** : la ligne d'un repas tronque le nom (1 ligne) et n'ouvre rien au toucher → impossible de revoir le contenu d'un repas dicté/photographié.
+- **`EntryDetailModal.tsx`** (nouveau) : au toucher d'une ligne, fenêtre avec le contenu complet (repas IA « A (200 g) + B (100 g) » affiché en liste à puces), repas · quantité · heure d'ajout, calories, tuiles Protéines / Glucides / Lipides (g + % des kcal), « Supprimer » (confirmation existante) et « Fermer ».
+- **`calories.tsx`** : `EntryRow` cliquable (`onOpen`), la corbeille reste un bouton à part ; état `detailEntry`.
+- **Bug corrigé (`AddEntryModal.prefillFromAnalysis`)** : un résultat IA (photo/voix) était enregistré avec la quantité par défaut « 100 g » alors que les calories sont celles du repas entier → maintenant « 1 portion » (+ bases de recalcul réinitialisées). Si « Ajouter à ma bibliothèque » était coché, l'ancien code stockait en plus des kcal/100 g fausses.
+- tsc OK, 94/94.
+
+## 2026-10-05 — Voix IA : calories calculées avec la base Ciqual (option B)
+
+- **Problème** : « 100 g de filet de poulet » dicté = 165 kcal (valeur USDA cuit estimée par Gemini) vs 110 kcal en saisie manuelle (Ciqual cru). Deux écarts : cru/cuit + table USDA/Ciqual.
+- **Nouveau flux** : Gemini (`extractMealItemsFromVoice`, `gemini.ts`) ne fait plus que **comprendre** : liste `{name, search, grams, kcalPer100 + macros}` (aliments cuits tels que mangés sauf « cru », quantités en grammes). Le calcul est fait par **`src/services/mealEstimate.ts`** avec `searchFood` (même base que la saisie manuelle).
+- **Choix du résultat** (`pickBestMatch`) : parmi les 8 premiers résultats sans marque, celui dont les kcal/100 g sont les plus proches de l'estimation Gemini (départage cru/cuit) ; à ±10 % près, le plus pertinent pour la recherche (standard plutôt que bio) ; rejet si écart > 50 % → estimation Gemini en secours pour cet aliment. Repli : on retire les derniers mots-clés (jamais une recherche sur un seul mot < 3 lettres : « bo » de « bo bun » matchait « jambon »).
+- Simulé sur la vraie `food.db` : poulet grillé → 141, poulet cru → 110, riz blanc cuit → 155, pâtes cuites → pâtes sèches cuites 167, pomme crue → 54, brocoli cuit → 38, bo bun → estimation Gemini.
+- Libellé sous les calories : « Calculé avec la base Ciqual » / « 1/3 aliments calculés avec la base Ciqual, le reste estimé par l'IA » / « Estimation IA (aliments absents de la base) ».
+- Refacto `gemini.ts` : `askGeminiWithMedia` partagé photo/voix ; `analyzeFoodVoice` supprimé. Photo inchangée (même logique applicable plus tard).
+- Tests : `mealEstimate.test.ts` (12) + `parseMealItems` (4). tsc OK, 94/94.
+
 ## 2026-10-04 — Politique de confidentialité mise à jour (`docs/index.html`)
 
 - **Ajouts** : Google **AdMob** (absent jusqu'ici alors que l'app affiche des pubs : données collectées, formulaire de consentement UE, Profil → Consentement publicitaire) ; **Voix IA** (enregistrement ≤ 60 s envoyé à Gemini, fichier supprimé après analyse) ; permission **Micro** ; Connexion Google/Apple ; RevenueCat (identifiant de compte, paiement traité par Google/Apple) ; carte **Vos droits (RGPD)** (droits, export JSON, suppression in-app, réclamation CNIL) ; transferts hors UE.

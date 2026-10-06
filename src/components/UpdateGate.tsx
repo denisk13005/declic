@@ -12,11 +12,13 @@ import React from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet, Linking, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useVersionGate } from '@/hooks/useVersionGate';
 import { storeUrl } from '@/services/versionGate';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
 
 export default function UpdateGate() {
+  const { t } = useTranslation();
   const { status, config, dismissed, dismiss } = useVersionGate();
 
   const isForced = status === 'forced';
@@ -45,14 +47,12 @@ export default function UpdateGate() {
           </LinearGradient>
 
           <Text style={styles.title}>
-            {isForced ? 'Mise à jour requise' : 'Mise à jour disponible'}
+            {isForced ? t('update.requiredTitle') : t('update.availableTitle')}
           </Text>
 
           <Text style={styles.subtitle}>
             {config.message ??
-              (isForced
-                ? 'Cette version n’est plus prise en charge. Mets à jour Vitacairn pour continuer.'
-                : 'Une nouvelle version de Vitacairn est disponible avec des améliorations.')}
+              (isForced ? t('update.requiredMessage') : t('update.availableMessage'))}
           </Text>
         </View>
 
@@ -61,14 +61,14 @@ export default function UpdateGate() {
             <LinearGradient colors={COLORS.gradientPrimary} style={styles.btn}>
               <Ionicons name="download-outline" size={20} color="#fff" />
               <Text style={styles.btnText}>
-                Mettre à jour {Platform.OS === 'ios' ? '(App Store)' : '(Play Store)'}
+                {t('update.button', { store: Platform.OS === 'ios' ? 'App Store' : 'Play Store' })}
               </Text>
             </LinearGradient>
           </TouchableOpacity>
 
           {!isForced && (
             <TouchableOpacity onPress={dismiss} style={styles.laterBtn} activeOpacity={0.7}>
-              <Text style={styles.laterText}>Plus tard</Text>
+              <Text style={styles.laterText}>{t('update.later')}</Text>
             </TouchableOpacity>
           )}
         </View>

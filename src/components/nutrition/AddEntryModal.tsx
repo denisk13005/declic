@@ -15,6 +15,7 @@ import {
   Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
@@ -43,11 +44,12 @@ export interface PrefillFood {
   foodItem?: FoodItem;
 }
 
-const MEALS: { key: MealType; label: string; icon: string }[] = [
-  { key: 'breakfast', label: 'Petit-déj', icon: '🌅' },
-  { key: 'lunch',     label: 'Déjeuner',  icon: '☀️' },
-  { key: 'dinner',    label: 'Dîner',     icon: '🌙' },
-  { key: 'snack',     label: 'Collation', icon: '🍎' },
+// Libellé traduit : t(`meals.short.${key}`)
+const MEALS: { key: MealType; icon: string }[] = [
+  { key: 'breakfast', icon: '🌅' },
+  { key: 'lunch',     icon: '☀️' },
+  { key: 'dinner',    icon: '🌙' },
+  { key: 'snack',     icon: '🍎' },
 ];
 
 function defaultMeal(): MealType {
@@ -70,12 +72,8 @@ interface Props {
 export type AddEntryTab = 'manuel' | 'photo' | 'voix' | 'barcode';
 type Tab = AddEntryTab;
 
-const UNITS: { value: ServingUnit; label: string }[] = [
-  { value: 'g', label: 'g' },
-  { value: 'ml', label: 'ml' },
-  { value: 'piece', label: 'pièce' },
-  { value: 'portion', label: 'portion' },
-];
+// Libellé traduit : t(`common.units.${value}`, { count: 1 })
+const UNITS: ServingUnit[] = ['g', 'ml', 'piece', 'portion'];
 
 // ─── Barcode scanner ─────────────────────────────────────────────────────────
 
@@ -88,6 +86,7 @@ function BarcodeScanner({
   onScanned: (code: string) => void;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
 
@@ -112,12 +111,12 @@ function BarcodeScanner({
       <Modal visible animationType="slide">
         <SafeAreaView style={scanStyles.permContainer}>
           <Ionicons name="camera-outline" size={64} color={COLORS.textTertiary} />
-          <Text style={scanStyles.permText}>Accès à la caméra requis</Text>
+          <Text style={scanStyles.permText}>{t('addEntry.scanner.cameraRequired')}</Text>
           <TouchableOpacity style={scanStyles.permBtn} onPress={requestPermission}>
-            <Text style={scanStyles.permBtnText}>Autoriser</Text>
+            <Text style={scanStyles.permBtnText}>{t('common.allow')}</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={onClose} style={{ marginTop: SPACING.md }}>
-            <Text style={{ color: COLORS.textSecondary }}>Annuler</Text>
+            <Text style={{ color: COLORS.textSecondary }}>{t('common.cancel')}</Text>
           </TouchableOpacity>
         </SafeAreaView>
       </Modal>
@@ -158,7 +157,7 @@ function BarcodeScanner({
           </View>
           <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', paddingTop: SPACING.lg }}>
             <Text style={{ color: '#fff', fontSize: FONT_SIZE.sm }}>
-              {scanned ? '⏳ Recherche…' : 'Pointe vers un code-barres'}
+              {scanned ? t('addEntry.scanner.searching') : t('addEntry.scanner.aim')}
             </Text>
           </View>
         </View>
@@ -179,6 +178,7 @@ function BarcodeScanner({
 
 export default function AddEntryModal({ visible, onClose, date, initialMeal, prefillFood, initialTab }: Props) {
   const C = useAppColors();
+  const { t } = useTranslation();
   const { addEntry, addFoodItem, foodLibrary } = useCalorieStore();
 
   const [tab, setTab] = useState<Tab>('manuel');
@@ -294,7 +294,7 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
           // Nouveau format : caloriesPer100 est le vrai /100g, gramsPerUnit connu
           const gpp = item.gramsPerUnit;
           setGramsPerPiece(String(gpp));
-          setPerLabel(`1 ${defUnit === 'piece' ? 'pièce' : 'portion'} · ${gpp}g`);
+          setPerLabel(t('addEntry.perPiece', { unit: t(`common.units.${defUnit}`, { count: 1 }), grams: gpp }));
           applyBase(base, defQty, defUnit, gpp);
         } else if (isPieceUnit) {
           // Ancien format : caloriesPer100 = calories de la portion elle-même
@@ -306,10 +306,13 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
             setFatInput(String(Math.round(item.macrosPer100.fat * defQty * 10) / 10));
             setMacrosOpen(true);
           }
-          setPerLabel(`pour ${defQty} ${defUnit === 'piece' ? 'pièce' : 'portion'} — entre le poids pour recalculer`);
+          setPerLabel(t('addEntry.perQuantityEnterWeight', {
+            quantity: defQty,
+            unit: t(`common.units.${defUnit}`, { count: defQty }),
+          }));
         } else {
           applyBase(base, defQty, defUnit);
-          setPerLabel('pour 100g');
+          setPerLabel(t('common.per100g'));
         }
       } else {
         // Repas composé : stocker les calories/macros pour 1 portion pour permettre le recalcul
@@ -324,7 +327,7 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
           setFatInput(String(prefillFood.macros.fat));
           setMacrosOpen(true);
         }
-        setPerLabel('pour 1 portion');
+        setPerLabel(t('addEntry.perPortions', { count: 1 }));
       }
     }
   }, [visible, prefillFood]);
@@ -366,7 +369,7 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
         setCarbsInput(String(Math.round(basePerPortion.macros.carbs * qty * 10) / 10));
         setFatInput(String(Math.round(basePerPortion.macros.fat * qty * 10) / 10));
       }
-      setPerLabel(`pour ${qty} portion${qty > 1 ? 's' : ''}`);
+      setPerLabel(t('addEntry.perPortions', { count: qty }));
     }
   }
 
@@ -377,11 +380,11 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
         const portionRef = lookupPortionWeight(name);
         if (portionRef) {
           setGramsPerPiece(String(portionRef.grams));
-          setPerLabel(`${portionRef.hint} · ${portionRef.grams}g/pièce`);
+          setPerLabel(t('addEntry.portionHint', { hint: portionRef.hint, grams: portionRef.grams }));
           applyBase(basePer100, parseFloat(quantity) || 1, newUnit, portionRef.grams);
         } else {
           setGramsPerPiece('');
-          setPerLabel('Indique le poids d\'une pièce pour calculer');
+          setPerLabel(t('addEntry.enterPieceWeight'));
         }
       } else {
         setGramsPerPiece('');
@@ -534,15 +537,15 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
       if (portionRef) {
         // Poids connu : pré-rempli, calcul immédiat
         setGramsPerPiece(String(portionRef.grams));
-        setPerLabel(`${portionRef.hint} · ${portionRef.grams}g/pièce`);
+        setPerLabel(t('addEntry.portionHint', { hint: portionRef.hint, grams: portionRef.grams }));
         applyBase(base, parseFloat(quantity) || 1, unit, portionRef.grams);
       } else {
         // Poids inconnu : l'utilisateur devra le saisir
         setGramsPerPiece('');
-        setPerLabel('Indique le poids d\'une pièce pour calculer');
+        setPerLabel(t('addEntry.enterPieceWeight'));
       }
     } else {
-      setPerLabel(`pour 100g`);
+      setPerLabel(t('common.per100g'));
       applyBase(base, parseFloat(quantity) || 100, unit, 0);
     }
   }
@@ -550,6 +553,12 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
   function prefillFromAnalysis(n: string, cal: number, macros?: Macros | null, label?: string | null) {
     setName(n);
     setCaloriesInput(String(cal));
+    // Résultat IA (photo / voix) = un repas entier : « 1 portion », pas le « 100 g » par défaut
+    // (sinon le détail affiche une quantité fausse et la bibliothèque stocke des kcal/100 g erronées)
+    setBasePer100(null);
+    setBasePerPortion(null);
+    setUnit('portion');
+    setQuantity('1');
     if (macros) {
       setProteinInput(String(macros.protein));
       setCarbsInput(String(macros.carbs));
@@ -565,10 +574,10 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
   async function pickImage(fromCamera: boolean) {
     if (fromCamera) {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
-      if (status !== 'granted') { Alert.alert('Permission refusée', "L'accès à la caméra est nécessaire."); return; }
+      if (status !== 'granted') { Alert.alert(t('common.permissionDenied'), t('addEntry.photo.cameraNeeded')); return; }
     } else {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') { Alert.alert('Permission refusée', "L'accès à la galerie est nécessaire."); return; }
+      if (status !== 'granted') { Alert.alert(t('common.permissionDenied'), t('addEntry.photo.galleryNeeded')); return; }
     }
 
     const result = fromCamera
@@ -587,17 +596,17 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
       const analysis = await analyzeFoodPhoto(base64);
       prefillFromAnalysis(analysis.name, analysis.calories, analysis.macros);
     } catch (err: any) {
-      Alert.alert('Analyse échouée', err.message ?? "Gemini n'a pas pu identifier le plat.");
+      Alert.alert(t('addEntry.photo.failedTitle'), err.message ?? t('addEntry.photo.failedDefault'));
     } finally {
       setAnalyzing(false);
     }
   }
 
   function showPhotoOptions() {
-    Alert.alert('Analyser un plat', 'Comment veux-tu ajouter une photo ?', [
-      { text: 'Prendre une photo', onPress: () => pickImage(true) },
-      { text: 'Choisir depuis la galerie', onPress: () => pickImage(false) },
-      { text: 'Annuler', style: 'cancel' },
+    Alert.alert(t('addEntry.photo.chooseTitle'), t('addEntry.photo.chooseMessage'), [
+      { text: t('addEntry.photo.takePhoto'), onPress: () => pickImage(true) },
+      { text: t('addEntry.photo.fromGallery'), onPress: () => pickImage(false) },
+      { text: t('common.cancel'), style: 'cancel' },
     ]);
   }
 
@@ -622,11 +631,11 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
       } else {
         setUnit('g');
         setQuantity('100');
-        setPerLabel('pour 100g');
+        setPerLabel(t('common.per100g'));
         applyBase(base, 100, 'g');
       }
     } catch (err: any) {
-      Alert.alert('Produit introuvable', err.message ?? 'Impossible de récupérer les infos nutritionnelles.');
+      Alert.alert(t('addEntry.barcode.notFoundTitle'), err.message ?? t('addEntry.barcode.notFoundDefault'));
       setTab('barcode');
     } finally {
       setAnalyzing(false);
@@ -637,8 +646,8 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
 
   function handleAdd() {
     const kcal = parseInt(caloriesInput, 10);
-    if (!name.trim()) { Alert.alert('Erreur', 'Entre un nom de repas.'); return; }
-    if (isNaN(kcal) || kcal <= 0) { Alert.alert('Erreur', 'Entre un nombre de calories valide.'); return; }
+    if (!name.trim()) { Alert.alert(t('common.error'), t('addEntry.errors.nameRequired')); return; }
+    if (isNaN(kcal) || kcal <= 0) { Alert.alert(t('common.error'), t('addEntry.errors.invalidCalories')); return; }
     const qty = parseFloat(quantity) || 1;
 
     const parsedMacros: Macros | null =
@@ -706,10 +715,10 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
   // ── Render ────────────────────────────────────────────────────────────────
 
   const tabs: { key: Tab; label: string; icon: React.ComponentProps<typeof Ionicons>['name'] }[] = [
-    { key: 'manuel', label: 'Manuel', icon: 'pencil-outline' },
-    { key: 'photo', label: 'Photo IA', icon: 'camera-outline' },
-    { key: 'voix', label: 'Voix IA', icon: 'mic-outline' },
-    { key: 'barcode', label: 'Code-barres', icon: 'barcode-outline' },
+    { key: 'manuel', label: t('addEntry.tabs.manuel'), icon: 'pencil-outline' },
+    { key: 'photo', label: t('addEntry.tabs.photo'), icon: 'camera-outline' },
+    { key: 'voix', label: t('addEntry.tabs.voix'), icon: 'mic-outline' },
+    { key: 'barcode', label: t('addEntry.tabs.barcode'), icon: 'barcode-outline' },
   ];
 
   return (
@@ -722,7 +731,7 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
           <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={handleClose} />
           <View style={styles.sheet}>
             <View style={styles.handle} />
-            <Text style={styles.title}>Ajouter un aliment</Text>
+            <Text style={styles.title}>{t('addEntry.title')}</Text>
 
             {/* Tab pills */}
             <View style={styles.tabRow}>
@@ -756,7 +765,7 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
                 >
                   <Text style={styles.mealPillIcon}>{m.icon}</Text>
                   <Text style={[styles.mealPillText, meal === m.key && styles.mealPillTextActive]}>
-                    {m.label}
+                    {t(`meals.short.${m.key}`)}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -782,8 +791,8 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
                   </TouchableOpacity>
                   <Text style={styles.photoHint}>
                     {analyzing
-                      ? 'Analyse en cours…'
-                      : 'Prends une photo ou choisis depuis la galerie.\nL\'IA identifiera le plat et estimera les calories.'}
+                      ? t('common.analyzing')
+                      : t('addEntry.photo.hint')}
                   </Text>
                 </View>
               )}
@@ -791,7 +800,7 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
               {/* ── Voix IA tab ────────────────────────────────────────────── */}
               {tab === 'voix' && (
                 <VoiceMealInput
-                  onResult={(a) => prefillFromAnalysis(a.name, a.calories, a.macros, "Estimation IA d'après ta description")}
+                  onResult={(a, sourceLabel) => prefillFromAnalysis(a.name, a.calories, a.macros, sourceLabel)}
                 />
               )}
 
@@ -812,8 +821,8 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
                   </TouchableOpacity>
                   <Text style={styles.photoHint}>
                     {analyzing
-                      ? 'Recherche du produit…'
-                      : 'Scanne le code-barres du produit pour récupérer\nautomatiquement les informations nutritionnelles.'}
+                      ? t('addEntry.barcode.searching')
+                      : t('addEntry.barcode.hint')}
                   </Text>
                 </View>
               )}
@@ -826,7 +835,7 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
                       style={styles.input}
                       value={name}
                       onChangeText={handleNameChange}
-                      placeholder="Nom (ex: Yaourt, Poulet…)"
+                      placeholder={t('addEntry.form.namePlaceholder')}
                       placeholderTextColor={COLORS.textTertiary}
                       autoCapitalize="sentences"
                       returnKeyType="next"
@@ -843,7 +852,7 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
                               {isFirstOff && (
                                 <View style={styles.offSeparator}>
                                   <Ionicons name="globe-outline" size={13} color="#6366F1" />
-                                  <Text style={styles.offSeparatorText}>Résultats Open Food Facts</Text>
+                                  <Text style={styles.offSeparatorText}>{t('addEntry.form.offResults')}</Text>
                                 </View>
                               )}
                               <TouchableOpacity
@@ -860,11 +869,11 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
                                   <Text style={styles.suggestionBrand}>
                                     {item.brand ? `${item.brand} · ` : ''}
                                     {item.macros
-                                      ? `P:${item.macros.protein}g · G:${item.macros.carbs}g · L:${item.macros.fat}g`
-                                      : 'pour 100g'}
+                                      ? t('common.macrosShort', { p: item.macros.protein, c: item.macros.carbs, f: item.macros.fat })
+                                      : t('common.per100g')}
                                   </Text>
                                 </View>
-                                <Text style={[styles.suggestionKcal, { color: C.primary }]}>{item.caloriesPer100} kcal</Text>
+                                <Text style={[styles.suggestionKcal, { color: C.primary }]}>{item.caloriesPer100} {t('common.kcal')}</Text>
                               </TouchableOpacity>
                             </React.Fragment>
                           );
@@ -881,7 +890,7 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
                             ) : (
                               <>
                                 <Ionicons name="chevron-down-outline" size={14} color={C.primary} />
-                                <Text style={[styles.loadMoreText, { color: C.primary }]}>Produits suivants</Text>
+                                <Text style={[styles.loadMoreText, { color: C.primary }]}>{t('addEntry.form.moreProducts')}</Text>
                               </>
                             )}
                           </TouchableOpacity>
@@ -889,7 +898,7 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
                         {offLoading && (
                           <View style={styles.offLoadingRow}>
                             <ActivityIndicator size="small" color="#6366F1" />
-                            <Text style={styles.offLoadingText}>Recherche sur Open Food Facts…</Text>
+                            <Text style={styles.offLoadingText}>{t('addEntry.form.searchingOff')}</Text>
                           </View>
                         )}
                       </View>
@@ -910,12 +919,12 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
                     <View style={styles.unitRow}>
                       {UNITS.map((u) => (
                         <TouchableOpacity
-                          key={u.value}
-                          style={[styles.unitBtn, unit === u.value && { backgroundColor: C.primary, borderColor: C.primary }]}
-                          onPress={() => handleUnitChange(u.value)}
+                          key={u}
+                          style={[styles.unitBtn, unit === u && { backgroundColor: C.primary, borderColor: C.primary }]}
+                          onPress={() => handleUnitChange(u)}
                         >
-                          <Text style={[styles.unitBtnText, unit === u.value && styles.unitBtnTextActive]}>
-                            {u.label}
+                          <Text style={[styles.unitBtnText, unit === u && styles.unitBtnTextActive]}>
+                            {t(`common.units.${u}`, { count: 1 })}
                           </Text>
                         </TouchableOpacity>
                       ))}
@@ -928,7 +937,7 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
                       style={styles.input}
                       value={gramsPerPiece}
                       onChangeText={handleGramsPerPieceChange}
-                      placeholder={`Poids d'une ${unit === 'piece' ? 'pièce' : 'portion'} en g`}
+                      placeholder={t('addEntry.form.pieceWeightPlaceholder', { unit: t(`common.units.${unit}`, { count: 1 }) })}
                       placeholderTextColor={COLORS.textTertiary}
                       keyboardType="decimal-pad"
                       returnKeyType="next"
@@ -940,7 +949,7 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
                       style={styles.input}
                       value={caloriesInput}
                       onChangeText={(v) => { setCaloriesInput(v); setPerLabel(null); setBasePer100(null); }}
-                      placeholder="Calories (kcal)"
+                      placeholder={t('addEntry.form.caloriesPlaceholder')}
                       placeholderTextColor={COLORS.textTertiary}
                       keyboardType="numeric"
                       returnKeyType="done"
@@ -956,7 +965,7 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
                     onPress={() => setMacrosOpen((v) => !v)}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.accordionTitle}>Macronutriments (optionnel)</Text>
+                    <Text style={styles.accordionTitle}>{t('addEntry.form.macrosOptional')}</Text>
                     <Ionicons
                       name={macrosOpen ? 'chevron-up' : 'chevron-down'}
                       size={16}
@@ -967,7 +976,7 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
                   {macrosOpen && (
                     <View style={styles.macroRow}>
                       <View style={styles.macroField}>
-                        <Text style={[styles.macroLabel, { color: '#60A5FA' }]}>Protéines</Text>
+                        <Text style={[styles.macroLabel, { color: '#60A5FA' }]}>{t('common.protein')}</Text>
                         <TextInput
                           style={styles.input}
                           value={proteinInput}
@@ -978,7 +987,7 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
                         />
                       </View>
                       <View style={styles.macroField}>
-                        <Text style={[styles.macroLabel, { color: '#FBBF24' }]}>Glucides</Text>
+                        <Text style={[styles.macroLabel, { color: '#FBBF24' }]}>{t('common.carbs')}</Text>
                         <TextInput
                           style={styles.input}
                           value={carbsInput}
@@ -989,7 +998,7 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
                         />
                       </View>
                       <View style={styles.macroField}>
-                        <Text style={[styles.macroLabel, { color: '#F472B6' }]}>Lipides</Text>
+                        <Text style={[styles.macroLabel, { color: '#F472B6' }]}>{t('common.fat')}</Text>
                         <TextInput
                           style={styles.input}
                           value={fatInput}
@@ -1005,8 +1014,8 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
                   {/* Save to library toggle */}
                   <View style={styles.libRow}>
                     <View style={styles.libText}>
-                      <Text style={styles.libLabel}>Sauvegarder dans ma bibliothèque</Text>
-                      <Text style={styles.libSub}>Réutilisable facilement</Text>
+                      <Text style={styles.libLabel}>{t('addEntry.form.saveToLibrary')}</Text>
+                      <Text style={styles.libSub}>{t('addEntry.form.saveToLibrarySub')}</Text>
                     </View>
                     <Switch
                       value={saveToLib}
@@ -1021,7 +1030,7 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
 
             {tab === 'manuel' && (
               <TouchableOpacity style={[styles.btn, { backgroundColor: C.primary }]} onPress={handleAdd} activeOpacity={0.8}>
-                <Text style={styles.btnText}>Ajouter</Text>
+                <Text style={styles.btnText}>{t('common.add')}</Text>
               </TouchableOpacity>
             )}
           </View>

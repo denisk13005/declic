@@ -11,6 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { WorkoutType } from '@/types';
 import { WORKOUT_META, WORKOUT_TYPES, computeWorkoutCalories } from '@/utils/workout';
 import { useWorkoutStore } from '@/stores/workoutStore';
@@ -25,6 +26,7 @@ interface Props {
 }
 
 export default function AddWorkoutModal({ visible, date, onClose }: Props) {
+  const { t } = useTranslation();
   const C = useAppColors();
   const { addWorkout } = useWorkoutStore();
   const { profile } = useProfileStore();
@@ -74,10 +76,10 @@ export default function AddWorkoutModal({ visible, date, onClose }: Props) {
         <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={handleClose} />
         <View style={styles.sheet}>
           <View style={styles.handle} />
-          <Text style={styles.title}>Ajouter une activité</Text>
+          <Text style={styles.title}>{t('workout.addTitle')}</Text>
 
           {/* Sport type picker */}
-          <Text style={styles.sectionLabel}>Type d'activité</Text>
+          <Text style={styles.sectionLabel}>{t('workout.type')}</Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -109,13 +111,13 @@ export default function AddWorkoutModal({ visible, date, onClose }: Props) {
           </ScrollView>
 
           {/* Duration */}
-          <Text style={styles.sectionLabel}>Durée (minutes)</Text>
+          <Text style={styles.sectionLabel}>{t('workout.durationMin')}</Text>
           <TextInput
             style={styles.input}
             value={duration}
             onChangeText={setDuration}
             keyboardType="numeric"
-            placeholder="ex. 45"
+            placeholder={t('workout.durationPlaceholder')}
             placeholderTextColor={COLORS.textTertiary}
             returnKeyType="next"
           />
@@ -125,23 +127,23 @@ export default function AddWorkoutModal({ visible, date, onClose }: Props) {
             <View style={styles.estimateRow}>
               <Ionicons name="flame-outline" size={14} color={COLORS.textSecondary} />
               <Text style={styles.estimateText}>
-                Estimation : <Text style={{ color: COLORS.textPrimary, fontWeight: FONT_WEIGHT.semibold }}>{estimatedCalories} kcal</Text>
-                {' '}(basé sur {weight} kg)
+                {t('workout.estimate')}<Text style={{ color: COLORS.textPrimary, fontWeight: FONT_WEIGHT.semibold }}>{estimatedCalories} kcal</Text>
+                {t('workout.basedOn', { weight })}
               </Text>
             </View>
           )}
 
           {/* Optional custom calories */}
           <Text style={styles.sectionLabel}>
-            Calories brûlées{' '}
-            <Text style={styles.optionalLabel}>(optionnel — remplace l'estimation)</Text>
+            {t('workout.caloriesBurned')}{' '}
+            <Text style={styles.optionalLabel}>{t('workout.optionalOverride')}</Text>
           </Text>
           <TextInput
             style={styles.input}
             value={customCalories}
             onChangeText={setCustomCalories}
             keyboardType="numeric"
-            placeholder={estimatedCalories > 0 ? String(estimatedCalories) : 'ex. 300'}
+            placeholder={estimatedCalories > 0 ? String(estimatedCalories) : t('workout.caloriesPlaceholder')}
             placeholderTextColor={COLORS.textTertiary}
             returnKeyType="done"
           />
@@ -156,7 +158,7 @@ export default function AddWorkoutModal({ visible, date, onClose }: Props) {
             activeOpacity={0.85}
           >
             <Text style={styles.saveBtnText}>
-              Enregistrer {finalCalories > 0 ? `— ${finalCalories} kcal` : ''}
+              {finalCalories > 0 ? t('workout.saveWithKcal', { kcal: finalCalories }) : t('common.save')}
             </Text>
           </TouchableOpacity>
         </View>

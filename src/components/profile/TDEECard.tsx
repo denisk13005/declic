@@ -9,6 +9,8 @@ import {
   LIFESTYLE_LABELS,
   EXERCISE_LABELS,
 } from '@/utils/tdee';
+import { useTranslation } from 'react-i18next';
+import { currentLanguage } from '@/i18n';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
 
 // Multiplicateurs et bonus (dupliqués ici pour l'affichage — valeurs identiques à tdee.ts)
@@ -89,6 +91,7 @@ function Sep() {
 // ─── Panneau de détail des calculs ───────────────────────────────────────────
 
 function CalcDetail({ result, params }: { result: TDEEResult; params: TDEEParams }) {
+  const { t } = useTranslation();
   const { weight, height, age, gender, lifestyleLevel, exerciseFrequency } = params;
   const mult = LIFESTYLE_MULTIPLIERS[lifestyleLevel];
   const bonus = EXERCISE_BONUS[exerciseFrequency];
@@ -99,16 +102,16 @@ function CalcDetail({ result, params }: { result: TDEEResult; params: TDEEParams
   const t3 = Math.round(5 * age);
   const t4 = gender === 'male' ? 5 : -161;
 
-  const fmt = (n: number) => n.toLocaleString('fr-FR');
+  const fmt = (n: number) => n.toLocaleString(currentLanguage());
   const sign = (n: number) => (n >= 0 ? `+ ${fmt(n)}` : `− ${fmt(Math.abs(n))}`);
 
   return (
     <View style={detailStyles.container}>
 
       {/* ── Étape 1 : BMR ─────────────────────────────────────────────────── */}
-      <Text style={detailStyles.stepTitle}>① Métabolisme de base (BMR)</Text>
+      <Text style={detailStyles.stepTitle}>{t('tdee.card.step1')}</Text>
       <Text style={detailStyles.formula}>
-        Formule Mifflin-St Jeor ({gender === 'male' ? 'homme' : 'femme'})
+        {t(gender === 'male' ? 'tdee.card.formulaMale' : 'tdee.card.formulaFemale')}
       </Text>
       <DetailRow
         indent
@@ -117,51 +120,51 @@ function CalcDetail({ result, params }: { result: TDEEResult; params: TDEEParams
       />
       <DetailRow
         indent
-        label={`6,25 × ${height} cm`}
+        label={`${fmt(6.25)} × ${height} cm`}
         value={`= ${fmt(t2)} kcal`}
       />
       <DetailRow
         indent
-        label={`5 × ${age} ans`}
+        label={`5 × ${age} ${t('tdee.card.years')}`}
         value={`= −${fmt(t3)} kcal`}
       />
       <DetailRow
         indent
-        label={gender === 'male' ? 'Constante homme' : 'Constante femme'}
+        label={t(gender === 'male' ? 'tdee.card.constantMale' : 'tdee.card.constantFemale')}
         value={`= ${sign(t4)} kcal`}
       />
       <DetailRow
         highlight
         label="BMR"
-        value={`${fmt(result.bmr)} kcal / jour`}
+        value={t('tdee.card.perDay', { kcal: fmt(result.bmr) })}
       />
 
       <Sep />
 
       {/* ── Étape 2 : TDEE ────────────────────────────────────────────────── */}
-      <Text style={detailStyles.stepTitle}>② Dépense totale (TDEE)</Text>
+      <Text style={detailStyles.stepTitle}>{t('tdee.card.step2')}</Text>
       <DetailRow
         indent
-        label={`Niveau de vie : ×${mult} (${LIFESTYLE_LABELS[lifestyleLevel]})`}
-        value={`${fmt(result.bmr)} × ${mult}`}
+        label={t('tdee.card.lifestyleLine', { mult: fmt(mult), label: LIFESTYLE_LABELS[lifestyleLevel] })}
+        value={`${fmt(result.bmr)} × ${fmt(mult)}`}
       />
       {bonus > 0 && (
         <DetailRow
           indent
-          label={`Sport : ${EXERCISE_LABELS[exerciseFrequency]}`}
+          label={t('tdee.card.sportLine', { label: EXERCISE_LABELS[exerciseFrequency] })}
           value={`+ ${fmt(bonus)} kcal`}
         />
       )}
       <DetailRow
         highlight
-        label="TDEE (maintenance)"
-        value={`${fmt(result.tdee)} kcal / jour`}
+        label={t('tdee.card.tdeeMaintenance')}
+        value={t('tdee.card.perDay', { kcal: fmt(result.tdee) })}
       />
 
       <Sep />
 
       {/* ── Étape 3 : Macros par objectif ─────────────────────────────────── */}
-      <Text style={detailStyles.stepTitle}>③ Répartition des macros</Text>
+      <Text style={detailStyles.stepTitle}>{t('tdee.card.step3')}</Text>
       {(['lose_fat', 'maintain', 'build_muscle'] as FitnessGoal[]).map((goal) => {
         const adj = GOAL_ADJUST[goal];
         const targetCal = result.tdee + adj;
@@ -185,15 +188,15 @@ function CalcDetail({ result, params }: { result: TDEEResult; params: TDEEParams
               </Text>
               <View style={detailStyles.macroLine}>
                 <Text style={detailStyles.macroItem}>
-                  <Text style={{ color: '#EF4444' }}>Prot </Text>
+                  <Text style={{ color: '#EF4444' }}>{t('tdee.card.protShort')}</Text>
                   {PROTEIN_PER_KG[goal]}g × {weight}kg = {prot}g
                 </Text>
                 <Text style={detailStyles.macroItem}>
-                  <Text style={{ color: '#F59E0B' }}>Gluc </Text>
+                  <Text style={{ color: '#F59E0B' }}>{t('tdee.card.carbsShort')}</Text>
                   ({targetCal} − {prot}×4 − {fat}×9) ÷ 4 = {carbs}g
                 </Text>
                 <Text style={detailStyles.macroItem}>
-                  <Text style={{ color: '#3B82F6' }}>Lip </Text>
+                  <Text style={{ color: '#3B82F6' }}>{t('tdee.card.fatShort')}</Text>
                   {Math.round(FAT_PCT[goal] * 100)}% × {targetCal} ÷ 9 = {fat}g
                 </Text>
               </View>
@@ -208,6 +211,7 @@ function CalcDetail({ result, params }: { result: TDEEResult; params: TDEEParams
 // ─── Composant principal ──────────────────────────────────────────────────────
 
 export default function TDEECard({ result, activeGoal, onApply, params }: Props) {
+  const { t } = useTranslation();
   const goals: FitnessGoal[] = ['lose_fat', 'maintain', 'build_muscle'];
   const [showDetail, setShowDetail] = useState(false);
 
@@ -216,13 +220,13 @@ export default function TDEECard({ result, activeGoal, onApply, params }: Props)
       {/* BMR / TDEE synthèse */}
       <View style={styles.infoRow}>
         <View style={styles.infoItem}>
-          <Text style={styles.infoValue}>{result.bmr.toLocaleString('fr-FR')}</Text>
-          <Text style={styles.infoLabel}>Métabolisme de base (kcal)</Text>
+          <Text style={styles.infoValue}>{result.bmr.toLocaleString(currentLanguage())}</Text>
+          <Text style={styles.infoLabel}>{t('tdee.card.bmrKcal')}</Text>
         </View>
         <View style={styles.infoDivider} />
         <View style={styles.infoItem}>
-          <Text style={styles.infoValue}>{result.tdee.toLocaleString('fr-FR')}</Text>
-          <Text style={styles.infoLabel}>Maintenance (kcal)</Text>
+          <Text style={styles.infoValue}>{result.tdee.toLocaleString(currentLanguage())}</Text>
+          <Text style={styles.infoLabel}>{t('tdee.card.maintenanceKcal')}</Text>
         </View>
       </View>
 
@@ -234,7 +238,7 @@ export default function TDEECard({ result, activeGoal, onApply, params }: Props)
           activeOpacity={0.7}
         >
           <Ionicons name="calculator-outline" size={15} color={COLORS.primary} />
-          <Text style={styles.detailToggleText}>Comment c'est calculé ?</Text>
+          <Text style={styles.detailToggleText}>{t('tdee.card.howCalculated')}</Text>
           <Ionicons
             name={showDetail ? 'chevron-up-outline' : 'chevron-down-outline'}
             size={15}
@@ -259,7 +263,7 @@ export default function TDEECard({ result, activeGoal, onApply, params }: Props)
               <Text style={styles.scenarioTitle}>{GOAL_LABELS[goal]}</Text>
               {isActive && (
                 <View style={styles.activeBadge}>
-                  <Text style={styles.activeBadgeText}>Actif</Text>
+                  <Text style={styles.activeBadgeText}>{t('tdee.card.active')}</Text>
                 </View>
               )}
               <TouchableOpacity
@@ -267,17 +271,17 @@ export default function TDEECard({ result, activeGoal, onApply, params }: Props)
                 style={[styles.applyBtn, isActive && styles.applyBtnActive]}
               >
                 <Text style={[styles.applyBtnText, isActive && styles.applyBtnTextActive]}>
-                  {isActive ? 'Appliqué' : 'Appliquer'}
+                  {t(isActive ? 'tdee.card.applied' : 'tdee.card.apply')}
                 </Text>
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.calories}>{macros.calories.toLocaleString('fr-FR')} kcal</Text>
+            <Text style={styles.calories}>{macros.calories.toLocaleString(currentLanguage())} kcal</Text>
 
             <View style={styles.macrosRow}>
-              <MacroChip label="Protéines" value={macros.protein} color="#EF4444" />
-              <MacroChip label="Glucides" value={macros.carbs} color="#F59E0B" />
-              <MacroChip label="Lipides" value={macros.fat} color="#3B82F6" />
+              <MacroChip label={t('common.protein')} value={macros.protein} color="#EF4444" />
+              <MacroChip label={t('common.carbs')} value={macros.carbs} color="#F59E0B" />
+              <MacroChip label={t('common.fat')} value={macros.fat} color="#3B82F6" />
             </View>
           </View>
         );

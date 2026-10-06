@@ -3,6 +3,7 @@
  * Complète `deleteAccount()` (firebase.ts) qui supprime le compte serveur.
  */
 import { Share } from 'react-native';
+import i18n from '@/i18n';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CONFIG } from '@/constants/config';
 import { useAuthStore } from '@/stores/authStore';
@@ -40,7 +41,7 @@ export async function exportUserData(): Promise<void> {
   };
 
   await Share.share({
-    title: 'Mes données Vitacairn',
+    title: i18n.t('errors.exportTitle'),
     message: JSON.stringify(payload, null, 2),
   });
 }

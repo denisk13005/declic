@@ -4,11 +4,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { requestNotificationPermission } from '@/services/notifications';
 import { useProfileStore } from '@/stores/profileStore';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
 
 export default function NotificationsScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { setOnboardingComplete, setNotificationsEnabled } = useProfileStore();
   const [loading, setLoading] = useState(false);
@@ -21,9 +23,9 @@ export default function NotificationsScreen() {
 
     if (!granted) {
       Alert.alert(
-        'Notifications désactivées',
-        'Tu peux les activer plus tard depuis les Réglages de ton téléphone.',
-        [{ text: 'Continuer', onPress: finish }]
+        t('onboarding.notifications.deniedTitle'),
+        t('onboarding.notifications.deniedMessage'),
+        [{ text: t('onboarding.notifications.continue'), onPress: finish }]
       );
     } else {
       finish();
@@ -43,19 +45,17 @@ export default function NotificationsScreen() {
           <Text style={styles.iconEmoji}>🔔</Text>
         </LinearGradient>
 
-        <Text style={styles.title}>Ne rate aucun jour</Text>
-        <Text style={styles.subtitle}>
-          Active les notifications pour recevoir un rappel quotidien et maintenir tes séries.
-        </Text>
+        <Text style={styles.title}>{t('onboarding.notifications.title')}</Text>
+        <Text style={styles.subtitle}>{t('onboarding.notifications.subtitle')}</Text>
 
         {/* Notification preview */}
         <View style={styles.preview}>
           <View style={styles.previewHeader}>
             <Text style={styles.previewApp}>⚡️ Vitacairn</Text>
-            <Text style={styles.previewTime}>maintenant</Text>
+            <Text style={styles.previewTime}>{t('onboarding.notifications.previewTime')}</Text>
           </View>
-          <Text style={styles.previewTitle}>🏃 Temps pour ton habitude !</Text>
-          <Text style={styles.previewBody}>N'oublie pas de cocher ta séance de sport du jour.</Text>
+          <Text style={styles.previewTitle}>{t('onboarding.notifications.previewTitle')}</Text>
+          <Text style={styles.previewBody}>{t('onboarding.notifications.previewBody')}</Text>
         </View>
       </ScrollView>
 
@@ -68,12 +68,12 @@ export default function NotificationsScreen() {
         >
           <LinearGradient colors={COLORS.gradientAccent} style={styles.btn}>
             <Ionicons name="notifications" size={20} color="#fff" />
-            <Text style={styles.btnText}>Activer les rappels</Text>
+            <Text style={styles.btnText}>{t('onboarding.notifications.enable')}</Text>
           </LinearGradient>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={finish} style={styles.skipBtn}>
-          <Text style={styles.skipText}>Pas maintenant</Text>
+          <Text style={styles.skipText}>{t('onboarding.notNow')}</Text>
         </TouchableOpacity>
 
         {/* Step indicator */}

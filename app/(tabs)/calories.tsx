@@ -16,8 +16,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Circle, Defs, LinearGradient as SvgGradient, Stop } from 'react-native-svg';
 import { format, addDays, subDays } from 'date-fns';
-import { fr } from 'date-fns/locale';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
+import { dateLocale } from '@/i18n';
 import { useCalorieStore } from '@/stores/calorieStore';
 import { useWorkoutStore } from '@/stores/workoutStore';
 import { useProfileStore } from '@/stores/profileStore';
@@ -26,6 +28,7 @@ import { AddEntryTab, PrefillFood } from '@/components/nutrition/AddEntryModal';
 import AddEntryModal from '@/components/nutrition/AddEntryModal';
 import FoodLibraryModal from '@/components/nutrition/FoodLibraryModal';
 import GoalsModal from '@/components/nutrition/GoalsModal';
+import EntryDetailModal from '@/components/nutrition/EntryDetailModal';
 import AddWorkoutModal from '@/components/sport/AddWorkoutModal';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
 import { useAppColors } from '@/hooks/useAppColors';
@@ -35,30 +38,36 @@ import { BannerAd, BannerAdSize, AD_UNITS } from '@/services/ads';
 
 // Libellés santé adaptés à la plateforme (iOS : Apple Santé / Watch — Android : Samsung Health / Health Connect)
 const IS_IOS = Platform.OS === 'ios';
-const HEALTH_APP_LABEL = IS_IOS ? 'Apple Santé' : 'Samsung Health';
-const HEALTH_SETTINGS_LABEL = IS_IOS ? 'Santé' : 'HC';
+
+function healthLabels(t: TFunction) {
+  return {
+    app: IS_IOS ? t('calories.healthAppIos') : 'Samsung Health',
+    settings: IS_IOS ? t('calories.healthSettingsIos') : 'HC',
+  };
+}
 
 function todayISO(): string {
   return format(new Date(), 'yyyy-MM-dd');
 }
 
-function formatDayLabel(dateStr: string): string {
+function formatDayLabel(dateStr: string, t: TFunction): string {
   const today = todayISO();
-  if (dateStr === today) return "Aujourd'hui";
+  if (dateStr === today) return t('common.today');
   const yesterday = format(subDays(new Date(), 1), 'yyyy-MM-dd');
-  if (dateStr === yesterday) return 'Hier';
-  return format(new Date(dateStr + 'T12:00:00'), 'd MMM', { locale: fr });
+  if (dateStr === yesterday) return t('common.yesterday');
+  return format(new Date(dateStr + 'T12:00:00'), 'd MMM', { locale: dateLocale() });
 }
 
 // ─── Meal metadata ─────────────────────────────────────────────────────────────
 
 const MEAL_ORDER: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
 
-const MEAL_META: Record<MealType, { label: string; icon: string; dotColor: string }> = {
-  breakfast: { label: 'Petit-déjeuner', icon: '🌅', dotColor: '#FB923C' },
-  lunch:     { label: 'Déjeuner',       icon: '☀️',  dotColor: '#60A5FA' },
-  dinner:    { label: 'Dîner',          icon: '🌙',  dotColor: '#A78BFA' },
-  snack:     { label: 'Collation',      icon: '🍎',  dotColor: '#34D399' },
+// Libellé traduit : t(`meals.${mealType}`)
+const MEAL_META: Record<MealType, { icon: string; dotColor: string }> = {
+  breakfast: { icon: '🌅', dotColor: '#FB923C' },
+  lunch:     { icon: '☀️',  dotColor: '#60A5FA' },
+  dinner:    { icon: '🌙',  dotColor: '#A78BFA' },
+  snack:     { icon: '🍎',  dotColor: '#34D399' },
 };
 
 // ─── Anneau SVG ───────────────────────────────────────────────────────────────
@@ -75,6 +84,7 @@ function CalorieRing({
   gradId?: string;
 }) {
   const C = useAppColors();
+  const { t } = useTranslation();
   const strokeWidth = size <= 152 ? 12 : 16;
   const r = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * r;
@@ -106,7 +116,7 @@ function CalorieRing({
         <Text style={[styles.ringValue, isSmall && { fontSize: FONT_SIZE.xl }, exceeded && { color: COLORS.error }]}>
           {consumed}
         </Text>
-        <Text style={[styles.ringUnit, isSmall && { fontSize: FONT_SIZE.xs }]}>kcal</Text>
+        <Text style={[styles.ringUnit, isSmall && { fontSize: FONT_SIZE.xs }]}>{t('common.kcal')}</Text>
         <Text style={[styles.ringGoal, isSmall && { fontSize: FONT_SIZE.xs }]}>/ {goal}</Text>
       </View>
     </View>
@@ -170,29 +180,36 @@ function MacroCol({
 function EntryRow({
   entry,
   dotColor,
+  onOpen,
   onDelete,
 }: {
   entry: FoodEntry;
   dotColor: string;
+  onOpen: () => void;
   onDelete: () => void;
 }) {
+  const { t } = useTranslation();
   const hasMacros = entry.macros != null;
   return (
-    <View style={styles.entryRow}>
+    <TouchableOpacity style={styles.entryRow} onPress={onOpen} activeOpacity={0.7}>
       <View style={[styles.entryDot, { backgroundColor: dotColor }]} />
       <View style={styles.entryInfo}>
         <Text style={styles.entryName} numberOfLines={1}>{entry.name}</Text>
         {hasMacros && (
           <Text style={styles.entryMacros}>
-            P:{Math.round(entry.macros!.protein)}g · G:{Math.round(entry.macros!.carbs)}g · L:{Math.round(entry.macros!.fat)}g
+            {t('common.macrosShort', {
+              p: Math.round(entry.macros!.protein),
+              c: Math.round(entry.macros!.carbs),
+              f: Math.round(entry.macros!.fat),
+            })}
           </Text>
         )}
       </View>
-      <Text style={styles.entryKcal}>{entry.calories} kcal</Text>
+      <Text style={styles.entryKcal}>{entry.calories} {t('common.kcal')}</Text>
       <TouchableOpacity onPress={onDelete} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
         <Ionicons name="trash-outline" size={18} color={COLORS.textTertiary} />
       </TouchableOpacity>
-    </View>
+    </TouchableOpacity>
   );
 }
 
@@ -203,6 +220,7 @@ function MealSection({
   entries,
   hasYesterday,
   onAdd,
+  onOpen,
   onDelete,
   onReuseYesterday,
 }: {
@@ -210,9 +228,11 @@ function MealSection({
   entries: FoodEntry[];
   hasYesterday: boolean;
   onAdd: () => void;
+  onOpen: (entry: FoodEntry) => void;
   onDelete: (entry: FoodEntry) => void;
   onReuseYesterday: () => void;
 }) {
+  const { t } = useTranslation();
   const meta = MEAL_META[mealType];
   const mealTotal = entries.reduce((sum, e) => sum + e.calories, 0);
 
@@ -220,14 +240,14 @@ function MealSection({
     <View style={styles.mealSection}>
       <View style={styles.mealHeader}>
         <Text style={styles.mealIcon}>{meta.icon}</Text>
-        <Text style={styles.mealLabel}>{meta.label}</Text>
+        <Text style={styles.mealLabel}>{t(`meals.${mealType}`)}</Text>
         <Text style={[styles.mealKcal, mealTotal > 0 && { color: COLORS.textPrimary }]}>
-          {mealTotal > 0 ? `${mealTotal} kcal` : '—'}
+          {mealTotal > 0 ? `${mealTotal} ${t('common.kcal')}` : '—'}
         </Text>
         {hasYesterday && (
           <TouchableOpacity onPress={onReuseYesterday} style={styles.reuseBtn} activeOpacity={0.7}>
             <Ionicons name="refresh-outline" size={13} color={COLORS.textSecondary} />
-            <Text style={styles.reuseBtnText}>Hier</Text>
+            <Text style={styles.reuseBtnText}>{t('calories.yesterdayShort')}</Text>
           </TouchableOpacity>
         )}
         <TouchableOpacity onPress={onAdd} style={styles.mealAddBtn} activeOpacity={0.7}>
@@ -242,6 +262,7 @@ function MealSection({
               key={entry.id}
               entry={entry}
               dotColor={meta.dotColor}
+              onOpen={() => onOpen(entry)}
               onDelete={() => onDelete(entry)}
             />
           ))}
@@ -269,6 +290,7 @@ function BurnedCaloriesModal({
   onClose: () => void;
 }) {
   const C = useAppColors();
+  const { t } = useTranslation();
   const [input, setInput] = useState(currentValue);
 
   React.useEffect(() => {
@@ -286,17 +308,15 @@ function BurnedCaloriesModal({
           <View style={burnedStyles.handle} />
           <View style={burnedStyles.iconRow}>
             <Ionicons name="flame" size={22} color="#F97316" />
-            <Text style={burnedStyles.title}>Calories brûlées</Text>
+            <Text style={burnedStyles.title}>{t('calories.burnedModal.title')}</Text>
           </View>
-          <Text style={burnedStyles.subtitle}>
-            Saisis la valeur manuellement si la synchronisation Health Connect est incorrecte ou indisponible.
-          </Text>
+          <Text style={burnedStyles.subtitle}>{t('calories.burnedModal.subtitle')}</Text>
           <TextInput
             style={burnedStyles.input}
             value={input}
             onChangeText={setInput}
             keyboardType="numeric"
-            placeholder="ex. 450"
+            placeholder={t('calories.burnedModal.placeholder')}
             placeholderTextColor={COLORS.textTertiary}
             autoFocus
             selectTextOnFocus
@@ -304,16 +324,16 @@ function BurnedCaloriesModal({
             onSubmitEditing={() => onSave(input)}
           />
           <TouchableOpacity style={[burnedStyles.saveBtn, { backgroundColor: C.primary }]} onPress={() => onSave(input)} activeOpacity={0.85}>
-            <Text style={burnedStyles.saveBtnText}>Enregistrer</Text>
+            <Text style={burnedStyles.saveBtnText}>{t('common.save')}</Text>
           </TouchableOpacity>
           {isManual && (
             <TouchableOpacity style={burnedStyles.resetBtn} onPress={onReset} activeOpacity={0.7}>
               <Ionicons name="sync-outline" size={14} color={COLORS.textSecondary} />
-              <Text style={burnedStyles.resetBtnText}>Réinitialiser (revenir à Health Connect)</Text>
+              <Text style={burnedStyles.resetBtnText}>{t('calories.burnedModal.reset')}</Text>
             </TouchableOpacity>
           )}
           <TouchableOpacity style={burnedStyles.cancelBtn} onPress={onClose} activeOpacity={0.7}>
-            <Text style={burnedStyles.cancelBtnText}>Annuler</Text>
+            <Text style={burnedStyles.cancelBtnText}>{t('common.cancel')}</Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -372,6 +392,8 @@ const burnedStyles = StyleSheet.create({
 
 export default function CaloriesScreen() {
   const C = useAppColors();
+  const { t } = useTranslation();
+  const health = healthLabels(t);
   const router = useRouter();
   const { isPremium } = usePremium();
   const { profile } = useProfileStore();
@@ -391,6 +413,7 @@ export default function CaloriesScreen() {
   const [prefillFood, setPrefillFood] = useState<PrefillFood | null>(null);
   const [burnedModalVisible, setBurnedModalVisible] = useState(false);
   const [addWorkoutModalVisible, setAddWorkoutModalVisible] = useState(false);
+  const [detailEntry, setDetailEntry] = useState<FoodEntry | null>(null);
 
   const isToday = selectedDate === todayISO();
 
@@ -419,7 +442,7 @@ export default function CaloriesScreen() {
       setManualBurnedCalories(selectedDate, n);
       setBurnedModalVisible(false);
     } else {
-      Alert.alert('Valeur invalide', 'Saisis un nombre entier positif.');
+      Alert.alert(t('common.invalidValue'), t('common.positiveInteger'));
     }
   }
 
@@ -449,9 +472,9 @@ export default function CaloriesScreen() {
   }
 
   function confirmDelete(entry: FoodEntry) {
-    Alert.alert('Supprimer', `Supprimer "${entry.name}" ?`, [
-      { text: 'Annuler', style: 'cancel' },
-      { text: 'Supprimer', style: 'destructive', onPress: () => removeEntry(entry.id) },
+    Alert.alert(t('common.delete'), t('calories.deleteConfirm', { name: entry.name }), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('common.delete'), style: 'destructive', onPress: () => removeEntry(entry.id) },
     ]);
   }
 
@@ -478,7 +501,7 @@ export default function CaloriesScreen() {
     <SafeAreaView style={styles.safe} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Calories</Text>
+        <Text style={styles.title}>{t('calories.title')}</Text>
         <TouchableOpacity onPress={() => setGoalsModalVisible(true)} style={styles.headerBtn}>
           <Ionicons name="settings-outline" size={22} color={COLORS.textSecondary} />
         </TouchableOpacity>
@@ -489,7 +512,7 @@ export default function CaloriesScreen() {
         <TouchableOpacity onPress={goBack} style={styles.dayNavArrow} activeOpacity={0.7}>
           <Ionicons name="chevron-back" size={22} color={COLORS.textSecondary} />
         </TouchableOpacity>
-        <Text style={styles.dayNavLabel}>{formatDayLabel(selectedDate)}</Text>
+        <Text style={styles.dayNavLabel}>{formatDayLabel(selectedDate, t)}</Text>
         <TouchableOpacity
           onPress={goForward}
           style={[styles.dayNavArrow, isToday && styles.dayNavArrowDisabled]}
@@ -506,14 +529,14 @@ export default function CaloriesScreen() {
           // Deux anneaux côte à côte quand les calories brûlées sont disponibles
           <View style={styles.dualRingWrapper}>
             <View style={styles.dualRingCol}>
-              <Text style={styles.dualRingLabel}>Alimentation</Text>
+              <Text style={styles.dualRingLabel}>{t('calories.food')}</Text>
               <CalorieRing consumed={total} goal={goals.calories} size={148} gradId="ringGradA" />
               <Text style={[styles.dualRingRemaining, remaining < 0 && { color: COLORS.error }]}>
-                {remaining < 0 ? `+${Math.abs(remaining)}` : remaining} restantes
+                {t('calories.remaining', { value: remaining < 0 ? `+${Math.abs(remaining)}` : remaining })}
               </Text>
             </View>
             <View style={styles.dualRingCol}>
-              <Text style={styles.dualRingLabel}>Activité incluse</Text>
+              <Text style={styles.dualRingLabel}>{t('calories.activityIncluded')}</Text>
               <CalorieRing
                 consumed={netCalories != null ? Math.max(0, netCalories) : 0}
                 goal={goals.calories}
@@ -524,7 +547,7 @@ export default function CaloriesScreen() {
                 const netRemaining = goals.calories - netCalories;
                 return (
                   <Text style={[styles.dualRingRemaining, netRemaining < 0 && { color: COLORS.error }]}>
-                    {netRemaining < 0 ? `+${Math.abs(netRemaining)}` : netRemaining} restantes
+                    {t('calories.remaining', { value: netRemaining < 0 ? `+${Math.abs(netRemaining)}` : netRemaining })}
                   </Text>
                 );
               })()}
@@ -540,11 +563,11 @@ export default function CaloriesScreen() {
           <TouchableOpacity onPress={() => router.push('/(tabs)/profile')} style={styles.profileAlert} activeOpacity={0.7}>
             <Ionicons name="information-circle-outline" size={18} color={C.primary} />
             <Text style={styles.profileAlertText}>
-              Objectif par défaut (2 000 kcal).{' '}
+              {t('calories.defaultGoalBefore')}
               <Text style={{ color: C.primary, fontWeight: FONT_WEIGHT.semibold }}>
-                Renseigne ton profil
+                {t('calories.defaultGoalLink')}
               </Text>
-              {' '}pour un calcul personnalisé.
+              {t('calories.defaultGoalAfter')}
             </Text>
             <Ionicons name="chevron-forward" size={14} color={COLORS.textTertiary} />
           </TouchableOpacity>
@@ -555,34 +578,34 @@ export default function CaloriesScreen() {
           <View style={styles.summaryRow}>
             <View style={styles.summaryCard}>
               <Text style={styles.summaryValue}>{total}</Text>
-              <Text style={styles.summaryLabel}>Consommées</Text>
+              <Text style={styles.summaryLabel}>{t('calories.consumed')}</Text>
             </View>
             <View style={[styles.summaryCard, styles.summaryCardMid]}>
               <Text style={[styles.summaryValue, { color: '#F97316' }]}>{effectiveBurned}</Text>
-              <Text style={styles.summaryLabel}>Brûlées</Text>
+              <Text style={styles.summaryLabel}>{t('calories.burned')}</Text>
             </View>
             <View style={styles.summaryCard}>
               <Text style={[styles.summaryValue, netCalories != null && netCalories < 0 && { color: COLORS.error }]}>
                 {netCalories != null ? (netCalories < 0 ? `+${Math.abs(netCalories)}` : netCalories) : '—'}
               </Text>
-              <Text style={styles.summaryLabel}>{netCalories != null && netCalories < 0 ? 'Dépassé' : 'Nettes'}</Text>
+              <Text style={styles.summaryLabel}>{netCalories != null && netCalories < 0 ? t('calories.exceeded') : t('calories.net')}</Text>
             </View>
           </View>
         ) : (
           <View style={styles.summaryRow}>
             <View style={styles.summaryCard}>
               <Text style={styles.summaryValue}>{total}</Text>
-              <Text style={styles.summaryLabel}>Consommées</Text>
+              <Text style={styles.summaryLabel}>{t('calories.consumed')}</Text>
             </View>
             <View style={[styles.summaryCard, styles.summaryCardMid]}>
               <Text style={styles.summaryValue}>{goals.calories}</Text>
-              <Text style={styles.summaryLabel}>Objectif</Text>
+              <Text style={styles.summaryLabel}>{t('calories.goal')}</Text>
             </View>
             <View style={styles.summaryCard}>
               <Text style={[styles.summaryValue, remaining < 0 && { color: COLORS.error }]}>
                 {remaining < 0 ? `+${Math.abs(remaining)}` : remaining}
               </Text>
-              <Text style={styles.summaryLabel}>{remaining < 0 ? 'Dépassé' : 'Restantes'}</Text>
+              <Text style={styles.summaryLabel}>{remaining < 0 ? t('calories.exceeded') : t('calories.remainingLabel')}</Text>
             </View>
           </View>
         )}
@@ -590,11 +613,11 @@ export default function CaloriesScreen() {
         {/* Macros */}
         {(hasMacroGoals || macros.protein > 0 || macros.carbs > 0 || macros.fat > 0) && (
           <View style={styles.macrosCard}>
-            <MacroCol label="Protéines" consumed={macros.protein} goal={goals.protein} color="#60A5FA" />
+            <MacroCol label={t('common.protein')} consumed={macros.protein} goal={goals.protein} color="#60A5FA" />
             <View style={styles.macroColDivider} />
-            <MacroCol label="Glucides" consumed={macros.carbs} goal={goals.carbs} color="#FBBF24" />
+            <MacroCol label={t('common.carbs')} consumed={macros.carbs} goal={goals.carbs} color="#FBBF24" />
             <View style={styles.macroColDivider} />
-            <MacroCol label="Lipides" consumed={macros.fat} goal={goals.fat} color="#F472B6" />
+            <MacroCol label={t('common.fat')} consumed={macros.fat} goal={goals.fat} color="#F472B6" />
           </View>
         )}
 
@@ -603,49 +626,43 @@ export default function CaloriesScreen() {
           <View style={styles.hcCard}>
             <View style={styles.hcRow}>
               <Ionicons name="flame" size={18} color="#F97316" />
-              <Text style={styles.hcTitle}>Activité physique</Text>
+              <Text style={styles.hcTitle}>{t('calories.activityTitle')}</Text>
               {hcLoading && <Text style={styles.hcSub}>…</Text>}
             </View>
 
             {hcStatus === 'unavailable' && !isManualBurned && (
               <Text style={styles.hcDesc}>
-                {IS_IOS
-                  ? "L'accès aux données Santé n'est pas disponible sur cet appareil."
-                  : "Health Connect n'est pas disponible sur cet appareil."}
+                {IS_IOS ? t('calories.healthUnavailableIos') : t('calories.healthUnavailableAndroid')}
               </Text>
             )}
 
             {hcStatus === 'not_authorized' && (
               <>
-                <Text style={styles.hcDesc}>
-                  Connecte {HEALTH_APP_LABEL} pour voir tes calories brûlées et ajuster ton objectif net.
-                </Text>
+                <Text style={styles.hcDesc}>{t('calories.healthConnectPrompt', { app: health.app })}</Text>
                 <TouchableOpacity onPress={requestPermissions} activeOpacity={0.85} style={styles.hcBtnWrapper}>
                   <LinearGradient colors={C.gradientPrimary} style={styles.hcBtn}>
                     <Ionicons name="heart" size={16} color="#fff" />
-                    <Text style={styles.hcBtnText}>Connecter {HEALTH_APP_LABEL}</Text>
+                    <Text style={styles.hcBtnText}>{t('calories.healthConnectButton', { app: health.app })}</Text>
                   </LinearGradient>
                 </TouchableOpacity>
                 {/* Si l'user a déjà refusé (Android bloque le dialog après 2x, iOS ne re-propose pas) — proposer les réglages */}
                 <TouchableOpacity onPress={openHCSettings} style={styles.hcSettingsLink}>
-                  <Text style={styles.hcSettingsText}>Permissions bloquées ? Ouvrir les paramètres {HEALTH_SETTINGS_LABEL}</Text>
+                  <Text style={styles.hcSettingsText}>{t('calories.healthPermissionsBlocked', { settings: health.settings })}</Text>
                 </TouchableOpacity>
               </>
             )}
 
             {hcStatus === 'not_installed' && (
               <>
-                <Text style={styles.hcDesc}>
-                  Health Connect n'est pas installé sur ton téléphone. Il est nécessaire pour synchroniser Samsung Health.
-                </Text>
+                <Text style={styles.hcDesc}>{t('calories.hcNotInstalled')}</Text>
                 <TouchableOpacity onPress={openPlayStore} activeOpacity={0.85} style={styles.hcBtnWrapper}>
                   <LinearGradient colors={['#6366F1', '#4F46E5']} style={styles.hcBtn}>
                     <Ionicons name="logo-google-playstore" size={16} color="#fff" />
-                    <Text style={styles.hcBtnText}>Installer Health Connect</Text>
+                    <Text style={styles.hcBtnText}>{t('calories.hcInstall')}</Text>
                   </LinearGradient>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={requestPermissions} style={styles.hcSettingsLink}>
-                  <Text style={styles.hcSettingsText}>Déjà installé ? Réessayer la connexion</Text>
+                  <Text style={styles.hcSettingsText}>{t('calories.hcRetry')}</Text>
                 </TouchableOpacity>
               </>
             )}
@@ -661,7 +678,11 @@ export default function CaloriesScreen() {
                     <Ionicons name="pencil" size={12} color={COLORS.textTertiary} style={{ marginLeft: 4, marginTop: 2 }} />
                   </View>
                   <Text style={styles.hcStatLabel}>
-                    {isManualBurned ? 'Brûlées ✎' : isWorkoutSource ? 'Brûlées 🏃' : 'Brûlées'}
+                    {isManualBurned
+                      ? t('calories.burnedManual')
+                      : isWorkoutSource
+                        ? t('calories.burnedWorkout')
+                        : t('calories.burned')}
                   </Text>
                 </TouchableOpacity>
                 <View style={[styles.hcStat, styles.hcStatMid]}>
@@ -674,12 +695,12 @@ export default function CaloriesScreen() {
                       : '—'}
                   </Text>
                   <Text style={styles.hcStatLabel}>
-                    {netCalories != null && netCalories < 0 ? 'Dépassé' : 'Nettes'}
+                    {netCalories != null && netCalories < 0 ? t('calories.exceeded') : t('calories.net')}
                   </Text>
                 </View>
                 <View style={styles.hcStat}>
                   <Text style={styles.hcStatValue}>{total}</Text>
-                  <Text style={styles.hcStatLabel}>Consommées</Text>
+                  <Text style={styles.hcStatLabel}>{t('calories.consumed')}</Text>
                 </View>
               </View>
             )}
@@ -693,8 +714,8 @@ export default function CaloriesScreen() {
               <Ionicons name="barbell-outline" size={14} color={COLORS.textSecondary} />
               <Text style={styles.hcManualLinkText}>
                 {workoutBurned > 0
-                  ? `Activités manuelles : ${workoutBurned} kcal — en ajouter une`
-                  : 'Ajouter une activité physique'}
+                  ? t('calories.manualWorkouts', { kcal: workoutBurned })
+                  : t('calories.addWorkout')}
               </Text>
             </TouchableOpacity>
 
@@ -708,8 +729,8 @@ export default function CaloriesScreen() {
                 <Ionicons name="create-outline" size={14} color={COLORS.textSecondary} />
                 <Text style={styles.hcManualLinkText}>
                   {isManualBurned
-                    ? `Modifier la valeur manuelle (${effectiveBurned} kcal)`
-                    : 'Saisir manuellement les calories brûlées'}
+                    ? t('calories.editManualBurned', { kcal: effectiveBurned })
+                    : t('calories.enterBurnedManually')}
                 </Text>
               </TouchableOpacity>
             )}
@@ -717,10 +738,10 @@ export default function CaloriesScreen() {
         )}
 
         {/* Meal sections */}
-        <Text style={styles.sectionTitle}>Repas du jour</Text>
+        <Text style={styles.sectionTitle}>{t('calories.mealsOfDay')}</Text>
 
         {entries.length === 0 && isToday && (
-          <Text style={styles.emptyHint}>Appuie sur + à côté d'un repas pour commencer</Text>
+          <Text style={styles.emptyHint}>{t('calories.emptyHint')}</Text>
         )}
 
         {MEAL_ORDER.map((mealType) => {
@@ -733,6 +754,7 @@ export default function CaloriesScreen() {
               entries={entriesByMeal[mealType]}
               hasYesterday={yEntries.length > 0}
               onAdd={() => openAddModal(mealType)}
+              onOpen={setDetailEntry}
               onDelete={confirmDelete}
               onReuseYesterday={() => {
                 yEntries.forEach((e) => addEntry({ ...e, date: selectedDate, meal: mealType }));
@@ -768,7 +790,7 @@ export default function CaloriesScreen() {
           <TouchableOpacity onPress={() => openAddModal()} activeOpacity={0.85} style={styles.actionBtnPrimary}>
             <LinearGradient colors={C.gradientPrimary} style={StyleSheet.absoluteFillObject} />
             <Ionicons name="add" size={20} color="#fff" />
-            <Text style={styles.actionBtnPrimaryText}>Ajouter un aliment</Text>
+            <Text style={styles.actionBtnPrimaryText}>{t('calories.addFood')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -784,6 +806,16 @@ export default function CaloriesScreen() {
       />
 
       <GoalsModal visible={goalsModalVisible} onClose={() => setGoalsModalVisible(false)} />
+
+      <EntryDetailModal
+        entry={detailEntry}
+        mealLabel={detailEntry ? t(`meals.${detailEntry.meal}`) : ''}
+        onClose={() => setDetailEntry(null)}
+        onDelete={(entry) => {
+          setDetailEntry(null);
+          confirmDelete(entry);
+        }}
+      />
 
       <AddEntryModal
         visible={addModalVisible}

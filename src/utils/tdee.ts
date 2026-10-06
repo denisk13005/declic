@@ -1,4 +1,5 @@
 import { LifestyleLevel, ExerciseFrequency, FitnessGoal, Gender } from '@/types';
+import { translatedRecord } from '@/i18n';
 
 // Multiplicateur de base selon le style de vie (hors sport)
 const LIFESTYLE_MULTIPLIERS: Record<LifestyleLevel, number> = {
@@ -8,19 +9,12 @@ const LIFESTYLE_MULTIPLIERS: Record<LifestyleLevel, number> = {
   very_active: 1.65,     // Travail physique intensif
 };
 
-export const LIFESTYLE_LABELS: Record<LifestyleLevel, string> = {
-  sedentary: 'Sédentaire',
-  lightly_active: 'Légèrement actif',
-  moderately_active: 'Modérément actif',
-  very_active: 'Très actif',
-};
+const LIFESTYLE_KEYS = ['sedentary', 'lightly_active', 'moderately_active', 'very_active'] as const;
 
-export const LIFESTYLE_DESCRIPTIONS: Record<LifestyleLevel, string> = {
-  sedentary: 'Bureau, télétravail, peu de marche',
-  lightly_active: 'Quelques déplacements, debout par moments',
-  moderately_active: 'Travail debout, marche régulière, livreur...',
-  very_active: 'Travail physique (chantier, restauration, agriculture...)',
-};
+// Libellés traduits (src/i18n/locales/*.json → tdee.*)
+export const LIFESTYLE_LABELS: Record<LifestyleLevel, string> = translatedRecord(LIFESTYLE_KEYS, 'tdee.lifestyle');
+
+export const LIFESTYLE_DESCRIPTIONS: Record<LifestyleLevel, string> = translatedRecord(LIFESTYLE_KEYS, 'tdee.lifestyleDescription');
 
 // Bonus calorique journalier lié au sport (moyenne ≈ 400 kcal/séance)
 const EXERCISE_BONUS_KCAL: Record<ExerciseFrequency, number> = {
@@ -32,20 +26,15 @@ const EXERCISE_BONUS_KCAL: Record<ExerciseFrequency, number> = {
   twice_daily: 650, // 11 × 400 / 7
 };
 
-export const EXERCISE_LABELS: Record<ExerciseFrequency, string> = {
-  none: 'Aucun sport',
-  '1_2': '1-2 séances / semaine',
-  '3_4': '3-4 séances / semaine',
-  '5_6': '5-6 séances / semaine',
-  daily: '1 séance / jour',
-  twice_daily: '2 séances / jour ou +',
-};
+export const EXERCISE_LABELS: Record<ExerciseFrequency, string> = translatedRecord(
+  ['none', '1_2', '3_4', '5_6', 'daily', 'twice_daily'] as const,
+  'tdee.exercise',
+);
 
-export const GOAL_LABELS: Record<FitnessGoal, string> = {
-  lose_fat: 'Perte de gras',
-  maintain: 'Maintien',
-  build_muscle: 'Prise de muscle',
-};
+export const GOAL_LABELS: Record<FitnessGoal, string> = translatedRecord(
+  ['lose_fat', 'maintain', 'build_muscle'] as const,
+  'tdee.goal',
+);
 
 export interface MacroTargets {
   calories: number;

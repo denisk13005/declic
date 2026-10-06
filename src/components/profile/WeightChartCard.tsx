@@ -3,7 +3,8 @@ import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-nati
 import { LineChart } from 'react-native-gifted-charts';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
+import i18n, { dateLocale } from '@/i18n';
 import { useWeightStore } from '@/stores/weightStore';
 import { useProfileStore } from '@/stores/profileStore';
 import { ExerciseFrequency } from '@/types';
@@ -11,11 +12,12 @@ import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/the
 
 type Period = '7j' | '30j' | '90j' | 'tout';
 
-const PERIODS: { key: Period; label: string; days: number | null }[] = [
-  { key: '7j',   label: '7j',   days: 7 },
-  { key: '30j',  label: '30j',  days: 30 },
-  { key: '90j',  label: '90j',  days: 90 },
-  { key: 'tout', label: 'Tout', days: null },
+// Libellé traduit : t(`weightChart.periods.${key}`)
+const PERIODS: { key: Period; days: number | null }[] = [
+  { key: '7j',   days: 7 },
+  { key: '30j',  days: 30 },
+  { key: '90j',  days: 90 },
+  { key: 'tout', days: null },
 ];
 
 const CHART_WIDTH = Dimensions.get('window').width - SPACING.lg * 2 - SPACING.md * 2;
@@ -26,10 +28,10 @@ function bmi(weight: number, heightCm: number): number {
 }
 
 function bmiLabel(bmi: number): { label: string; color: string } {
-  if (bmi < 18.5) return { label: 'Insuffisance', color: '#60A5FA' };
-  if (bmi < 25)   return { label: 'Normal', color: '#10B981' };
-  if (bmi < 30)   return { label: 'Surpoids', color: '#F59E0B' };
-  return              { label: 'Obésité', color: '#EF4444' };
+  if (bmi < 18.5) return { label: i18n.t('weightChart.bmi.underweight'), color: '#60A5FA' };
+  if (bmi < 25)   return { label: i18n.t('weightChart.bmi.normal'), color: '#10B981' };
+  if (bmi < 30)   return { label: i18n.t('weightChart.bmi.overweight'), color: '#F59E0B' };
+  return              { label: i18n.t('weightChart.bmi.obese'), color: '#EF4444' };
 }
 
 interface ImcTarget {
@@ -59,13 +61,13 @@ function imcTarget(heightCm: number, exerciseFreq?: ExerciseFrequency): ImcTarge
 
   if (exerciseFreq === '3_4' || exerciseFreq === '5_6') {
     minImc = 18.5; maxImc = 27; idealImc = 23.5;
-    note = 'Plage ajustée : la musculation augmente la masse musculaire, un IMC jusqu\'à 27 est sain.';
+    note = i18n.t('weightChart.notes.strength');
   } else if (exerciseFreq === 'daily') {
     minImc = 20; maxImc = 28; idealImc = 24.5;
-    note = 'Plage ajustée pour athlète : masse musculaire importante, IMC jusqu\'à 28 acceptable.';
+    note = i18n.t('weightChart.notes.athlete');
   } else if (exerciseFreq === 'twice_daily') {
     minImc = 21; maxImc = 29; idealImc = 25;
-    note = 'Plage ajustée pour athlète intensif : l\'IMC standard n\'est pas adapté à ce niveau.';
+    note = i18n.t('weightChart.notes.intense');
   }
 
   const kg = (imc: number) => Math.round(imc * h * h * 10) / 10;
@@ -85,6 +87,7 @@ interface Props {
 }
 
 export default function WeightChartCard({ onLogWeight }: Props) {
+  const { t } = useTranslation();
   const { entries, removeWeight } = useWeightStore();
   const { profile } = useProfileStore();
   const [period, setPeriod] = useState<Period>('30j');
@@ -107,13 +110,11 @@ export default function WeightChartCard({ onLogWeight }: Props) {
     return (
       <View style={styles.emptyCard}>
         <Ionicons name="scale-outline" size={32} color={COLORS.textTertiary} />
-        <Text style={styles.emptyTitle}>Suivi du poids</Text>
-        <Text style={styles.emptySub}>
-          Enregistre ton poids chaque jour pour suivre ton évolution.
-        </Text>
+        <Text style={styles.emptyTitle}>{t('weightChart.emptyTitle')}</Text>
+        <Text style={styles.emptySub}>{t('weightChart.emptySub')}</Text>
         <TouchableOpacity style={styles.logBtn} onPress={onLogWeight} activeOpacity={0.8}>
           <Ionicons name="add" size={16} color="#fff" />
-          <Text style={styles.logBtnText}>Logger mon poids</Text>
+          <Text style={styles.logBtnText}>{t('weightChart.logWeight')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -172,10 +173,10 @@ export default function WeightChartCard({ onLogWeight }: Props) {
     <View style={styles.card}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.cardTitle}>Évolution du poids</Text>
+        <Text style={styles.cardTitle}>{t('weightChart.title')}</Text>
         <TouchableOpacity onPress={onLogWeight} style={styles.addBtn} activeOpacity={0.7}>
           <Ionicons name="add" size={14} color={COLORS.primary} />
-          <Text style={styles.addBtnText}>Logger</Text>
+          <Text style={styles.addBtnText}>{t('weightChart.log')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -189,7 +190,7 @@ export default function WeightChartCard({ onLogWeight }: Props) {
             activeOpacity={0.7}
           >
             <Text style={[styles.periodText, period === p.key && styles.periodTextActive]}>
-              {p.label}
+              {t(`weightChart.periods.${p.key}`)}
             </Text>
           </TouchableOpacity>
         ))}
@@ -201,7 +202,7 @@ export default function WeightChartCard({ onLogWeight }: Props) {
           <Text style={[styles.statValue, { color: trendColor }]}>
             {latest ? `${latest.weight} kg` : '—'}
           </Text>
-          <Text style={styles.statLabel}>Poids actuel</Text>
+          <Text style={styles.statLabel}>{t('weightChart.currentWeight')}</Text>
         </View>
         <View style={styles.statDivider} />
         <View style={styles.statBox}>
@@ -210,7 +211,7 @@ export default function WeightChartCard({ onLogWeight }: Props) {
               ? `${diff > 0 ? '+' : ''}${diff} kg`
               : '—'}
           </Text>
-          <Text style={styles.statLabel}>Sur la période</Text>
+          <Text style={styles.statLabel}>{t('weightChart.overPeriod')}</Text>
         </View>
         <View style={styles.statDivider} />
         <View style={styles.statBox}>
@@ -222,7 +223,7 @@ export default function WeightChartCard({ onLogWeight }: Props) {
           ) : (
             <>
               <Text style={styles.statValue}>—</Text>
-              <Text style={styles.statLabel}>IMC</Text>
+              <Text style={styles.statLabel}>{t('weightChart.bmiLabel')}</Text>
             </>
           )}
         </View>
@@ -269,7 +270,7 @@ export default function WeightChartCard({ onLogWeight }: Props) {
                 width: CHART_WIDTH,
                 dashWidth: 6,
                 dashGap: 4,
-                labelText: `Objectif ${target.ideal} kg (IMC ${target.idealImc})`,
+                labelText: t('weightChart.goalLine', { weight: target.ideal, bmi: target.idealImc }),
                 labelTextStyle: { color: '#10B981', fontSize: 9 },
               },
             } : {})}
@@ -277,9 +278,7 @@ export default function WeightChartCard({ onLogWeight }: Props) {
         </View>
       ) : (
         <View style={styles.notEnoughData}>
-          <Text style={styles.notEnoughText}>
-            Enregistre au moins 2 pesées pour voir le graphe.
-          </Text>
+          <Text style={styles.notEnoughText}>{t('weightChart.notEnoughData')}</Text>
         </View>
       )}
 
@@ -288,9 +287,14 @@ export default function WeightChartCard({ onLogWeight }: Props) {
         <View style={styles.imcTargetBox}>
           <View style={styles.imcTargetHeader}>
             <Ionicons name="flag-outline" size={13} color="#10B981" />
-            <Text style={styles.imcTargetTitle}>Objectif IMC recommandé</Text>
+            <Text style={styles.imcTargetTitle}>{t('weightChart.recommendedTitle')}</Text>
             <Text style={styles.imcTargetRange}>
-              {target.min}–{target.max} kg (IMC {target.minImc}–{target.maxImc})
+              {t('weightChart.recommendedRange', {
+                min: target.min,
+                max: target.max,
+                minBmi: target.minImc,
+                maxBmi: target.maxImc,
+              })}
             </Text>
           </View>
           {target.note && (
@@ -302,15 +306,15 @@ export default function WeightChartCard({ onLogWeight }: Props) {
           <View style={styles.imcTargetBody}>
             <View style={styles.imcIdealBadge}>
               <Text style={styles.imcIdealValue}>{target.ideal} kg</Text>
-              <Text style={styles.imcIdealLabel}>Idéal (IMC 22)</Text>
+              <Text style={styles.imcIdealLabel}>{t('weightChart.ideal', { bmi: target.idealImc })}</Text>
             </View>
             <View style={styles.imcDeltaCol}>
               {delta === null ? null : delta > 0 ? (
-                <Text style={styles.imcDeltaNeg}>−{delta} kg à perdre</Text>
+                <Text style={styles.imcDeltaNeg}>{t('weightChart.toLose', { kg: delta })}</Text>
               ) : delta < 0 ? (
-                <Text style={styles.imcDeltaPos}>+{Math.abs(delta)} kg à prendre</Text>
+                <Text style={styles.imcDeltaPos}>{t('weightChart.toGain', { kg: Math.abs(delta) })}</Text>
               ) : (
-                <Text style={styles.imcDeltaOk}>Objectif atteint ✓</Text>
+                <Text style={styles.imcDeltaOk}>{t('weightChart.reached')}</Text>
               )}
               {/* Mini barre de progression */}
               <View style={styles.progressTrack}>
@@ -328,9 +332,9 @@ export default function WeightChartCard({ onLogWeight }: Props) {
 
       {/* Historique récent */}
       <View style={styles.historySection}>
-        <Text style={styles.historyTitle}>Historique récent</Text>
+        <Text style={styles.historyTitle}>{t('weightChart.history')}</Text>
         {[...sorted].reverse().slice(0, 5).map((e) => {
-          const dateLabel = format(new Date(e.date + 'T12:00:00'), 'EEE d MMM', { locale: fr });
+          const dateLabel = format(new Date(e.date + 'T12:00:00'), t('weightChart.historyDateFormat'), { locale: dateLocale() });
           return (
             <View key={e.id} style={styles.historyRow}>
               <Ionicons name="scale-outline" size={14} color={COLORS.textTertiary} />

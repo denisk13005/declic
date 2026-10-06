@@ -3,7 +3,8 @@ import { View, Text, ScrollView, StyleSheet, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { format, subDays, parseISO } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
+import { dateLocale } from '@/i18n';
 import { BarChart, LineChart } from 'react-native-gifted-charts';
 import { useHabitStore } from '@/stores/habitStore';
 import { useCalorieStore } from '@/stores/calorieStore';
@@ -84,6 +85,7 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 // ─── StatsScreen ──────────────────────────────────────────────────────────────
 
 export default function StatsScreen() {
+  const { t } = useTranslation();
   const [weightModalVisible, setWeightModalVisible] = useState(false);
   const { habits, getStats } = useHabitStore();
   const { getCaloriesForDate, goals } = useCalorieStore();
@@ -107,7 +109,7 @@ export default function StatsScreen() {
   const days7 = lastNDays(7);
   const barData = days7.map((d) => ({
     value: active.filter((h) => h.completions.includes(d)).length,
-    label: format(parseISO(d), 'EEE', { locale: fr }).slice(0, 2),
+    label: format(parseISO(d), 'EEE', { locale: dateLocale() }).slice(0, 2),
     frontColor: COLORS.primary,
     topLabelComponent: () => null,
   }));
@@ -120,14 +122,14 @@ export default function StatsScreen() {
     return {
       value: rate,
       // Only show label every 7 days to avoid clutter
-      label: i % 7 === 0 ? format(parseISO(d), 'd/M') : '',
+      label: i % 7 === 0 ? format(parseISO(d), t('stats.shortDateFormat')) : '',
     };
   });
 
   // ── Calorie chart : 7j vs objectif ────────────────────────────────────────
   const calorieData = days7.map((d) => ({
     value: getCaloriesForDate(d),
-    label: format(parseISO(d), 'EEE', { locale: fr }).slice(0, 2),
+    label: format(parseISO(d), 'EEE', { locale: dateLocale() }).slice(0, 2),
     frontColor: COLORS.accent,
   }));
   const goalLine = days7.map(() => ({ value: dailyGoal }));
@@ -138,30 +140,30 @@ export default function StatsScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Statistiques</Text>
+        <Text style={styles.title}>{t('stats.title')}</Text>
 
         {/* Summary cards */}
         <View style={styles.statsGrid}>
           <StatCard
-            label="Meilleure série"
-            value={`${bestStreak}j`}
+            label={t('stats.bestStreak')}
+            value={t('stats.daysShort', { count: bestStreak })}
             icon="🔥"
             gradient={['#F59E0B', '#D97706']}
           />
           <StatCard
-            label="Aujourd'hui"
+            label={t('stats.today')}
             value={`${todayDone}/${active.length}`}
             icon="✅"
             gradient={COLORS.gradientSuccess}
           />
           <StatCard
-            label="Total coché"
+            label={t('stats.totalDone')}
             value={`${totalDone}`}
             icon="🎯"
             gradient={COLORS.gradientPrimary}
           />
           <StatCard
-            label="Taux moyen"
+            label={t('stats.avgRate')}
             value={`${Math.round(avgRate * 100)}%`}
             icon="📈"
             gradient={COLORS.gradientAccent}
@@ -169,7 +171,7 @@ export default function StatsScreen() {
         </View>
 
         {/* ── Bar chart — 7 derniers jours ── */}
-        <ChartCard title="Habitudes cochées (7j)">
+        <ChartCard title={t('stats.habitsChecked')}>
           {hasData ? (
             <BarChart
               data={barData}
@@ -191,13 +193,13 @@ export default function StatsScreen() {
             />
           ) : (
             <View style={styles.chartEmpty}>
-              <Text style={styles.chartEmptyText}>Crée des habitudes pour voir le graphique</Text>
+              <Text style={styles.chartEmptyText}>{t('stats.createHabitsForChart')}</Text>
             </View>
           )}
         </ChartCard>
 
         {/* ── Line chart — taux de complétion 30j ── */}
-        <ChartCard title="Taux de complétion (30j)">
+        <ChartCard title={t('stats.completionRate')}>
           {hasData ? (
             <LineChart
               data={lineData30}
@@ -225,13 +227,13 @@ export default function StatsScreen() {
             />
           ) : (
             <View style={styles.chartEmpty}>
-              <Text style={styles.chartEmptyText}>Pas encore de données</Text>
+              <Text style={styles.chartEmptyText}>{t('stats.noData')}</Text>
             </View>
           )}
         </ChartCard>
 
         {/* ── Calorie chart — 7j ── */}
-        <ChartCard title="Calories / jour (7j)">
+        <ChartCard title={t('stats.caloriesPerDay')}>
           {hasCalorieData ? (
             <>
               <BarChart
@@ -259,12 +261,12 @@ export default function StatsScreen() {
               />
               <View style={styles.legendRow}>
                 <View style={[styles.legendDot, { backgroundColor: COLORS.warning }]} />
-                <Text style={styles.legendLabel}>Objectif ({dailyGoal} kcal)</Text>
+                <Text style={styles.legendLabel}>{t('stats.goalLegend', { kcal: dailyGoal })}</Text>
               </View>
             </>
           ) : (
             <View style={styles.chartEmpty}>
-              <Text style={styles.chartEmptyText}>Ajoute des aliments pour voir le graphique</Text>
+              <Text style={styles.chartEmptyText}>{t('stats.addFoodForChart')}</Text>
             </View>
           )}
         </ChartCard>
@@ -273,12 +275,12 @@ export default function StatsScreen() {
         <WeightChartCard onLogWeight={() => setWeightModalVisible(true)} />
 
         {/* ── Heatmap 7j ── */}
-        <Text style={styles.sectionTitle}>7 derniers jours</Text>
+        <Text style={styles.sectionTitle}>{t('stats.last7Days')}</Text>
         <View style={styles.heatmapHeader}>
           <View style={{ width: 28 + 100 + SPACING.sm }} />
           {days7.map((d, i) => (
             <Text key={i} style={styles.dayLabel}>
-              {format(parseISO(d), 'EEE', { locale: fr }).slice(0, 2)}
+              {format(parseISO(d), 'EEE', { locale: dateLocale() }).slice(0, 2)}
             </Text>
           ))}
         </View>
@@ -286,7 +288,7 @@ export default function StatsScreen() {
         {active.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyEmoji}>📊</Text>
-            <Text style={styles.emptyText}>Crée tes premières habitudes pour voir tes stats !</Text>
+            <Text style={styles.emptyText}>{t('stats.emptyText')}</Text>
           </View>
         ) : (
           <View style={styles.heatmapContainer}>
@@ -299,7 +301,7 @@ export default function StatsScreen() {
         {/* ── Détail par habitude ── */}
         {active.length > 0 && (
           <>
-            <Text style={styles.sectionTitle}>Détail par habitude</Text>
+            <Text style={styles.sectionTitle}>{t('stats.perHabit')}</Text>
             {active.map((h) => {
               const s = getStats(h.id);
               return (

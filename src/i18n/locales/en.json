@@ -1,0 +1,1700 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "save": "Save",
+    "close": "Close",
+    "ok": "OK",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "kcal": "kcal",
+    "protein": "Protein",
+    "carbs": "Carbs",
+    "fat": "Fat",
+    "invalidValue": "Invalid value",
+    "positiveInteger": "Enter a positive whole number.",
+    "error": "Error",
+    "add": "Add",
+    "allow": "Allow",
+    "permissionDenied": "Permission denied",
+    "analyzing": "Analyzing…",
+    "macrosShort": "P:{{p}}g · C:{{c}}g · F:{{f}}g",
+    "macrosCompact": "P:{{p}} C:{{c}} F:{{f}}",
+    "back": "Back",
+    "create": "Create",
+    "searchPlaceholder": "Search…",
+    "per100g": "per 100g",
+    "units": {
+      "g": "g",
+      "ml": "ml",
+      "piece_one": "piece",
+      "piece_other": "pieces",
+      "portion_one": "serving",
+      "portion_other": "servings"
+    }
+  },
+  "meals": {
+    "breakfast": "Breakfast",
+    "lunch": "Lunch",
+    "dinner": "Dinner",
+    "snack": "Snack",
+    "short": {
+      "breakfast": "Breakfast",
+      "lunch": "Lunch",
+      "dinner": "Dinner",
+      "snack": "Snack"
+    }
+  },
+  "addEntry": {
+    "title": "Add food",
+    "tabs": {
+      "manuel": "Manual",
+      "photo": "AI Photo",
+      "voix": "AI Voice",
+      "barcode": "Barcode"
+    },
+    "scanner": {
+      "cameraRequired": "Camera access required",
+      "searching": "⏳ Searching…",
+      "aim": "Point at a barcode"
+    },
+    "perPiece": "1 {{unit}} · {{grams}}g",
+    "perQuantityEnterWeight": "for {{quantity}} {{unit}} — enter the weight to recalculate",
+    "perPortions_one": "for {{count}} serving",
+    "perPortions_other": "for {{count}} servings",
+    "portionHint": "{{hint}} · {{grams}}g/piece",
+    "enterPieceWeight": "Enter the weight of one piece to calculate",
+    "photo": {
+      "cameraNeeded": "Camera access is required.",
+      "galleryNeeded": "Photo library access is required.",
+      "failedTitle": "Analysis failed",
+      "failedDefault": "Gemini couldn't identify the dish.",
+      "chooseTitle": "Analyze a dish",
+      "chooseMessage": "How do you want to add a photo?",
+      "takePhoto": "Take a photo",
+      "fromGallery": "Choose from library",
+      "hint": "Take a photo or pick one from your library.\nThe AI will identify the dish and estimate the calories."
+    },
+    "barcode": {
+      "notFoundTitle": "Product not found",
+      "notFoundDefault": "Couldn't retrieve the nutrition facts.",
+      "searching": "Looking up the product…",
+      "hint": "Scan the product's barcode to automatically\nget its nutrition facts."
+    },
+    "errors": {
+      "nameRequired": "Enter a name.",
+      "invalidCalories": "Enter a valid calorie amount."
+    },
+    "form": {
+      "namePlaceholder": "Name (e.g. Yogurt, Chicken…)",
+      "offResults": "Open Food Facts results",
+      "moreProducts": "More products",
+      "searchingOff": "Searching Open Food Facts…",
+      "pieceWeightPlaceholder": "Weight of one {{unit}} in g",
+      "caloriesPlaceholder": "Calories (kcal)",
+      "macrosOptional": "Macronutrients (optional)",
+      "saveToLibrary": "Save to my library",
+      "saveToLibrarySub": "Easy to reuse"
+    }
+  },
+  "calories": {
+    "title": "Calories",
+    "food": "Food",
+    "activityIncluded": "With activity",
+    "remaining": "{{value}} left",
+    "defaultGoalBefore": "Default goal (2,000 kcal). ",
+    "defaultGoalLink": "Complete your profile",
+    "defaultGoalAfter": " for a personalized goal.",
+    "consumed": "Eaten",
+    "burned": "Burned",
+    "burnedManual": "Burned ✎",
+    "burnedWorkout": "Burned 🏃",
+    "net": "Net",
+    "exceeded": "Over",
+    "goal": "Goal",
+    "remainingLabel": "Left",
+    "activityTitle": "Physical activity",
+    "healthUnavailableIos": "Health data access isn't available on this device.",
+    "healthUnavailableAndroid": "Health Connect isn't available on this device.",
+    "healthConnectPrompt": "Connect {{app}} to see your burned calories and adjust your net goal.",
+    "healthConnectButton": "Connect {{app}}",
+    "healthPermissionsBlocked": "Permissions blocked? Open {{settings}} settings",
+    "healthAppIos": "Apple Health",
+    "healthSettingsIos": "Health",
+    "hcNotInstalled": "Health Connect isn't installed on your phone. It's required to sync Samsung Health.",
+    "hcInstall": "Install Health Connect",
+    "hcRetry": "Already installed? Try connecting again",
+    "manualWorkouts": "Manual activities: {{kcal}} kcal — add another",
+    "addWorkout": "Add a physical activity",
+    "editManualBurned": "Edit manual value ({{kcal}} kcal)",
+    "enterBurnedManually": "Enter burned calories manually",
+    "mealsOfDay": "Today's meals",
+    "emptyHint": "Tap + next to a meal to get started",
+    "yesterdayShort": "Yesterday",
+    "addFood": "Add food",
+    "deleteConfirm": "Delete “{{name}}”?",
+    "burnedModal": {
+      "title": "Burned calories",
+      "subtitle": "Enter the value manually if Health Connect sync is wrong or unavailable.",
+      "placeholder": "e.g. 450",
+      "reset": "Reset (back to Health Connect)"
+    }
+  },
+  "onboarding": {
+    "next": "Next →",
+    "continue": "Continue →",
+    "notNow": "Not now",
+    "welcome": {
+      "tagline": "Your habits.\nYour pace.",
+      "pills": {
+        "nutrition": "🍽️ Nutrition & weight",
+        "streaks": "🔥 Day streaks",
+        "stats": "📊 Clear stats",
+        "reminders": "🔔 Smart reminders"
+      },
+      "cta": "Let's go 🚀",
+      "sub": "Free · No account required"
+    },
+    "benefits": {
+      "title": "Why does it work?",
+      "subtitle": "Vitacairn uses proven techniques to help you build lasting habits.",
+      "habit": {
+        "title": "21 days to build a habit",
+        "desc": "Research shows it takes 66 days on average to make a behavior automatic. Vitacairn helps you stick with it."
+      },
+      "streaks": {
+        "title": "The power of streaks",
+        "desc": "Watching your streak grow every day is a powerful motivation not to break the chain."
+      },
+      "progress": {
+        "title": "Visible progress",
+        "desc": "Your stats clearly show where you stand and keep you motivated."
+      }
+    },
+    "nutrition": {
+      "title": "Everyday nutrition",
+      "subtitle": "Track your calories and macros without the hassle.",
+      "tracking": {
+        "title": "Complete calorie tracking",
+        "desc": "4 meals a day. Add a food in 3 seconds — Ciqual database, barcode scan or AI photo."
+      },
+      "database": {
+        "title": "62,000 foods listed",
+        "desc": "Official ANSES Ciqual 2025 database + Open Food Facts. Instant, offline search."
+      },
+      "weight": {
+        "title": "Weight chart",
+        "desc": "Log your weight every day and track your progress toward your goal."
+      },
+      "free": "Free",
+      "freeDesc": " — full nutrition + 1 habit",
+      "premium": "Premium",
+      "premiumDesc": " — unlimited habits, no ads"
+    },
+    "sport": {
+      "title": "Your custom program",
+      "subtitle": "Set your preferences to generate your program.",
+      "gender": "Gender",
+      "level": "Level",
+      "goal": "Goal",
+      "daysPerWeek": "Days per week",
+      "equipment": "Available equipment",
+      "generate": "Generate my program →"
+    },
+    "health": {
+      "connected": "Connected!",
+      "title": "Burned calories",
+      "connectedSubtitle": "Your {{app}} data will sync automatically every day into your tracking.",
+      "subtitle": "Connect {{app}} to see how much you really burn and adjust your net calorie goal.",
+      "featureDaily": "Daily burned calories ({{source}})",
+      "featureNetGoal": "Net goal = goal − burned calories",
+      "featureAdjust": "Adjusts automatically to your activity",
+      "synced": "{{app}} synced",
+      "openSettings": "Open {{settings}} settings",
+      "connecting": "Connecting…",
+      "installedContinue": "I installed HC → Continue",
+      "connect": "Connect {{app}}",
+      "sourceIos": "Apple Watch / Health"
+    },
+    "notifications": {
+      "title": "Never miss a day",
+      "subtitle": "Turn on notifications to get a daily reminder and keep your streaks going.",
+      "previewTime": "now",
+      "previewTitle": "🏃 Time for your habit!",
+      "previewBody": "Don't forget to check off today's workout.",
+      "enable": "Turn on reminders",
+      "deniedTitle": "Notifications off",
+      "deniedMessage": "You can turn them on later in your phone's Settings.",
+      "continue": "Continue"
+    }
+  },
+  "fitness": {
+    "gender": {
+      "male": "Male",
+      "female": "Female"
+    },
+    "level": {
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced"
+    },
+    "levelDesc": {
+      "beginner": "< 1 year of training",
+      "intermediate": "1–3 years of training",
+      "advanced": "3+ years of training"
+    }
+  },
+  "auth": {
+    "email": "Email",
+    "emailPlaceholder": "you@email.com",
+    "password": "Password",
+    "passwordMinPlaceholder": "At least 6 characters",
+    "confirmPassword": "Confirm password",
+    "or": "or",
+    "genericError": "Something went wrong.",
+    "fillAllFields": "Please fill in all fields.",
+    "login": {
+      "subtitle": "Sign in to continue",
+      "submit": "Sign in",
+      "google": "Sign in with Google",
+      "noAccount": "Don't have an account? ",
+      "createAccount": "Create an account",
+      "failedTitle": "Sign-in failed",
+      "wrongCredentials": "Incorrect email or password.",
+      "userNotFound": "No account with this email."
+    },
+    "register": {
+      "title": "Create an account",
+      "subtitle": "Start making progress today",
+      "submit": "Create an account",
+      "google": "Sign up with Google",
+      "haveAccount": "Already have an account? ",
+      "login": "Sign in",
+      "failedTitle": "Sign-up failed",
+      "passwordMismatch": "Passwords don't match.",
+      "passwordTooShort": "Your password must be at least 6 characters.",
+      "emailInUse": "An account already exists with this email.",
+      "invalidEmail": "This email address is invalid."
+    },
+    "google": {
+      "default": "Continue with Google",
+      "failedTitle": "Google sign-in failed",
+      "otherProvider": "An account already exists with this email (using another sign-in method)."
+    },
+    "apple": {
+      "failedTitle": "Apple sign-in failed"
+    }
+  },
+  "home": {
+    "title": "My habits",
+    "dateFormat": "EEEE, MMMM d",
+    "completed": "{{pct}}% done",
+    "emptyTitle": "No habits yet",
+    "emptySubtitle": "Tap + to get started",
+    "longPressHint": "Long press to edit",
+    "upgradeBanner": "Go Premium for unlimited habits",
+    "streakDays_one": "🔥 {{count}} day",
+    "streakDays_other": "🔥 {{count}} days",
+    "dashboard": {
+      "bestStreakValue": "{{count}}d",
+      "bestStreak": "Best streak",
+      "nextSession": "Next workout",
+      "rest": "Rest"
+    },
+    "habitForm": {
+      "newTitle": "New habit",
+      "editTitle": "Edit habit",
+      "namePlaceholder": "Habit name",
+      "emoji": "Emoji",
+      "color": "Color",
+      "reminder": "Reminder",
+      "reminderActive": "On",
+      "reminderWillUpdate": "The reminder will be updated.",
+      "reminderWillSchedule": "A reminder will be scheduled.",
+      "archive": "Archive"
+    },
+    "reminder": {
+      "every": "Every",
+      "timeWindow": "Time window",
+      "from": "From",
+      "to": "To",
+      "atWhatTime": "At what time",
+      "units": {
+        "hours": "Hours",
+        "days": "Days",
+        "weeks": "Weeks",
+        "months": "Months"
+      },
+      "hint": {
+        "hours": "Every {{value}}h from {{start}}h to {{end}}h",
+        "days_one": "Every day at {{time}}",
+        "days_other": "Every {{count}} days at {{time}}",
+        "weeks_one": "Every week at {{time}}",
+        "weeks_other": "Every {{count}} weeks at {{time}}",
+        "months_one": "Every month at {{time}}",
+        "months_other": "Every {{count}} months at {{time}}"
+      },
+      "short": {
+        "days": "/{{count}}d",
+        "weeks_one": "/wk",
+        "weeks_other": "/{{count}} wk",
+        "months_one": "/mo",
+        "months_other": "/{{count}} mo"
+      }
+    },
+    "limit": {
+      "adUnavailableTitle": "Ad unavailable",
+      "adUnavailableMessage": "Couldn't load the ad, please try again later.",
+      "title": "Extra habit",
+      "message": "You've reached your free limit. Watch a short ad to unlock one habit for today, or go Premium for unlimited habits.",
+      "watchAd": "Watch an ad",
+      "goPremium": "Go Premium"
+    }
+  },
+  "tdee": {
+    "lifestyle": {
+      "sedentary": "Sedentary",
+      "lightly_active": "Lightly active",
+      "moderately_active": "Moderately active",
+      "very_active": "Very active"
+    },
+    "lifestyleDescription": {
+      "sedentary": "Office job, remote work, little walking",
+      "lightly_active": "Some moving around, on your feet at times",
+      "moderately_active": "Standing job, regular walking, delivery...",
+      "very_active": "Physical job (construction, restaurant, farming...)"
+    },
+    "exercise": {
+      "none": "No exercise",
+      "1_2": "1-2 workouts / week",
+      "3_4": "3-4 workouts / week",
+      "5_6": "5-6 workouts / week",
+      "daily": "1 workout / day",
+      "twice_daily": "2+ workouts / day"
+    },
+    "goal": {
+      "lose_fat": "Fat loss",
+      "maintain": "Maintenance",
+      "build_muscle": "Muscle gain"
+    },
+    "card": {
+      "bmrKcal": "Basal metabolism (kcal)",
+      "maintenanceKcal": "Maintenance (kcal)",
+      "howCalculated": "How is it calculated?",
+      "active": "Active",
+      "applied": "Applied",
+      "apply": "Apply",
+      "step1": "① Basal metabolic rate (BMR)",
+      "formulaMale": "Mifflin-St Jeor formula (male)",
+      "formulaFemale": "Mifflin-St Jeor formula (female)",
+      "years": "yrs",
+      "constantMale": "Male constant",
+      "constantFemale": "Female constant",
+      "perDay": "{{kcal}} kcal / day",
+      "step2": "② Total expenditure (TDEE)",
+      "lifestyleLine": "Lifestyle: ×{{mult}} ({{label}})",
+      "sportLine": "Exercise: {{label}}",
+      "tdeeMaintenance": "TDEE (maintenance)",
+      "step3": "③ Macro breakdown",
+      "protShort": "Prot ",
+      "carbsShort": "Carbs ",
+      "fatShort": "Fat "
+    }
+  },
+  "physicalProfile": {
+    "title": "My physical profile",
+    "gender": "Sex",
+    "age": "Age",
+    "years": "yrs",
+    "height": "Height",
+    "currentWeight": "Current weight",
+    "goal": "Goal",
+    "lifestyle": "Daily lifestyle",
+    "exercise": "Physical activity",
+    "submit": "Calculate my goals"
+  },
+  "themes": {
+    "title": "Color theme",
+    "subtitle": "Customize the app's colors",
+    "active": "Active",
+    "names": {
+      "violet": "Mauve",
+      "ocean": "Ocean",
+      "forest": "Forest",
+      "fire": "Fire",
+      "night": "Indigo"
+    }
+  },
+  "stats": {
+    "title": "Statistics",
+    "bestStreak": "Best streak",
+    "daysShort": "{{count}}d",
+    "today": "Today",
+    "totalDone": "Total checked",
+    "avgRate": "Average rate",
+    "habitsChecked": "Habits checked (7d)",
+    "createHabitsForChart": "Create habits to see the chart",
+    "completionRate": "Completion rate (30d)",
+    "noData": "No data yet",
+    "caloriesPerDay": "Calories / day (7d)",
+    "goalLegend": "Goal ({{kcal}} kcal)",
+    "addFoodForChart": "Add food to see the chart",
+    "last7Days": "Last 7 days",
+    "emptyText": "Create your first habits to see your stats!",
+    "perHabit": "Per-habit breakdown",
+    "shortDateFormat": "M/d"
+  },
+  "sport": {
+    "title": "Workout",
+    "duration": {
+      "min": "{{m}} min",
+      "hours": "{{h}}h",
+      "hoursMin": "{{h}}h {{m}}min"
+    },
+    "dayFormat": "MMM d",
+    "deleteConfirm": "Delete \"{{name}}\"?",
+    "notifDeniedMessage": "Enable notifications in your phone's settings to receive reminders.",
+    "kcalBurned": "kcal burned",
+    "totalTime": "total time",
+    "activities_one": "activity",
+    "activities_other": "activities",
+    "noWeightInfo": "Enter your weight in Profile for a more accurate calorie estimate (currently based on 70 kg).",
+    "syncInfo": "Calories burned here are automatically added to your balance in the Calories tab.",
+    "programSection": "Strength program",
+    "sessionsPerWeek": "{{count}} sessions/wk · {{goal}}",
+    "perfs": "Stats",
+    "deleteProgramTitle": "Delete program",
+    "irreversible": "This action cannot be undone.",
+    "dayBadge": "D{{n}}",
+    "toConfigure": "No exercises — to set up",
+    "done": "Done",
+    "start": "Start",
+    "configure": "Set up",
+    "seeFullProgram": "See full program",
+    "createProgram": "Create my program",
+    "createProgramDesc": "Program tailored to your sessions and your goal",
+    "progress7Days": "Progress — last 7 days",
+    "reminders": "Workout reminders",
+    "todayActivities": "Today's activities",
+    "emptyTitle": "No activity logged",
+    "emptySub": "Tap + to add your first workout of the day."
+  },
+  "workout": {
+    "types": {
+      "marche": "Walking",
+      "course": "Running",
+      "velo": "Cycling",
+      "natation": "Swimming",
+      "musculation": "Strength training",
+      "hiit": "HIIT",
+      "yoga": "Yoga",
+      "football": "Soccer",
+      "basketball": "Basketball",
+      "tennis": "Tennis",
+      "elliptique": "Elliptical",
+      "randonnee": "Hiking",
+      "danse": "Dance",
+      "escaliers": "Stair climbing",
+      "autre": "Other activity"
+    },
+    "addTitle": "Add an activity",
+    "type": "Activity type",
+    "durationMin": "Duration (minutes)",
+    "durationPlaceholder": "e.g. 45",
+    "estimate": "Estimate: ",
+    "basedOn": " (based on {{weight}} kg)",
+    "caloriesBurned": "Calories burned",
+    "optionalOverride": "(optional — replaces the estimate)",
+    "caloriesPlaceholder": "e.g. 300",
+    "saveWithKcal": "Save — {{kcal}} kcal",
+    "session": {
+      "weightKg": "Weight (kg)",
+      "reps": "Reps",
+      "addSet": "Add a set",
+      "youtubeQuery": "{{name}} exercise how to",
+      "setsDone": "{{done}}/{{total}} sets",
+      "watchDemo": "Watch a demo",
+      "completeSave": "Workout complete! Save",
+      "saveProgress": "Save ({{done}}/{{total}})"
+    },
+    "stats": {
+      "title": "Performance",
+      "loggedCount_one": "{{count}} exercise logged",
+      "loggedCount_other": "{{count}} exercises logged",
+      "searchPlaceholder": "Search an exercise...",
+      "noData": "No data",
+      "noDataSub": "Start a workout and log your sets to see your performance here.",
+      "sessionsCount_one": "{{count}} session",
+      "sessionsCount_other": "{{count}} sessions",
+      "recordInline": "  ·  best: {{kg}} kg",
+      "noDataExercise": "No data for this exercise.",
+      "sessions": "Sessions",
+      "bestLoad": "Best load",
+      "bodyweight": "Bodyweight",
+      "est1rm": "Estimated 1RM",
+      "totalSets": "Total sets",
+      "totalReps": "Total reps",
+      "progression": "Progress",
+      "avgVolume": "Avg vol.",
+      "maxLoad": "Max load",
+      "totalVolume": "Total volume",
+      "weightLegend": "— Max load per session  ╌ Min load",
+      "volumeLegend": "Volume = weight × reps (all sets)",
+      "sessionDetail": "Session details",
+      "sessionDateFormat": "EEEE, MMM d",
+      "shortDateFormat": "M/d",
+      "colWeight": "Weight",
+      "colReps": "Reps",
+      "col1rm": "Est. 1RM",
+      "colVolume": "Volume",
+      "footer": "{{sets}} sets · {{reps}} reps · vol. {{volume}} kg"
+    },
+    "picker": {
+      "title": "Choose exercises",
+      "all": "All",
+      "compound": "Compound",
+      "isolation": "Isolation",
+      "allAdded": "All exercises in this group are already added",
+      "addCount_one": "Add {{count}} exercise",
+      "addCount_other": "Add {{count}} exercises"
+    },
+    "creator": {
+      "goalDesc": {
+        "lose_fat": "High volume, short rest",
+        "maintain": "Balance of strength and endurance",
+        "build_muscle": "Heavy loads, long rest"
+      },
+      "compoundTag": "🏋️ Compound",
+      "isolationTag": "🎯 Isolation",
+      "exCount": "{{count}} ex.",
+      "minutes": "⏱ {{m}} min",
+      "sessionLabel": "Session {{n}}",
+      "noExercise": "No exercises",
+      "customSplitName": "Custom program",
+      "replaceTitle": "Replace program?",
+      "saveTitle": "Save program",
+      "replaceMessage": "You already have a program. Replace it?",
+      "saveMessage": "This program will be saved in the Workout tab.",
+      "confirm": "Confirm",
+      "titleCreate": "Create my program",
+      "titleCustomizer": "My exercises",
+      "programType": "Program type",
+      "modeAuto": "Automatic",
+      "modeCustom": "Custom",
+      "modeAutoDesc": "Optimized program generated by the app",
+      "modeCustomDesc": "You pick your exercises for each session",
+      "equipment": "Available equipment",
+      "presetGym": "Full gym",
+      "presetHome": "Home setup",
+      "presetBodyweight": "Bodyweight only",
+      "profile": "Profile",
+      "level": "Training level",
+      "sessionsPerWeek": "Sessions per week",
+      "daysPerWeekShort": "d/wk",
+      "goal": "Goal",
+      "techIntermediate": "⚡ Intermediate techniques included",
+      "techAdvanced": "🔥 Advanced techniques included",
+      "techDesc": {
+        "supersetIntermediate": "2 opposing muscles back to back, no rest",
+        "superset": "Opposing muscles (e.g. biceps + triceps)",
+        "biset": "2 exercises for the same muscle back to back",
+        "dropset": "Reduce the load at failure (-20 to 30%)",
+        "restPause": "At failure → 15 s → keep going"
+      },
+      "generate": "Generate my program",
+      "chooseExercises": "Choose my exercises",
+      "customizerHint": "Add the exercises you want for each session",
+      "antagonistLabel": "Opposing muscle:",
+      "sameMuscleLabel": "Same muscle:",
+      "addAntagonist": "Add an opposing-muscle exercise ({{groups}})",
+      "addSameMuscle": "Add another {{group}} exercise",
+      "addExercises": "Add exercises",
+      "seeProgram": "See my program",
+      "summaryGym": "Gym",
+      "summaryEquipCount": "{{count}} equip.",
+      "summarySessions": "sessions/wk",
+      "summaryPerSession": "/ session",
+      "summaryTechniques": "techniques",
+      "saveProgram": "Save this program"
+    }
+  },
+  "profile": {
+    "title": "Profile",
+    "premiumActive": "Premium active ✨",
+    "premiumActiveSub": "No ads, unlimited habits",
+    "upgrade": "Go Premium",
+    "upgradeSub": "Unlock all features",
+    "statHabits": "Habits",
+    "statTotalChecked": "Total checked",
+    "statLimit": "Limit",
+    "sectionHealth": "Health",
+    "physicalProfile": "Physical profile",
+    "physicalSummary": "{{age}} y/o · {{height}} cm · {{lifestyle}}",
+    "physicalMissing": "Not set — required for the TDEE calculation",
+    "sectionMealReminders": "Meal reminders",
+    "reminderTime": "{{meal}} — reminder time",
+    "notificationsDenied": "Enable notifications in your settings.",
+    "sectionCalorieGoals": "Calorie goals",
+    "tdeePromptTitle": "Calculate your calorie needs",
+    "tdeePromptSub": "Fill in your physical profile to get personalized macros",
+    "goalsAppliedTitle": "Goals applied",
+    "goalsAppliedMessage": "{{goal}} — {{kcal}} kcal/day",
+    "sectionAppearance": "Appearance",
+    "colorTheme": "Color theme",
+    "sectionSubscription": "Subscription",
+    "restorePurchases": "Restore purchases",
+    "restorePurchasesSub": "Recover your existing subscription",
+    "restoredTitle": "Access restored 🎉",
+    "restoredMessage": "Your Premium subscription is active.",
+    "noPurchaseTitle": "No purchase found",
+    "noPurchaseMessage": "No active subscription found for this Apple/Google account.",
+    "sectionAccount": "Account",
+    "connected": "Signed in",
+    "exportData": "Export my data",
+    "exportDataSub": "Download a copy of your data (GDPR)",
+    "exportFailed": "Export failed",
+    "genericError": "Something went wrong.",
+    "logout": "Sign out",
+    "logoutConfirm": "Sign out of your account?",
+    "logoutAction": "Sign out",
+    "sectionAbout": "About",
+    "version": "Version",
+    "privacyPolicy": "Privacy policy",
+    "terms": "Terms of use",
+    "adConsent": "Ad consent",
+    "adConsentSub": "Manage my GDPR preferences",
+    "adConsentUnavailableTitle": "Unavailable",
+    "adConsentUnavailableMessage": "Ad consent options aren't available right now.",
+    "sectionDanger": "Danger zone",
+    "resetApp": "Reset the app",
+    "resetAppSub": "Deletes local data (account kept)",
+    "resetAppMessage": "All your local data (habits, nutrition, weight, workouts) will be deleted. Your account will be kept. This can't be undone.",
+    "resetAction": "Reset",
+    "deleteAccount": "Delete my account",
+    "deleteAccountSub": "Account + data, permanently deleted",
+    "deleteAccountMessage": "Your account and all your data (habits, nutrition, weight, workouts) will be permanently deleted from our servers and this device. This can't be undone.",
+    "deleteForever": "Delete permanently",
+    "reauthTitle": "Sign-in required",
+    "reauthMessage": "For security reasons, sign in again and then retry the deletion.",
+    "deleteFailed": "Deletion failed"
+  },
+  "paywall": {
+    "headline": "Build habits\nthat last.",
+    "subheadline": "Unlock everything to stay motivated every day.",
+    "features": {
+      "noAds": "No ads",
+      "unlimitedHabits_one": "Unlimited habits ({{count}} in the free version)",
+      "unlimitedHabits_other": "Unlimited habits ({{count}} in the free version)"
+    },
+    "packages": {
+      "annual": {
+        "label": "Yearly",
+        "period": "/yr",
+        "subtitle": "Billed once a year",
+        "subtitleWithMonthly": "Just {{price}}/mo, billed once a year"
+      },
+      "monthly": {
+        "label": "Monthly",
+        "period": "/mo",
+        "subtitle": "Billed monthly, cancel anytime"
+      },
+      "lifetime": {
+        "label": "Lifetime",
+        "period": "",
+        "subtitle": "One-time payment, lifetime access"
+      }
+    },
+    "continue": "Continue",
+    "continueWithPrice": "Continue — {{price}}",
+    "restore": "Restore purchases",
+    "legal": "Secure payment through the App Store / Google Play. Your subscription renews automatically. You can cancel anytime in your account settings.",
+    "welcomeTitle": "Welcome to Premium! 🎉",
+    "welcomeMessage": "Enjoy all the features.",
+    "welcomeButton": "Great!",
+    "restoredTitle": "Access restored!",
+    "restoredMessage": "Your Premium subscription is active again.",
+    "noPurchaseTitle": "No purchase",
+    "noPurchaseMessage": "No active subscription found."
+  },
+  "goals": {
+    "title": "Nutrition goals",
+    "caloriesPerDay": "Calories / day",
+    "macrosOptional": "Macros / day (optional)",
+    "macrosHint": "Leave empty to not track this macro",
+    "proteinG": "Protein (g)",
+    "carbsG": "Carbs (g)",
+    "fatG": "Fat (g)",
+    "targetWeight": "Target weight (kg, optional)"
+  },
+  "weight": {
+    "title": "Body weight",
+    "noData": "No data to display",
+    "goal": "Goal: {{weight}} kg",
+    "logToday": "Log my weight — {{date}}",
+    "placeholder": "e.g. 72.5",
+    "last30Days": "Last 30 days",
+    "invalid": "Enter a valid weight (in kg)."
+  },
+  "weightChart": {
+    "periods": {
+      "7j": "7d",
+      "30j": "30d",
+      "90j": "90d",
+      "tout": "All"
+    },
+    "bmi": {
+      "underweight": "Underweight",
+      "normal": "Normal",
+      "overweight": "Overweight",
+      "obese": "Obese"
+    },
+    "notes": {
+      "strength": "Adjusted range: strength training builds muscle mass, a BMI up to 27 is healthy.",
+      "athlete": "Adjusted range for athletes: high muscle mass, a BMI up to 28 is acceptable.",
+      "intense": "Adjusted range for intensive athletes: standard BMI isn't suited to this level."
+    },
+    "emptyTitle": "Weight tracking",
+    "emptySub": "Log your weight every day to track your progress.",
+    "logWeight": "Log my weight",
+    "title": "Weight trend",
+    "log": "Log",
+    "currentWeight": "Current weight",
+    "overPeriod": "Over the period",
+    "bmiLabel": "BMI",
+    "goalLine": "Goal {{weight}} kg (BMI {{bmi}})",
+    "notEnoughData": "Log at least 2 weigh-ins to see the chart.",
+    "recommendedTitle": "Recommended BMI goal",
+    "recommendedRange": "{{min}}–{{max}} kg (BMI {{minBmi}}–{{maxBmi}})",
+    "ideal": "Ideal (BMI {{bmi}})",
+    "toLose": "−{{kg}} kg to lose",
+    "toGain": "+{{kg}} kg to gain",
+    "reached": "Goal reached ✓",
+    "history": "Recent history",
+    "historyDateFormat": "EEE, MMM d"
+  },
+  "update": {
+    "requiredTitle": "Update required",
+    "availableTitle": "Update available",
+    "requiredMessage": "This version is no longer supported. Update Vitacairn to continue.",
+    "availableMessage": "A new version of Vitacairn is available with improvements.",
+    "button": "Update ({{store}})",
+    "later": "Later"
+  },
+  "library": {
+    "title": "Library",
+    "tabs": {
+      "foods": "Foods",
+      "meals": "Meals"
+    },
+    "emptyFoods": "No foods in your library.",
+    "emptyMeals": "No saved meals.",
+    "kcalPer100": "{{kcal}} kcal / 100{{unit}}",
+    "kcalPerUnit": "{{kcal}} kcal / unit",
+    "ingredientCount_one": "{{kcal}} kcal · {{count}} ingredient",
+    "ingredientCount_other": "{{kcal}} kcal · {{count}} ingredients",
+    "createFood": "Create a food",
+    "createComposedMeal": "Create a meal",
+    "editMeal": "Edit meal",
+    "foodNamePlaceholder": "Food name",
+    "caloriesPlaceholder": "Calories / 100g (or / 1 unit)",
+    "macrosOptional": "Macros / 100g (optional)",
+    "defaultPortion": "Default serving",
+    "addAsIngredient": "Add as ingredient",
+    "chooseIngredient": "Choose an ingredient",
+    "searchFoodPlaceholder": "Search for a food…",
+    "inYourLibrary": "In your library",
+    "foodDatabase": "Food database",
+    "openFoodFacts": "Open Food Facts",
+    "notFoundTitle": "Not found",
+    "notFoundMessage": "“{{query}}” isn't in the database.\nCreate it manually.",
+    "createManually": "Create “{{query}}” manually",
+    "typeToSearch": "Type a name to search…",
+    "mealNamePlaceholder": "Meal name",
+    "ingredients": "Ingredients",
+    "addIngredient": "Add an ingredient",
+    "total": "Total:",
+    "saveChanges": "Save changes",
+    "createMeal": "Create meal",
+    "deleteFoodConfirm": "Remove “{{name}}” from your library?",
+    "errors": {
+      "nameAndCaloriesRequired": "Name and calories are required.",
+      "invalidCalories": "Invalid calories.",
+      "nameRequired": "Enter a name.",
+      "mealNameRequired": "Give your meal a name.",
+      "ingredientRequired": "Add at least one ingredient."
+    }
+  },
+  "voice": {
+    "micDeniedTitle": "Microphone denied",
+    "micDeniedMessage": "Microphone access is required to dictate your meal. You can enable it in your phone settings.",
+    "recordingFailedTitle": "Can't record",
+    "recordingFailedDefault": "The microphone couldn't start.",
+    "recordingMissing": "The recording couldn't be found.",
+    "tooShort": "Recording too short: keep talking for a few seconds.",
+    "analysisFailedTitle": "Analysis failed",
+    "analysisFailedDefault": "The AI couldn't estimate your meal.",
+    "a11yStop": "Stop recording",
+    "a11yStart": "Dictate my meal",
+    "listening": "I'm listening… Tap ◼ when you're done.",
+    "hint": "Tap the mic and describe your meal with quantities.\nE.g. “200 g of rice, a chicken breast and an apple”",
+    "sourceAllDatabase": "Calculated with the Ciqual database",
+    "sourceNoneDatabase": "AI estimate (items not in the database)",
+    "sourcePartial": "{{matched}}/{{total}} items calculated with the Ciqual database, the rest estimated by AI"
+  },
+  "entryDetail": {
+    "content": "Contents",
+    "meta": "{{meal}} · {{serving}} · added at {{time}}",
+    "pctOfKcal": "{{pct}}% of kcal",
+    "noMacros": "No macronutrient data for this item."
+  },
+  "exercises": {
+    "push_up": {
+      "name": "Push-ups",
+      "description": "Body straight from head to heels, elbows at 45° from your torso. Lower until your chest nearly touches the floor, then push up explosively."
+    },
+    "pec_deck": {
+      "name": "Pec deck (machine)",
+      "description": "Seated on the machine, bring your arms together in an arc in front of you. Control the return slowly to stretch the pecs."
+    },
+    "cable_fly": {
+      "name": "Cable crossover",
+      "description": "Standing between two pulleys, bring the cables together in front of you in an arc. Keep a slight bend in the elbows throughout."
+    },
+    "bench_press_db": {
+      "name": "Dumbbell bench press",
+      "description": "Lying on the bench, dumbbells at chest level, elbows at 75°. Press up, bringing the dumbbells together without touching at the top. More range of motion than the barbell."
+    },
+    "bench_press": {
+      "name": "Barbell bench press",
+      "description": "Shoulder blades squeezed into the bench, lower the bar to your lower chest. Elbows at 75°, press straight up without lifting your hips."
+    },
+    "incline_press": {
+      "name": "Incline dumbbell press",
+      "description": "Bench at 30-45°, dumbbells at upper-chest level. Press up, focusing the work on your upper pecs."
+    },
+    "incline_press_bb": {
+      "name": "Incline barbell press",
+      "description": "Bench at 30-45°, lower the bar to your upper chest. Allows heavier loads than dumbbells to stimulate the upper pecs."
+    },
+    "dips_chest": {
+      "name": "Dips (chest)",
+      "description": "Lean your torso forward (30-45°) to target the pecs. Lower to a 90° elbow bend, then push up while squeezing your chest."
+    },
+    "fly_dumbbell": {
+      "name": "Dumbbell fly",
+      "description": "Lying down, lower the dumbbells in an arc until you feel a stretch in your pecs. Come back up without locking your elbows."
+    },
+    "decline_press": {
+      "name": "Decline dumbbell press",
+      "description": "Decline bench, targets the lower pecs. Keep elbows at 75° from your torso and press toward the ceiling."
+    },
+    "guillotine_press": {
+      "name": "Guillotine press",
+      "description": "Lower the bar toward your neck with a wide grip. Maximizes the pec stretch but requires healthy shoulders. Use a spotter."
+    },
+    "lat_pulldown": {
+      "name": "Lat pulldown",
+      "description": "Wide grip, pull the bar to your upper chest, driving your elbows down and back. Start the movement with your lats."
+    },
+    "seated_row": {
+      "name": "Seated cable row",
+      "description": "Seated, back straight, pull the handle to your belly button. Squeeze your shoulder blades together at the end, control the return."
+    },
+    "face_pull": {
+      "name": "Face pull",
+      "description": "High pulley, pull the rope toward your face, spreading your hands to each side of your head. Great for shoulder health."
+    },
+    "pull_up": {
+      "name": "Pull-ups",
+      "description": "Overhand grip slightly wider than shoulders. Start with your lats, pull until your chin is over the bar. Keep your core tight."
+    },
+    "barbell_row": {
+      "name": "Barbell row",
+      "description": "Torso at 45°, knees slightly bent. Pull the bar to your lower sternum, back flat and elbows close to your body."
+    },
+    "one_arm_row": {
+      "name": "One-arm dumbbell row",
+      "description": "One knee and one hand on the bench. Pull the dumbbell toward your hip with a slight torso rotation. Elbow high at the top."
+    },
+    "deadlift": {
+      "name": "Deadlift",
+      "description": "Feet hip-width apart, bar over your shins. Push the floor away without rounding your back, keep the bar very close to your body throughout."
+    },
+    "chest_supported": {
+      "name": "Chest-supported incline row",
+      "description": "Chest on an incline bench, pull the dumbbells toward your hips. Removes lower-back cheating to isolate the back."
+    },
+    "chin_up": {
+      "name": "Chin-ups",
+      "description": "Underhand grip (palms facing you), shoulder-width. Pull until your chin is over the bar. Works the biceps more than overhand pull-ups."
+    },
+    "tbar_row": {
+      "name": "T-bar row",
+      "description": "Bar in a landmine, V-handle, torso at 45°. Pull toward your sternum while squeezing your shoulder blades. Lets you go heavy safely."
+    },
+    "pullover_db": {
+      "name": "Dumbbell pullover",
+      "description": "Lying across the bench, dumbbell held with both hands. Bring your straight arms behind your head, elbows slightly bent. Stretches the lats."
+    },
+    "pendlay_row": {
+      "name": "Pendlay row",
+      "description": "Bar on the floor, torso horizontal. Pull explosively to your lower sternum and set the bar back down on every rep."
+    },
+    "meadows_row": {
+      "name": "Meadows row",
+      "description": "Bar in a landmine, stand perpendicular to it. Pull toward your hip with a torso rotation. Large range of motion."
+    },
+    "lateral_raise": {
+      "name": "Lateral raises",
+      "description": "Dumbbells in a neutral grip, raise your arms out to the sides to shoulder height. Slight elbow bend, thumbs slightly down."
+    },
+    "dumbbell_press": {
+      "name": "Dumbbell shoulder press",
+      "description": "Seated or standing, elbows at 90° at the bottom. Press the dumbbells overhead without locking your elbows. Brace your core."
+    },
+    "front_raise": {
+      "name": "Front raises",
+      "description": "Raise one arm (or both) in front of you to shoulder height. Keep your torso upright and avoid swinging."
+    },
+    "ohp": {
+      "name": "Barbell overhead press",
+      "description": "Bar at collarbone level, squeeze your glutes and brace. Press straight overhead, keeping the bar in line."
+    },
+    "arnold_press": {
+      "name": "Arnold press",
+      "description": "Dumbbells in front of your face, palms facing you. As you press, open your elbows and rotate your wrists outward. Works all 3 delt heads."
+    },
+    "rear_delt_fly": {
+      "name": "Dumbbell reverse fly (rear delts)",
+      "description": "Bent forward, arms slightly bent, raise your arms out to the sides to shoulder height. Targets the often-neglected rear delts."
+    },
+    "upright_row": {
+      "name": "Upright row",
+      "description": "Bar or dumbbells against your body, pull toward your chin with elbows high. Be careful if you have a history of shoulder problems."
+    },
+    "machine_shoulder": {
+      "name": "Machine shoulder press",
+      "description": "Seated in the machine, press the handles overhead. Ideal for beginners: no balance to manage, focus on the contraction."
+    },
+    "cable_lateral": {
+      "name": "Cable lateral raises",
+      "description": "Low pulley at your side, raise your arm in an arc to shoulder height. The constant cable tension better targets the side delt."
+    },
+    "behind_neck_press": {
+      "name": "Behind-the-neck press",
+      "description": "Bar behind your neck, press up. Only for lifters with excellent mobility and no shoulder weakness."
+    },
+    "dumbbell_curl": {
+      "name": "Alternating dumbbell curl",
+      "description": "Alternating arms, curl the dumbbell to your shoulder, turning your wrist up at the top. Elbow fixed against your body, control the descent."
+    },
+    "hammer_curl": {
+      "name": "Hammer curl",
+      "description": "Neutral grip (thumbs up), curl the dumbbell to your shoulder. Works the brachialis and brachioradialis in addition to the biceps."
+    },
+    "cable_curl": {
+      "name": "Cable curl",
+      "description": "Low pulley, curl with a straight or EZ bar. Constant cable tension maximizes biceps work at the bottom of the movement."
+    },
+    "barbell_curl": {
+      "name": "Barbell curl",
+      "description": "Straight or EZ bar, curl with both arms keeping your elbows fixed against your body. Lower slowly."
+    },
+    "incline_curl": {
+      "name": "Incline dumbbell curl",
+      "description": "Lying on an incline bench, arms hanging behind you. Maximal stretch on the biceps long head at the bottom."
+    },
+    "preacher_curl": {
+      "name": "Preacher curl",
+      "description": "Arms resting on the angled pad. The arm is stabilized, no cheating possible. Intensely targets the biceps short head."
+    },
+    "concentration_curl": {
+      "name": "Concentration curl",
+      "description": "Seated, elbow braced against your inner thigh. Curl, turning your wrist up at the top. Peak biceps contraction."
+    },
+    "spider_curl": {
+      "name": "Spider curl",
+      "description": "Chest on an incline bench, arms hanging straight down. Perfectly isolates the biceps without shoulder cheating."
+    },
+    "bayesian_curl": {
+      "name": "Bayesian curl (high pulley)",
+      "description": "Pulley behind you, curl your elbow forward. Peak tension happens in the stretched position, very effective."
+    },
+    "tricep_pushdown": {
+      "name": "Rope pushdown",
+      "description": "High pulley with a rope, elbows fixed at your sides. Push down to full extension, spreading the rope at the bottom."
+    },
+    "overhead_ext": {
+      "name": "Dumbbell overhead extension",
+      "description": "Dumbbell overhead, bend your elbows behind your head. Targets the long head. Keep your elbows pointing at the ceiling."
+    },
+    "dips_triceps": {
+      "name": "Bench dips (triceps)",
+      "description": "Hands on the bench behind you, torso upright and close to the bench. Bend your elbows to 90° and push back up without locking."
+    },
+    "skull_crusher": {
+      "name": "Skull crusher (EZ bar)",
+      "description": "Lying down, lower the EZ bar to your forehead or behind your head. Elbows fixed pointing at the ceiling, full extension at the top."
+    },
+    "close_grip_bench": {
+      "name": "Close-grip bench press",
+      "description": "Bench press with a narrow grip (shoulder-width). Keep your elbows close to your body. Great for triceps mass."
+    },
+    "dips_parallel": {
+      "name": "Parallel bar dips",
+      "description": "Between the bars, torso upright to target the triceps. Full extension at the top, 90° bend at the bottom. Add weight if too easy."
+    },
+    "tricep_kickback": {
+      "name": "Dumbbell kickback",
+      "description": "Bent forward, upper arm against your body, extend your elbow back to full extension. Keep the upper arm still, only the forearm moves."
+    },
+    "cable_overhead_t": {
+      "name": "Cable overhead extension",
+      "description": "Facing away from the high pulley, rope behind your head. Extend your elbows forward keeping your upper arms still. Targets the long head."
+    },
+    "tate_press": {
+      "name": "Tate press",
+      "description": "Dumbbells on your chest, elbows pointing up and out. Extend your elbows toward the ceiling while rotating your wrists."
+    },
+    "jm_press": {
+      "name": "JM press",
+      "description": "Hybrid between a skull crusher and a close-grip press. The bar lowers toward your neck, elbows at 45°. Advanced, high triceps volume."
+    },
+    "leg_press": {
+      "name": "Leg press",
+      "description": "Feet hip-width on the platform. Lower to 90° and push without locking your knees at the top. Back pressed into the seat."
+    },
+    "leg_extension": {
+      "name": "Leg extension",
+      "description": "Seated on the machine, extend your legs to the top while squeezing your quads. Lower slowly."
+    },
+    "goblet_squat": {
+      "name": "Goblet squat",
+      "description": "Dumbbell held with both hands against your chest, feet shoulder-width. Squat down keeping your torso upright. Great for learning the squat."
+    },
+    "lunge": {
+      "name": "Dumbbell lunges",
+      "description": "Step forward, back knee 2 cm from the floor. Front knee in line with your foot, torso upright. Push through the front foot to return."
+    },
+    "walking_lunge": {
+      "name": "Walking lunges",
+      "description": "Walk forward lunge by lunge, alternating legs. More dynamic than static lunges. Add dumbbells or a bar to progress."
+    },
+    "step_up": {
+      "name": "Dumbbell step-up",
+      "description": "Put one foot on a bench, push to step up keeping your torso upright. Works the quads and glutes one leg at a time."
+    },
+    "squat": {
+      "name": "Barbell squat",
+      "description": "Bar on your upper back, feet shoulder-width. Squat to parallel keeping your torso upright and knees in line with your feet."
+    },
+    "bulgarian_squat": {
+      "name": "Bulgarian split squat",
+      "description": "Back foot on the bench, front foot forward. Lower keeping your torso upright. Great for fixing imbalances."
+    },
+    "hack_squat": {
+      "name": "Hack squat (machine)",
+      "description": "Back against the machine, feet slightly forward. Lower to at least 90°. Safer for the back than the barbell squat."
+    },
+    "front_squat": {
+      "name": "Front squat",
+      "description": "Bar on your collarbones, torso very upright. Requires good ankle and shoulder mobility. Intensely targets the quads."
+    },
+    "sissy_squat": {
+      "name": "Sissy squat",
+      "description": "Heels raised, lean your torso back while bending your knees forward. Intense quad isolation."
+    },
+    "leg_curl": {
+      "name": "Lying leg curl",
+      "description": "Lying on the machine, curl your heels toward your glutes. Hips pressed against the bench. Lower slowly."
+    },
+    "rdl": {
+      "name": "Romanian deadlift",
+      "description": "Bar against your legs, hinge your torso forward with knees slightly bent. Lower until your hamstrings stretch, then come back up."
+    },
+    "good_morning": {
+      "name": "Good morning",
+      "description": "Bar on your upper back, hinge forward until your torso is horizontal. Back flat, knees slightly bent. Drive your hips forward to come up."
+    },
+    "seated_leg_curl": {
+      "name": "Seated leg curl",
+      "description": "Seated on the machine, curl your legs under the seat. The seated position lengthens the hamstrings at the top for a fuller stretch."
+    },
+    "nordic_curl": {
+      "name": "Nordic curl",
+      "description": "Knees on the floor, feet anchored. Lean forward while resisting with your hamstrings. A very intense eccentric exercise."
+    },
+    "lying_leg_curl": {
+      "name": "Lying cable leg curl",
+      "description": "Lying flat, low pulley attached to your ankles. Constant cable tension works the hamstrings through the whole range."
+    },
+    "glute_bridge": {
+      "name": "Glute bridge",
+      "description": "Lying on your back, feet flat. Lift your hips, squeezing your glutes hard at the top. Hold 1 second at the top."
+    },
+    "sumo_squat": {
+      "name": "Dumbbell sumo squat",
+      "description": "Wide stance, toes out, dumbbell between your legs. The wide stance works the glutes and adductors more."
+    },
+    "cable_kickback": {
+      "name": "Cable kickback",
+      "description": "Low pulley attached to your ankle, torso slightly leaning. Kick your leg back and up while squeezing your glute."
+    },
+    "hip_thrust": {
+      "name": "Barbell hip thrust",
+      "description": "Shoulders on the bench, bar on your hips. Drive your hips toward the ceiling, squeezing your glutes hard. Hold 1 second at the top."
+    },
+    "rdl_glutes": {
+      "name": "Glute-focused Romanian deadlift",
+      "description": "Classic RDL but with the intent to squeeze your glutes at the top. Drive your hips forward while squeezing your glutes."
+    },
+    "banded_abduction": {
+      "name": "Banded abduction",
+      "description": "Band around your knees, push your legs apart against the resistance. Activates the often-neglected glute medius."
+    },
+    "single_hip_thrust": {
+      "name": "Single-leg hip thrust",
+      "description": "Hip thrust on one leg to fix left/right imbalances. Doubles the resistance on the working glute."
+    },
+    "standing_calf": {
+      "name": "Standing calf raise (machine)",
+      "description": "Standing on the machine, rise onto your toes squeezing your calves. Lower into a full stretch and rise explosively."
+    },
+    "seated_calf": {
+      "name": "Seated calf raise",
+      "description": "Seated, knees at 90°, load on your knees. Targets the (deep) soleus. Full stretch at the bottom, squeeze at the top."
+    },
+    "donkey_calf": {
+      "name": "Donkey calf raise",
+      "description": "Torso horizontal and supported, rise onto your toes. The bent-over position lengthens the gastrocnemius for a maximal stretch."
+    },
+    "plank": {
+      "name": "Plank",
+      "description": "Body straight, on forearms and toes. Brace your abs, glutes and shoulders. Breathe normally without arching your back."
+    },
+    "side_plank": {
+      "name": "Side plank",
+      "description": "On one forearm, body aligned sideways. Targets the obliques. Keep your hips high, don't let them drop."
+    },
+    "bicycle_crunch": {
+      "name": "Bicycle crunch",
+      "description": "On your back, bring your right elbow to your left knee and vice versa, alternating. Works the obliques and rectus abdominis together."
+    },
+    "crunch": {
+      "name": "Crunch",
+      "description": "Lying on your back, lift your shoulders toward your knees. Lower back on the floor, don't pull on your neck. Exhale as you crunch."
+    },
+    "leg_raise": {
+      "name": "Leg raise",
+      "description": "Lying or hanging, raise your straight legs to 90°. Press your lower back into the floor (or brace if hanging). Control the descent."
+    },
+    "cable_crunch": {
+      "name": "Cable crunch",
+      "description": "Kneeling at a high pulley, crunch your torso toward the floor bringing your elbows to your knees. Keep your hips still, all the movement comes from the abs."
+    },
+    "russian_twist": {
+      "name": "Russian twist",
+      "description": "Seated in a V (back leaning), rotate your torso from right to left. Add a plate or dumbbell to increase intensity."
+    },
+    "ab_wheel": {
+      "name": "Ab wheel",
+      "description": "Kneeling, roll the wheel forward without arching your back. Come back squeezing your abs hard. Don't go further than you can control."
+    },
+    "dragon_flag": {
+      "name": "Dragon flag",
+      "description": "On a bench, body rigid and supported on your shoulders. Lower your straight legs toward the floor and back up. Bruce Lee's exercise, very intense."
+    },
+    "hanging_leg_raise": {
+      "name": "Hanging leg raise",
+      "description": "Hanging from a bar, raise your straight legs to horizontal (or higher). Avoid swinging, control the descent."
+    },
+    "machine_chest_press": {
+      "name": "Machine chest press",
+      "description": "Guided machine, ideal for beginners or to finish a session. Adjust the seat so the handles are at lower-chest level."
+    },
+    "diamond_push_up": {
+      "name": "Diamond push-ups",
+      "description": "Hands close together forming a diamond under your chest. Intensely works the triceps and the sternal pecs."
+    },
+    "push_up_feet_elevated": {
+      "name": "Feet-elevated push-ups",
+      "description": "Feet on a bench, body angled head-down. Targets the upper pecs like an incline press."
+    },
+    "low_cable_fly": {
+      "name": "Low cable fly",
+      "description": "Low pulleys, bring the cables up and to the center in an arc. Targets the upper pecs with constant tension."
+    },
+    "push_up_ring": {
+      "name": "Ring push-ups",
+      "description": "Hands on gymnastic rings, maximal instability that deeply activates the pecs and stabilizers. Turn your wrists inward at the top."
+    },
+    "landmine_press": {
+      "name": "Landmine press",
+      "description": "Bar in a landmine, cupped with one or both hands, press up in an arc. Works the upper pecs and shoulders."
+    },
+    "cable_fly_mid": {
+      "name": "Mid cable fly",
+      "description": "Pulleys at shoulder height, bring the cables together in front of you in an arc. A variation targeting the middle of the pecs."
+    },
+    "narrow_lat_pulldown": {
+      "name": "Close-grip lat pulldown",
+      "description": "High pulley with a V-handle or close grip. More range at the bottom, easier on the shoulders. Pull to your lower sternum."
+    },
+    "machine_row": {
+      "name": "Machine row",
+      "description": "Guided machine, chest supported. Pull the handles toward you while squeezing your shoulder blades. Ideal for learning without lower-back cheating."
+    },
+    "rack_pull": {
+      "name": "Rack pull",
+      "description": "Partial deadlift from knee height. Lets you overload heavy to build upper-back and trap strength."
+    },
+    "weighted_pull_up": {
+      "name": "Weighted pull-ups",
+      "description": "Pull-ups with a dip belt or a dumbbell between your feet. Ideal for progressing once bodyweight pull-ups are mastered."
+    },
+    "seal_row": {
+      "name": "Seal row",
+      "description": "Chest lying on a raised bench, pull the dumbbells or bar to your lower sternum. Completely removes lower-back cheating."
+    },
+    "straight_arm_pulldown": {
+      "name": "Straight-arm pulldown",
+      "description": "High pulley, arms straight, bring the bar down to your hips with elbows slightly bent. Isolates the lats without the biceps."
+    },
+    "cable_row_single": {
+      "name": "Single-arm cable row",
+      "description": "Low pulley, pull with one arm toward your hip with a slight torso rotation. Fixes left/right imbalances."
+    },
+    "assisted_pull_up": {
+      "name": "Assisted pull-ups (machine)",
+      "description": "Counterweight machine that reduces your bodyweight. Lets you learn the pull-up with a load suited to your level."
+    },
+    "machine_lateral_raise": {
+      "name": "Machine lateral raises",
+      "description": "Guided machine for lateral raises. The fixed path helps target the side delt without cheating. Control the return."
+    },
+    "cable_rear_delt": {
+      "name": "Cable reverse fly",
+      "description": "Low pulley at your side or crossed, pull back and up in an arc. Constant tension on the rear delt."
+    },
+    "lu_raise": {
+      "name": "Lu raises",
+      "description": "Front raise + lateral raise + overhead reach in a single rep. Popularized by Lu Xiaojun, works the whole delt."
+    },
+    "handstand_push_up": {
+      "name": "Handstand push-ups (HSPU)",
+      "description": "Upside down against a wall, bend your elbows until your head touches the floor. Maximal strength and coordination."
+    },
+    "z_press": {
+      "name": "Z-press",
+      "description": "Seated on the floor with legs straight in front of you, press the bar or dumbbells overhead. Requires excellent hip and back mobility."
+    },
+    "reverse_curl": {
+      "name": "Reverse curl",
+      "description": "Overhand grip (back of the hand up), classic curl. Targets the brachioradialis and the biceps."
+    },
+    "zottman_curl": {
+      "name": "Zottman curl",
+      "description": "Curl up with palms up, then rotate to palms down for the descent. Combines the classic curl and reverse curl in one movement."
+    },
+    "drag_curl": {
+      "name": "Drag curl",
+      "description": "Drag the bar up along your body, moving your elbows back. Recruits the biceps long head more than a classic curl."
+    },
+    "cross_body_cable_curl": {
+      "name": "Cross-body cable curl",
+      "description": "High pulley on the opposite side, curl toward your face. The arm rotation creates an exceptional peak contraction on the short head."
+    },
+    "waiter_curl": {
+      "name": "Waiter curl",
+      "description": "Hold a single dumbbell cupped in both hands, elbows against your body. Keeps maximal supination throughout the movement."
+    },
+    "pushdown_bar": {
+      "name": "Straight-bar pushdown",
+      "description": "High pulley with a straight bar, elbows fixed at your sides. Full extension at the bottom. Lets you go heavier than the rope."
+    },
+    "single_arm_cable_ext": {
+      "name": "Single-arm cable extension",
+      "description": "High pulley, one arm behind your head, extend your elbow. Fixes imbalances and increases the long head's range."
+    },
+    "cable_kickback_tri": {
+      "name": "Cable triceps kickback",
+      "description": "Low pulley, bent forward, elbow fixed at your side. Extend your arm back to full extension. Constant tension vs. dumbbell."
+    },
+    "band_pushdown": {
+      "name": "Band pushdown",
+      "description": "Band anchored up high, classic pushdown. Ideal as a high-rep finisher for a triceps pump."
+    },
+    "bench_dip_weighted": {
+      "name": "Weighted bench dips",
+      "description": "Bench dips with a weight plate on your thighs. Adds resistance when bodyweight dips become too easy."
+    },
+    "reverse_lunge": {
+      "name": "Dumbbell reverse lunges",
+      "description": "Step one foot back into a lunge, back knee 2 cm from the floor. More stable than forward lunges, less stress on the front knee."
+    },
+    "single_leg_press": {
+      "name": "Single-leg press",
+      "description": "Leg press on one leg to fix imbalances. Use 50-60% of your two-leg load."
+    },
+    "high_foot_leg_press": {
+      "name": "High-foot leg press",
+      "description": "Feet placed high on the platform, go deep. Shifts more load onto the hamstrings and glutes."
+    },
+    "belt_squat": {
+      "name": "Belt squat",
+      "description": "Load hung from a hip belt. Deep squat with no load on the spine, ideal for people with back problems."
+    },
+    "split_squat": {
+      "name": "Split squat",
+      "description": "Static lunge position, lower and rise without moving your feet. Simple and effective single-leg work for the quads."
+    },
+    "leg_press_close": {
+      "name": "Close-stance leg press",
+      "description": "Feet close together in the center of the platform. Targets the vastus lateralis and rectus femoris more."
+    },
+    "hyperextension": {
+      "name": "Back extension",
+      "description": "On the Roman chair, lean your torso forward and come back up to alignment. Works the hamstrings, glutes and lower back. Keep your back flat."
+    },
+    "single_leg_rdl": {
+      "name": "Single-leg Romanian deadlift",
+      "description": "RDL on one leg, dumbbell in the opposite hand. Improves balance and fixes imbalances. Keep your back flat and hips level."
+    },
+    "glute_ham_raise": {
+      "name": "Glute-ham raise",
+      "description": "On the GHR machine, lower your torso and squeeze your hamstrings to come back up. Combines knee flexion and hip extension for the hamstrings."
+    },
+    "standing_leg_curl": {
+      "name": "Standing leg curl (machine)",
+      "description": "Standing machine, bend your knee to bring your heel toward your glute. One leg at a time, to spot and fix imbalances."
+    },
+    "banded_good_morning": {
+      "name": "Banded good morning",
+      "description": "Band under your feet and around your neck, hinge your torso forward. Beginner version of the good morning to learn the hip hinge."
+    },
+    "clamshell": {
+      "name": "Clamshell",
+      "description": "Lying on your side, knees bent, open your top knee like a clamshell. Targets the glute medius and external rotators. Add a band."
+    },
+    "fire_hydrant": {
+      "name": "Fire hydrant",
+      "description": "On all fours, raise one bent knee out to the side to horizontal. Targets the glute medius. Keep your pelvis stable, don't let your back sag."
+    },
+    "cable_pull_through": {
+      "name": "Cable pull-through",
+      "description": "Back to the low pulley, grab the rope between your legs. Hinge forward, then drive your hips forward squeezing your glutes and hamstrings."
+    },
+    "reverse_hyper": {
+      "name": "Reverse hyperextension",
+      "description": "Upper body on the bench, raise your straight legs behind you. Targets the glutes and lower back while decompressing the spine."
+    },
+    "sumo_squat_bb": {
+      "name": "Barbell sumo squat",
+      "description": "Very wide stance, toes pointed at 45°, bar on your upper back. Works the glutes and adductors more than a regular squat."
+    },
+    "donkey_kick": {
+      "name": "Donkey kick",
+      "description": "On all fours, push one foot toward the ceiling keeping your knee bent at 90°. Maximal glute squeeze at the top. Add a band."
+    },
+    "single_calf_raise": {
+      "name": "Single-leg calf raise",
+      "description": "On one leg, rise onto your toes with your bodyweight or holding a dumbbell. Doubles the resistance and improves balance."
+    },
+    "barbell_calf_raise": {
+      "name": "Barbell calf raise",
+      "description": "Bar on your upper back, rise onto your toes. Lets you load heavier than the machine or bodyweight."
+    },
+    "step_calf_raise": {
+      "name": "Step calf raise",
+      "description": "Balls of your feet on the edge of a step, heels hanging. The extra range at the bottom gives a maximal calf stretch."
+    },
+    "tibia_raise": {
+      "name": "Tibia raise",
+      "description": "Back against a wall, lift your toes while keeping your heels on the floor. Works the tibialis anterior, the often-neglected opposite of the calves."
+    },
+    "hollow_body": {
+      "name": "Hollow body hold",
+      "description": "Lying down, lower back pressed into the floor, straight arms and legs held a few cm off the floor. Body in an inverted banana shape. A key gymnastics position."
+    },
+    "toes_to_bar": {
+      "name": "Toes to bar",
+      "description": "Hanging from the bar, raise your toes until they touch the bar. Control the swing, start the movement with your abs, not your shoulders."
+    },
+    "pallof_press": {
+      "name": "Pallof press",
+      "description": "Side-on to a pulley, extend your arms in front of you and resist the rotation. Trains anti-rotation, key for core stability."
+    },
+    "wood_chop": {
+      "name": "Wood chop",
+      "description": "High or low pulley, rotate your torso diagonally in a controlled way. Works the obliques in rotation, a functional movement."
+    },
+    "decline_crunch": {
+      "name": "Decline crunch",
+      "description": "On a decline bench, crunch toward your knees. The decline increases range and difficulty. Hold a plate on your chest."
+    },
+    "flutter_kicks": {
+      "name": "Flutter kicks",
+      "description": "Lying on your back, legs slightly off the floor, kick your feet alternately. Lower back pressed down, constant lower-ab work."
+    },
+    "mountain_climber": {
+      "name": "Mountain climbers",
+      "description": "In push-up position, drive your knees toward your chest, alternating quickly. Combines core work and cardio. Keep your hips low."
+    },
+    "l_sit": {
+      "name": "L-sit",
+      "description": "Supported on parallel bars or the floor, raise your straight legs to horizontal and hold. Requires exceptional ab and hip-flexor strength."
+    },
+    "dead_bug": {
+      "name": "Dead bug",
+      "description": "On your back, arms and knees at 90°. Extend the opposite arm and leg at the same time keeping your lower back pressed down. Great for core control."
+    },
+    "v_up": {
+      "name": "V-up",
+      "description": "Raise your straight legs and torso at the same time to form a V. Touch your toes with your fingers. Squeeze your abs hard at the top."
+    }
+  },
+  "muscleGroups": {
+    "chest": "Chest",
+    "back": "Back",
+    "shoulders": "Shoulders",
+    "biceps": "Biceps",
+    "triceps": "Triceps",
+    "quads": "Quads",
+    "hamstrings": "Hamstrings",
+    "glutes": "Glutes",
+    "calves": "Calves",
+    "abs": "Abs"
+  },
+  "equipment": {
+    "bodyweight": "Bodyweight",
+    "dumbbells": "Dumbbells",
+    "barbell": "Barbell + rack",
+    "pull_up_bar": "Pull-up bar",
+    "resistance_band": "Resistance bands",
+    "cables": "Cables / pulleys",
+    "machines": "Machines"
+  },
+  "program": {
+    "focus": {
+      "glutes": "Glutes",
+      "hamstrings": "Hamstrings",
+      "quads": "Quads",
+      "chest": "Chest",
+      "back": "Back",
+      "shoulders": "Shoulders",
+      "biceps": "Biceps",
+      "triceps": "Triceps",
+      "abs": "Abs",
+      "absLong": "Abs",
+      "absOptional": "(Abs)",
+      "calves": "Calves",
+      "arms": "Arms",
+      "compoundLowerChest": "Lower-body compound + Chest",
+      "heavyCompounds": "Heavy compounds",
+      "fullStrength": "Full-body strength"
+    },
+    "days": {
+      "chestTri": "Chest + Triceps {{v}}",
+      "backBi": "Back + Biceps {{v}}",
+      "shoulderAbs": "Shoulders + Abs",
+      "armsCore": "Arms + Core"
+    },
+    "splits": {
+      "female3": "3-day split · Women · 2× Lower",
+      "female4": "4-day split · Women · 2× Lower",
+      "female5": "5-day split · Women · 2× Lower",
+      "female6": "6-day split · Women · 3× Lower",
+      "bodyPart4": "4-day split · Muscle groups",
+      "bodyPart5": "5-day split · Muscle groups",
+      "bodyPart6": "6-day split · Muscle groups"
+    },
+    "splitDesc": {
+      "1": "1 full-body session per week",
+      "2": "Alternate 2 full-body sessions",
+      "3": "Classic 3-day split · Advanced women: 2× Lower body",
+      "4": "Upper × 2 + Lower × 2 · Advanced: muscle-group split",
+      "5": "Push·Pull·Legs + Upper·Lower · Advanced: 5-day muscle groups",
+      "6": "PPL × 2 · Advanced: 6-day muscle groups (women: 3× Lower)"
+    },
+    "levelDesc": {
+      "beginner": "Less than 1 year · Machines & dumbbells · Straight sets",
+      "intermediate": "1 to 3 years · Barbells & dumbbells · Opposing-muscle supersets",
+      "advanced": "3+ years · Intensity techniques · High volume"
+    },
+    "genderDesc": {
+      "female": "Focus on glutes · hamstrings · abs · lower body",
+      "male": "Focus on chest · back · shoulders · arms"
+    },
+    "techniqueNotes": {
+      "none": "",
+      "superset": "Do A and B back to back with no rest · Rest after B only",
+      "biset": "Do the 2 exercises back to back with no rest · Rest after the 2nd",
+      "dropset": "Last set: reduce the load by 20-30% at each failure (2-3 drops)",
+      "rest_pause": "At failure → rest 15-20 s → continue to the next failure (2-3 mini-sets)"
+    }
+  },
+  "notifications": {
+    "markDone": "✓ Done!",
+    "snooze30": "⏰ 30 min",
+    "channels": {
+      "habitsName": "Habit reminders",
+      "habitsDesc": "Daily notifications for your habits",
+      "mealsName": "Meal reminders",
+      "mealsDesc": "Daily notifications to log your meals",
+      "workoutsName": "Workout reminders",
+      "workoutsDesc": "Weekly reminders for your strength workouts"
+    },
+    "habitBody": "It's time for your habit!",
+    "meals": {
+      "breakfastTitle": "🌅 Breakfast",
+      "breakfastBody": "Don't forget to log your breakfast!",
+      "lunchTitle": "☀️ Lunch",
+      "lunchBody": "It's lunchtime, remember to log it!",
+      "dinnerTitle": "🌙 Dinner",
+      "dinnerBody": "Don't forget to log your dinner!",
+      "snackTitle": "🍎 Snack",
+      "snackBody": "Had a snack? Remember to log it!",
+      "defaultTitle": "🍽 Meal",
+      "defaultBody": "Don't forget to log your meal!"
+    },
+    "workoutTitle": "💪 It's workout day!",
+    "weekdays": {
+      "1": "Sun",
+      "2": "Mon",
+      "3": "Tue",
+      "4": "Wed",
+      "5": "Thu",
+      "6": "Fri",
+      "7": "Sat"
+    },
+    "permissionDeniedMessage": "Enable notifications for Vitacairn in your phone settings."
+  },
+  "errors": {
+    "googleNoToken": "Google did not return an idToken. Check the Web client ID and SHA-1 in Firebase.",
+    "appleNoToken": "Apple did not return an identityToken.",
+    "noAccount": "No account signed in.",
+    "reauthCancelled": "Sign-in cancelled.",
+    "exportTitle": "My Vitacairn data",
+    "aiUnreadable": "Unreadable Gemini response: {{text}}",
+    "voiceNoFood": "I didn't recognize any food. Try again and mention the quantities.",
+    "network": "Network: HTTP {{status}}",
+    "productNotFound": "Product not found. Make sure the barcode is readable.",
+    "noNutrition": "No nutrition data available for this product.",
+    "unknownFood": "Unknown food",
+    "photoConversion": "Could not convert the photo"
+  },
+  "portions": {
+    "pomme_de_terre": "medium potato",
+    "frite": "serving of fries",
+    "pain_de_mie": "slice of sandwich bread",
+    "pain_complet": "slice of wholemeal bread",
+    "baguette": "whole baguette",
+    "tranche_pain": "slice of bread",
+    "croissant": "medium croissant",
+    "pain_au_chocolat": "pain au chocolat",
+    "pain_aux_raisins": "raisin swirl pastry",
+    "brioche": "slice of brioche",
+    "biscotte": "rusk",
+    "galette_riz": "rice cake",
+    "pomme": "medium apple",
+    "poire": "medium pear",
+    "banane": "medium banana (~100g without peel)",
+    "orange": "medium orange",
+    "clementine": "clementine",
+    "mandarine": "mandarin",
+    "kiwi": "medium kiwi",
+    "peche": "medium peach",
+    "nectarine": "medium nectarine",
+    "abricot": "medium apricot",
+    "prune": "medium plum",
+    "figue": "medium fig",
+    "mangue": "half a mango",
+    "avocat": "half an avocado",
+    "citron": "medium lemon",
+    "pamplemousse": "half a grapefruit",
+    "fraise": "medium strawberry",
+    "cerise": "cherry",
+    "raisin": "grape",
+    "ananas": "slice of pineapple",
+    "melon": "slice of melon",
+    "pasteque": "slice of watermelon",
+    "litchi": "lychee",
+    "grenade": "whole pomegranate",
+    "carotte": "medium carrot",
+    "tomate": "medium tomato",
+    "courgette": "medium zucchini",
+    "aubergine": "medium eggplant",
+    "poivron": "medium bell pepper",
+    "oignon": "medium onion",
+    "echalote": "shallot",
+    "ail": "garlic clove",
+    "champignon": "medium mushroom",
+    "brocoli": "broccoli floret",
+    "chou_fleur": "cauliflower floret",
+    "concombre": "half a cucumber",
+    "radis": "radish",
+    "cornichon": "gherkin",
+    "endive": "endive",
+    "artichaut": "whole artichoke",
+    "poireau": "medium leek",
+    "navet": "medium turnip",
+    "betterave": "small beetroot",
+    "celeri": "celery stalk",
+    "oeuf": "medium egg (~60g in shell, ~50g without)",
+    "yaourt_nature": "pot of yogurt",
+    "fromage_blanc": "serving of fromage blanc",
+    "petit_suisse": "petit-suisse",
+    "camembert": "serving of camembert (1/4)",
+    "brie": "serving of brie",
+    "emmental": "slice of emmental",
+    "gruyere": "serving of gruyère",
+    "comte": "serving of comté",
+    "raclette": "slice of raclette cheese",
+    "roquefort": "serving of roquefort",
+    "mozzarella": "slice of mozzarella",
+    "vache_qui_rit": "Laughing Cow portion",
+    "jambon_tranche": "slice of ham",
+    "saucisse": "medium sausage",
+    "merguez": "merguez sausage",
+    "chipolata": "chipolata",
+    "steak_hache": "standard ground beef patty",
+    "steak": "medium steak",
+    "escalope": "medium cutlet",
+    "blanc_poulet": "chicken breast",
+    "cuisse_poulet": "chicken thigh",
+    "cotelette": "medium chop",
+    "tranche_bacon": "slice of bacon",
+    "sardine": "sardine",
+    "crevette": "shrimp",
+    "moule": "mussel (meat)",
+    "huitre": "oyster (meat)",
+    "filet_saumon": "salmon fillet",
+    "filet_cabillaud": "cod fillet",
+    "carre_chocolat": "square of chocolate",
+    "tablette_chocolat": "chocolate bar",
+    "biscuit_lu": "LU biscuit",
+    "oreo": "Oreo cookie",
+    "biscuit": "medium cookie",
+    "bonbon": "candy",
+    "madeleine": "madeleine",
+    "financier": "financier",
+    "macaron": "macaron",
+    "eclair": "éclair",
+    "choux": "cream puff",
+    "muffin": "standard muffin",
+    "sucre_cube": "sugar cube",
+    "noix": "whole walnut (~7g of kernels)",
+    "noisette": "hazelnut",
+    "amande": "almond",
+    "cacahuete": "peanut",
+    "datte": "date",
+    "pruneau": "prune"
+  },
+  "tabs": {
+    "home": "Today",
+    "stats": "Stats",
+    "calories": "Calories",
+    "sport": "Workout",
+    "profile": "Profile"
+  }
+}

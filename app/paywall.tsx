@@ -16,25 +16,30 @@ import { PurchasesPackage } from 'react-native-purchases';
 import { getOfferings, purchasePackage, restorePurchases } from '@/services/revenueCat';
 import { useProfileStore } from '@/stores/profileStore';
 import { CONFIG } from '@/constants/config';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
 
 // Uniquement ce que `isPremium` débloque réellement dans l'app (exigence stores :
 // ne jamais promettre une fonctionnalité absente).
 const FEATURES = [
-  { icon: '🚫', label: 'Aucune publicité' },
-  { icon: '✅', label: `Habitudes illimitées (${CONFIG.FREE_HABIT_LIMIT} en version gratuite)` },
-];
+  { icon: '🚫', key: 'paywall.features.noAds' },
+  { icon: '✅', key: 'paywall.features.unlimitedHabits' },
+] as const;
 
 // Sur Google Play, les forfaits d'un même abonnement partagent le même titre produit
 // → on libelle chaque package d'après son type (MONTHLY / ANNUAL / LIFETIME).
-const PACKAGE_INFO: Record<string, { label: string; period: string; order: number }> = {
-  ANNUAL: { label: 'Annuel', period: '/an', order: 0 },
-  MONTHLY: { label: 'Mensuel', period: '/mois', order: 1 },
-  LIFETIME: { label: 'À vie', period: '', order: 2 },
-};
+const PACKAGE_ORDER: Record<string, number> = { ANNUAL: 0, MONTHLY: 1, LIFETIME: 2 };
+const PACKAGE_KEY: Record<string, string> = { ANNUAL: 'annual', MONTHLY: 'monthly', LIFETIME: 'lifetime' };
 
 function packageInfo(pkg: PurchasesPackage) {
-  return PACKAGE_INFO[pkg.packageType] ?? { label: pkg.product.title, period: '', order: 9 };
+  const key = PACKAGE_KEY[pkg.packageType];
+  if (!key) return { label: pkg.product.title, period: '', order: 9 };
+  return {
+    label: i18n.t(`paywall.packages.${key}.label`),
+    period: i18n.t(`paywall.packages.${key}.period`),
+    order: PACKAGE_ORDER[pkg.packageType],
+  };
 }
 
 /** Économie de l'annuel par rapport à 12 mois de mensuel, en % arrondi (null si non calculable). */
@@ -50,18 +55,19 @@ function packageSubtitle(pkg: PurchasesPackage): string {
   switch (pkg.packageType) {
     case 'ANNUAL':
       return pkg.product.pricePerMonthString
-        ? `Soit ${pkg.product.pricePerMonthString}/mois, facturé une fois par an`
-        : 'Facturé une fois par an';
+        ? i18n.t('paywall.packages.annual.subtitleWithMonthly', { price: pkg.product.pricePerMonthString })
+        : i18n.t('paywall.packages.annual.subtitle');
     case 'MONTHLY':
-      return 'Facturé chaque mois, sans engagement';
+      return i18n.t('paywall.packages.monthly.subtitle');
     case 'LIFETIME':
-      return 'Paiement unique, accès à vie';
+      return i18n.t('paywall.packages.lifetime.subtitle');
     default:
       return pkg.product.description;
   }
 }
 
 export default function PaywallScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { setPremium } = useProfileStore();
   const [packages, setPackages] = useState<PurchasesPackage[]>([]);
@@ -88,8 +94,8 @@ export default function PaywallScreen() {
     setPurchasing(false);
     if (success) {
       setPremium(true);
-      Alert.alert('Bienvenue dans Premium ! 🎉', 'Profite de toutes les fonctionnalités.', [
-        { text: 'Super !', onPress: () => router.back() },
+      Alert.alert(t('paywall.welcomeTitle'), t('paywall.welcomeMessage'), [
+        { text: t('paywall.welcomeButton'), onPress: () => router.back() },
       ]);
     }
   };
@@ -100,11 +106,11 @@ export default function PaywallScreen() {
     setPurchasing(false);
     if (success) {
       setPremium(true);
-      Alert.alert('Accès restauré !', 'Ton abonnement Premium est de nouveau actif.', [
-        { text: 'OK', onPress: () => router.back() },
+      Alert.alert(t('paywall.restoredTitle'), t('paywall.restoredMessage'), [
+        { text: t('common.ok'), onPress: () => router.back() },
       ]);
     } else {
-      Alert.alert('Aucun achat', 'Aucun abonnement actif trouvé.');
+      Alert.alert(t('paywall.noPurchaseTitle'), t('paywall.noPurchaseMessage'));
     }
   };
 
@@ -127,17 +133,15 @@ export default function PaywallScreen() {
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
           {/* Hero */}
           <Text style={styles.badge}>✨ VITACAIRN PREMIUM</Text>
-          <Text style={styles.headline}>Construis des habitudes{'\n'}qui durent.</Text>
-          <Text style={styles.subheadline}>
-            Débloque tout pour rester motivé chaque jour.
-          </Text>
+          <Text style={styles.headline}>{t('paywall.headline')}</Text>
+          <Text style={styles.subheadline}>{t('paywall.subheadline')}</Text>
 
           {/* Features */}
           <View style={styles.featureList}>
             {FEATURES.map((f) => (
-              <View key={f.label} style={styles.featureRow}>
+              <View key={f.key} style={styles.featureRow}>
                 <Text style={styles.featureIcon}>{f.icon}</Text>
-                <Text style={styles.featureLabel}>{f.label}</Text>
+                <Text style={styles.featureLabel}>{t(f.key, { count: CONFIG.FREE_HABIT_LIMIT })}</Text>
               </View>
             ))}
           </View>
@@ -212,8 +216,10 @@ export default function PaywallScreen() {
               ) : (
                 <Text style={styles.ctaText}>
                   {selected
-                    ? `Continuer — ${selected.product.priceString}${packageInfo(selected).period}`
-                    : 'Continuer'}
+                    ? t('paywall.continueWithPrice', {
+                        price: `${selected.product.priceString}${packageInfo(selected).period}`,
+                      })
+                    : t('paywall.continue')}
                 </Text>
               )}
             </LinearGradient>
@@ -221,12 +227,10 @@ export default function PaywallScreen() {
 
           {/* Restore */}
           <TouchableOpacity onPress={handleRestore} style={styles.restoreBtn}>
-            <Text style={styles.restoreText}>Restaurer mes achats</Text>
+            <Text style={styles.restoreText}>{t('paywall.restore')}</Text>
           </TouchableOpacity>
 
-          <Text style={styles.legal}>
-            Paiement sécurisé via l'App Store / Google Play. L'abonnement se renouvelle automatiquement. Tu peux annuler à tout moment dans les réglages de ton compte.
-          </Text>
+          <Text style={styles.legal}>{t('paywall.legal')}</Text>
         </ScrollView>
       </SafeAreaView>
     </View>

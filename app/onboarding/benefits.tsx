@@ -3,49 +3,35 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
 
+// Textes : t(`onboarding.benefits.${key}.title|desc`)
 const BENEFITS = [
-  {
-    emoji: '🧠',
-    title: '21 jours pour ancrer une habitude',
-    desc: 'La science montre qu\'il faut en moyenne 66 jours pour automatiser un comportement. Vitacairn t\'aide à tenir.',
-    gradient: ['#7C3AED', '#5B21B6'] as const,
-  },
-  {
-    emoji: '🔥',
-    title: 'Le pouvoir des séries',
-    desc: 'Voir ta série grandir chaque jour crée une motivation puissante pour ne pas briser la chaîne.',
-    gradient: ['#F59E0B', '#D97706'] as const,
-  },
-  {
-    emoji: '📈',
-    title: 'Des progrès visibles',
-    desc: 'Tes statistiques te montrent clairement où tu en es et te motivent à continuer.',
-    gradient: ['#10B981', '#059669'] as const,
-  },
+  { key: 'habit', emoji: '🧠', gradient: ['#7C3AED', '#5B21B6'] as const },
+  { key: 'streaks', emoji: '🔥', gradient: ['#F59E0B', '#D97706'] as const },
+  { key: 'progress', emoji: '📈', gradient: ['#10B981', '#059669'] as const },
 ];
 
 export default function BenefitsScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.title}>Pourquoi ça marche ?</Text>
-        <Text style={styles.subtitle}>
-          Vitacairn utilise des techniques éprouvées pour t'aider à construire des habitudes durables.
-        </Text>
+        <Text style={styles.title}>{t('onboarding.benefits.title')}</Text>
+        <Text style={styles.subtitle}>{t('onboarding.benefits.subtitle')}</Text>
 
         <View style={styles.cards}>
           {BENEFITS.map((b) => (
-            <View key={b.title} style={styles.card}>
+            <View key={b.key} style={styles.card}>
               <LinearGradient colors={b.gradient} style={styles.cardIcon}>
                 <Text style={styles.cardEmoji}>{b.emoji}</Text>
               </LinearGradient>
               <View style={styles.cardText}>
-                <Text style={styles.cardTitle}>{b.title}</Text>
-                <Text style={styles.cardDesc}>{b.desc}</Text>
+                <Text style={styles.cardTitle}>{t(`onboarding.benefits.${b.key}.title`)}</Text>
+                <Text style={styles.cardDesc}>{t(`onboarding.benefits.${b.key}.desc`)}</Text>
               </View>
             </View>
           ))}
@@ -59,7 +45,7 @@ export default function BenefitsScreen() {
           activeOpacity={0.9}
         >
           <LinearGradient colors={COLORS.gradientPrimary} style={styles.btn}>
-            <Text style={styles.btnText}>Suivant →</Text>
+            <Text style={styles.btnText}>{t('onboarding.next')}</Text>
           </LinearGradient>
         </TouchableOpacity>
 

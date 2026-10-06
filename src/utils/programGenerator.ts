@@ -8,6 +8,7 @@ import {
   getAvailableIsolations,
   getAvailableExercises,
 } from '@/data/exercises';
+import i18n, { translatedRecord } from '@/i18n';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -84,13 +85,20 @@ export function getDefaultExerciseParams(goal: FitnessGoal, level: PractitionerL
 
 // ─── Notes de technique ───────────────────────────────────────────────────────
 
-export const TECHNIQUE_NOTES: Record<IntensificationTechnique, string> = {
-  none:        '',
-  superset:    'Enchaîner A et B sans repos · Repos après B seulement',
-  biset:       'Enchaîner les 2 exercices sans repos · Repos après le 2ᵉ',
-  dropset:     'Dernier set : réduire la charge de 20-30 % à chaque échec (2-3 drops)',
-  rest_pause:  "À l'échec → 15-20 s de repos → continuer jusqu'au prochain échec (2-3 mini-séries)",
-};
+export const TECHNIQUE_NOTES = translatedRecord<IntensificationTechnique>(
+  ['none', 'superset', 'biset', 'dropset', 'rest_pause'],
+  'program.techniqueNotes',
+);
+
+type FocusKey =
+  | 'glutes' | 'hamstrings' | 'quads' | 'chest' | 'back' | 'shoulders' | 'biceps' | 'triceps'
+  | 'abs' | 'absLong' | 'absOptional' | 'calves' | 'arms'
+  | 'compoundLowerChest' | 'heavyCompounds' | 'fullStrength';
+
+/** Libellé « focus » d'une séance (ex. « Dos · Biceps »), traduit. */
+function focusOf(...keys: FocusKey[]): string {
+  return keys.map((k) => i18n.t(`program.focus.${k}`)).join(' · ');
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -285,9 +293,17 @@ interface GroupSpec {
   isolations: number;
 }
 
-export const GENDER_INFO: Record<Gender, { label: string; emoji: string; description: string }> = {
-  female: { label: 'Femme', emoji: '👩', description: 'Focus fessiers · ischio · abdos · bas du corps' },
-  male:   { label: 'Homme', emoji: '👨', description: 'Focus pectoraux · dos · épaules · bras' },
+export const GENDER_INFO: Record<Gender, { readonly label: string; emoji: string; readonly description: string }> = {
+  female: {
+    emoji: '👩',
+    get label() { return i18n.t('fitness.gender.female'); },
+    get description() { return i18n.t('program.genderDesc.female'); },
+  },
+  male: {
+    emoji: '👨',
+    get label() { return i18n.t('fitness.gender.male'); },
+    get description() { return i18n.t('program.genderDesc.male'); },
+  },
 };
 
 /**
@@ -362,12 +378,7 @@ export function generateCustomDay(
 ): ProgramDay {
   const focus = muscleGroups
     .map((g) => {
-      const labels: Record<MuscleGroup, string> = {
-        chest: 'Pectoraux', back: 'Dos', shoulders: 'Épaules',
-        biceps: 'Biceps', triceps: 'Triceps', quads: 'Quadriceps',
-        hamstrings: 'Ischio', glutes: 'Fessiers', calves: 'Mollets', abs: 'Abdos',
-      };
-      return labels[g];
+      return i18n.t(`program.focus.${g}`);
     })
     .join(' · ');
 
@@ -385,7 +396,7 @@ export function generateCustomDay(
 
 function makeFullBody(n: number, v: 'A' | 'B' | 'C', goal: FitnessGoal, level: PractitionerLevel, gender: Gender, equipmentSet?: Set<EquipmentType>): ProgramDay {
   const configs = {
-    A: { label: `Full Body A`, focus: gender === 'female' ? 'Fessiers · Dos · Épaules · Abdos' : 'Compound Bas + Pec · Dos · Épaules · Abdos', groups: [
+    A: { label: `Full Body A`, focus: gender === 'female' ? focusOf('glutes', 'back', 'shoulders', 'abs') : focusOf('compoundLowerChest', 'back', 'shoulders', 'abs'), groups: [
       { group: 'glutes' as MuscleGroup,    compounds: gender === 'female' ? 1 : 0, isolations: gender === 'female' ? 1 : 0 },
       { group: 'quads' as MuscleGroup,     compounds: 1, isolations: level === 'beginner' ? 0 : 1 },
       { group: 'chest' as MuscleGroup,     compounds: 1, isolations: 1 },
@@ -393,7 +404,7 @@ function makeFullBody(n: number, v: 'A' | 'B' | 'C', goal: FitnessGoal, level: P
       { group: 'shoulders' as MuscleGroup, compounds: 0, isolations: 1 },
       { group: 'abs' as MuscleGroup,       compounds: 0, isolations: 1 },
     ]},
-    B: { label: `Full Body B`, focus: gender === 'female' ? 'Fessiers · Ischio · Dos · Abdos · Bras' : 'Fessiers · Ischio · Pec · Dos · Bras', groups: [
+    B: { label: `Full Body B`, focus: gender === 'female' ? focusOf('glutes', 'hamstrings', 'back', 'abs', 'arms') : focusOf('glutes', 'hamstrings', 'chest', 'back', 'arms'), groups: [
       { group: 'glutes' as MuscleGroup,     compounds: 1, isolations: 1 },
       { group: 'hamstrings' as MuscleGroup, compounds: 1, isolations: 0 },
       { group: 'chest' as MuscleGroup,      compounds: gender === 'female' ? 0 : 1, isolations: 1 },
@@ -401,7 +412,7 @@ function makeFullBody(n: number, v: 'A' | 'B' | 'C', goal: FitnessGoal, level: P
       { group: 'biceps' as MuscleGroup,     compounds: 0, isolations: 1 },
       { group: 'abs' as MuscleGroup,        compounds: 0, isolations: gender === 'female' ? 1 : 0 },
     ]},
-    C: { label: `Full Body C`, focus: 'Compound lourds · Force complète', groups: [
+    C: { label: `Full Body C`, focus: focusOf('heavyCompounds', 'fullStrength'), groups: [
       { group: 'quads' as MuscleGroup,      compounds: 1, isolations: 1 },
       { group: 'back' as MuscleGroup,       compounds: 2, isolations: 0 },
       { group: 'chest' as MuscleGroup,      compounds: 1, isolations: 0 },
@@ -442,8 +453,8 @@ function makePush(n: number, v: 'A' | 'B', goal: FitnessGoal, level: Practitione
           { group: 'triceps',   compounds: 0, isolations: 2 },
         ];
   const focus = gender === 'female'
-    ? 'Épaules · Pectoraux · Triceps · Abdos'
-    : 'Pectoraux · Épaules · Triceps';
+    ? focusOf('shoulders', 'chest', 'triceps', 'abs')
+    : focusOf('chest', 'shoulders', 'triceps');
   return buildDay(n, `Push ${v}`, focus, groups, goal, level, gender, equipmentSet);
 }
 
@@ -460,8 +471,8 @@ function makePull(n: number, v: 'A' | 'B', goal: FitnessGoal, level: Practitione
         { group: 'abs',       compounds: 0, isolations: 1 },
       ];
   const focus = gender === 'female'
-    ? 'Dos · Biceps · Ischio · Abdos'
-    : 'Dos · Biceps · (Abdos)';
+    ? focusOf('back', 'biceps', 'hamstrings', 'abs')
+    : focusOf('back', 'biceps', 'absOptional');
   return buildDay(n, `Pull ${v}`, focus, groups, goal, level, gender, equipmentSet);
 }
 
@@ -478,7 +489,7 @@ function makeLegs(n: number, v: 'A' | 'B' | 'C', goal: FitnessGoal, level: Pract
         { group: 'hamstrings' as MuscleGroup, compounds: 1, isolations: 0 },
         { group: 'quads' as MuscleGroup,      compounds: 1, isolations: 0 },
       ];
-      focus = 'Fessiers · Ischio · Quadriceps';
+      focus = focusOf('glutes', 'hamstrings', 'quads');
     } else if (v === 'B') {
       // biasGroups : glutes → 2c+1i, hamstrings +1 iso, abs +1 iso → 8 total, cap 7
       groups = [
@@ -487,7 +498,7 @@ function makeLegs(n: number, v: 'A' | 'B' | 'C', goal: FitnessGoal, level: Pract
         { group: 'quads' as MuscleGroup,      compounds: 0, isolations: 1 },
         { group: 'abs' as MuscleGroup,        compounds: 0, isolations: 1 },
       ];
-      focus = 'Fessiers · Ischio · Quadriceps · Abdos';
+      focus = focusOf('glutes', 'hamstrings', 'quads', 'abs');
     } else {
       // C — focus quadriceps, fessiers en soutien · biasGroups : glutes → 1c+2i
       groups = [
@@ -495,7 +506,7 @@ function makeLegs(n: number, v: 'A' | 'B' | 'C', goal: FitnessGoal, level: Pract
         { group: 'glutes' as MuscleGroup,     compounds: 0, isolations: 1 },
         { group: 'calves' as MuscleGroup,     compounds: 0, isolations: 1 },
       ];
-      focus = 'Quadriceps · Fessiers · Mollets';
+      focus = focusOf('quads', 'glutes', 'calves');
     }
   } else {
     if (v === 'A') {
@@ -505,7 +516,7 @@ function makeLegs(n: number, v: 'A' | 'B' | 'C', goal: FitnessGoal, level: Pract
         { group: 'glutes' as MuscleGroup,     compounds: 1, isolations: 0 },
         { group: 'calves' as MuscleGroup,     compounds: 0, isolations: 1 },
       ];
-      focus = 'Quadriceps · Ischio · Fessiers · Mollets';
+      focus = focusOf('quads', 'hamstrings', 'glutes', 'calves');
     } else {
       groups = [
         { group: 'glutes' as MuscleGroup,     compounds: 2, isolations: 1 },
@@ -514,7 +525,7 @@ function makeLegs(n: number, v: 'A' | 'B' | 'C', goal: FitnessGoal, level: Pract
         { group: 'calves' as MuscleGroup,     compounds: 0, isolations: 1 },
         { group: 'abs' as MuscleGroup,        compounds: 0, isolations: 1 },
       ];
-      focus = 'Fessiers · Ischio · Mollets · Abdos';
+      focus = focusOf('glutes', 'hamstrings', 'calves', 'abs');
     }
   }
 
@@ -555,8 +566,8 @@ function makeUpper(n: number, v: 'A' | 'B', goal: FitnessGoal, level: Practition
           { group: 'triceps',   compounds: 1, isolations: 1 },
         ];
   const focus = gender === 'female'
-    ? v === 'A' ? 'Dos · Épaules · Biceps · Abdos' : 'Dos · Épaules · Biceps · Pectoraux · Abdos'
-    : 'Pectoraux · Dos · Épaules · Bras';
+    ? v === 'A' ? focusOf('back', 'shoulders', 'biceps', 'abs') : focusOf('back', 'shoulders', 'biceps', 'chest', 'abs')
+    : focusOf('chest', 'back', 'shoulders', 'arms');
   return buildDay(n, `Upper ${v}`, focus, groups, goal, level, gender, equipmentSet);
 }
 
@@ -573,7 +584,7 @@ function makeLower(n: number, v: 'A' | 'B', goal: FitnessGoal, level: Practition
         { group: 'hamstrings' as MuscleGroup, compounds: 1, isolations: 0 },
         { group: 'quads' as MuscleGroup,      compounds: 1, isolations: 0 },
       ];
-      focus = 'Fessiers · Ischio · Quadriceps';
+      focus = focusOf('glutes', 'hamstrings', 'quads');
     } else {
       // biasGroups : glutes → 2c+1i, hamstrings +1 iso, abs +1 iso → 8 total, cap 7
       groups = [
@@ -582,7 +593,7 @@ function makeLower(n: number, v: 'A' | 'B', goal: FitnessGoal, level: Practition
         { group: 'quads' as MuscleGroup,      compounds: 0, isolations: 1 },
         { group: 'abs' as MuscleGroup,        compounds: 0, isolations: 1 },
       ];
-      focus = 'Fessiers · Ischio · Quadriceps · Abdos';
+      focus = focusOf('glutes', 'hamstrings', 'quads', 'abs');
     }
   } else {
     if (v === 'A') {
@@ -592,7 +603,7 @@ function makeLower(n: number, v: 'A' | 'B', goal: FitnessGoal, level: Practition
         { group: 'glutes' as MuscleGroup,     compounds: 1, isolations: 0 },
         { group: 'calves' as MuscleGroup,     compounds: 0, isolations: 1 },
       ];
-      focus = 'Quadriceps · Ischio · Fessiers · Mollets';
+      focus = focusOf('quads', 'hamstrings', 'glutes', 'calves');
     } else {
       groups = [
         { group: 'glutes' as MuscleGroup,     compounds: 2, isolations: 1 },
@@ -600,7 +611,7 @@ function makeLower(n: number, v: 'A' | 'B', goal: FitnessGoal, level: Practition
         { group: 'hamstrings' as MuscleGroup, compounds: 1, isolations: 1 },
         { group: 'abs' as MuscleGroup,        compounds: 0, isolations: 2 },
       ];
-      focus = 'Fessiers · Quads · Ischio · Abdos';
+      focus = focusOf('glutes', 'quads', 'hamstrings', 'abs');
     }
   }
 
@@ -629,9 +640,9 @@ function makeChestTri(n: number, v: 'A' | 'B', goal: FitnessGoal, level: Practit
           { group: 'triceps' as MuscleGroup, compounds: 1, isolations: 2 },
         ];
   const focus = gender === 'female'
-    ? 'Pectoraux · Épaules · Triceps · Abdos'
-    : 'Pectoraux · Triceps';
-  return buildDay(n, `Pec + Triceps ${v}`, focus, groups, goal, level, gender, equipmentSet);
+    ? focusOf('chest', 'shoulders', 'triceps', 'abs')
+    : focusOf('chest', 'triceps');
+  return buildDay(n, i18n.t('program.days.chestTri', { v }), focus, groups, goal, level, gender, equipmentSet);
 }
 
 /** Dos + Biceps — utilisé dans les splits avancés 4-6j. */
@@ -646,8 +657,8 @@ function makeBackBi(n: number, v: 'A' | 'B', goal: FitnessGoal, level: Practitio
         { group: 'biceps' as MuscleGroup, compounds: 0, isolations: 2 },
         { group: 'abs' as MuscleGroup,    compounds: 0, isolations: 1 },  // → +1 iso female bias
       ];
-  const focus = v === 'A' ? 'Dos · Biceps' : 'Dos · Biceps · Abdos';
-  return buildDay(n, `Dos + Biceps ${v}`, focus, groups, goal, level, gender, equipmentSet);
+  const focus = v === 'A' ? focusOf('back', 'biceps') : focusOf('back', 'biceps', 'abs');
+  return buildDay(n, i18n.t('program.days.backBi', { v }), focus, groups, goal, level, gender, equipmentSet);
 }
 
 /** Épaules + Abdominaux — utilisé dans les splits avancés 4-6j. */
@@ -656,7 +667,7 @@ function makeShoulderAbs(n: number, goal: FitnessGoal, level: PractitionerLevel,
     { group: 'shoulders' as MuscleGroup, compounds: 1, isolations: 2 },
     { group: 'abs' as MuscleGroup,       compounds: 0, isolations: 3 },  // female bias cap à 2 isos
   ];
-  return buildDay(n, 'Épaules + Abdos', 'Épaules · Abdominaux', groups, goal, level, gender, equipmentSet);
+  return buildDay(n, i18n.t('program.days.shoulderAbs'), focusOf('shoulders', 'absLong'), groups, goal, level, gender, equipmentSet);
 }
 
 /** Bras + Core — jour dédié bras (split 5j homme avancé). */
@@ -666,29 +677,43 @@ function makeArmsCore(n: number, goal: FitnessGoal, level: PractitionerLevel, ge
     { group: 'triceps' as MuscleGroup, compounds: 0, isolations: 2 },  // female bias → 0c+1i
     { group: 'abs' as MuscleGroup,     compounds: 0, isolations: 3 },  // female bias cap à 2
   ];
-  return buildDay(n, 'Bras + Core', 'Biceps · Triceps · Abdos', groups, goal, level, gender, equipmentSet);
+  return buildDay(n, i18n.t('program.days.armsCore'), focusOf('biceps', 'triceps', 'abs'), groups, goal, level, gender, equipmentSet);
 }
 
 // ─── Générateur principal ─────────────────────────────────────────────────────
 
 export interface SplitInfo {
   name: string;
-  description: string;
+  /** Traduit (getter i18n : program.splitDesc.<n>) */
+  readonly description: string;
+}
+
+function splitInfo(n: number, name: string): SplitInfo {
+  return { name, get description() { return i18n.t(`program.splitDesc.${n}`); } };
 }
 
 export const SPLIT_INFO: Record<number, SplitInfo> = {
-  1: { name: 'Full Body',          description: '1 séance complète par semaine' },
-  2: { name: 'Full Body A/B',      description: 'Alternance 2 séances complètes' },
-  3: { name: 'Push / Pull / Legs', description: 'Split classique 3 jours · Femme avancée : 2× Bas du corps' },
-  4: { name: 'Upper / Lower',      description: 'Haut × 2 + Bas × 2 · Avancé : Split groupes musculaires' },
-  5: { name: 'PPL + Upper/Lower',  description: 'Push·Pull·Legs + Upper·Lower · Avancé : 5j groupes musculaires' },
-  6: { name: 'PPL × 2',            description: 'PPL × 2 · Avancé : 6j groupes musculaires (femme : 3× Bas)' },
+  1: splitInfo(1, 'Full Body'),
+  2: splitInfo(2, 'Full Body A/B'),
+  3: splitInfo(3, 'Push / Pull / Legs'),
+  4: splitInfo(4, 'Upper / Lower'),
+  5: splitInfo(5, 'PPL + Upper/Lower'),
+  6: splitInfo(6, 'PPL × 2'),
 };
 
-export const LEVEL_INFO: Record<PractitionerLevel, { label: string; emoji: string; description: string; color: string }> = {
-  beginner:     { label: 'Débutant',      emoji: '🌱', description: 'Moins d\'1 an · Machines & haltères · Séries droites',            color: '#10B981' },
-  intermediate: { label: 'Intermédiaire', emoji: '💪', description: '1 à 3 ans · Barres & haltères · Supersets antagonistes',          color: '#60A5FA' },
-  advanced:     { label: 'Avancé',        emoji: '🔥', description: '3+ ans · Techniques d\'intensification · Volume élevé',           color: '#F97316' },
+function levelInfo(level: PractitionerLevel, emoji: string, color: string) {
+  return {
+    emoji,
+    color,
+    get label() { return i18n.t(`fitness.level.${level}`); },
+    get description() { return i18n.t(`program.levelDesc.${level}`); },
+  };
+}
+
+export const LEVEL_INFO: Record<PractitionerLevel, { readonly label: string; emoji: string; readonly description: string; color: string }> = {
+  beginner:     levelInfo('beginner', '🌱', '#10B981'),
+  intermediate: levelInfo('intermediate', '💪', '#60A5FA'),
+  advanced:     levelInfo('advanced', '🔥', '#F97316'),
 };
 
 /** Vérifie si l'équipement permet des exercices de dos (tirage vertical ou horizontal). */
@@ -724,7 +749,7 @@ export function generateProgram(
       if (level === 'advanced' && gender === 'female' && canPull) {
         // 2 jours bas du corps pour femme avancée
         days = [makeLower(1, 'A', goal, level, g, eq), makeUpper(2, 'A', goal, level, g, eq), makeLower(3, 'B', goal, level, g, eq)];
-        splitName = 'Split 3j Femme · 2× Bas';
+        splitName = i18n.t('program.splits.female3');
       } else if (canPull) {
         days = [makePush(1, 'A', goal, level, g, eq), makePull(2, 'A', goal, level, g, eq), makeLegs(3, 'A', goal, level, g, eq)];
         splitName = SPLIT_INFO[3].name;
@@ -744,7 +769,7 @@ export function generateProgram(
             makeChestTri(3, 'A', goal, level, g, eq),
             makeLower(4, 'B', goal, level, g, eq),
           ];
-          splitName = 'Split 4j Femme · 2× Bas';
+          splitName = i18n.t('program.splits.female4');
         } else {
           // Body part classique 4 jours
           days = [
@@ -753,7 +778,7 @@ export function generateProgram(
             makeShoulderAbs(3, goal, level, g, eq),
             makeLegs(4, 'A', goal, level, g, eq),
           ];
-          splitName = 'Split 4j · Groupes musculaires';
+          splitName = i18n.t('program.splits.bodyPart4');
         }
       } else {
         days = [makeUpper(1, 'A', goal, level, g, eq), makeLower(2, 'A', goal, level, g, eq), makeUpper(3, 'B', goal, level, g, eq), makeLower(4, 'B', goal, level, g, eq)];
@@ -772,7 +797,7 @@ export function generateProgram(
             makeLower(4, 'B', goal, level, g, eq),
             makeChestTri(5, 'A', goal, level, g, eq),
           ];
-          splitName = 'Split 5j Femme · 2× Bas';
+          splitName = i18n.t('program.splits.female5');
         } else if (canPull) {
           // Body part 5 jours homme
           days = [
@@ -782,7 +807,7 @@ export function generateProgram(
             makeShoulderAbs(4, goal, level, g, eq),
             makeArmsCore(5, goal, level, g, eq),
           ];
-          splitName = 'Split 5j · Groupes musculaires';
+          splitName = i18n.t('program.splits.bodyPart5');
         } else {
           days = [makeUpper(1, 'A', goal, level, g, eq), makeLower(2, 'A', goal, level, g, eq), makeFullBody(3, 'A', goal, level, g, eq), makeUpper(4, 'B', goal, level, g, eq), makeLower(5, 'B', goal, level, g, eq)];
           splitName = 'Upper/Lower + Full Body';
@@ -808,7 +833,7 @@ export function generateProgram(
             makeChestTri(5, 'A', goal, level, g, eq),
             makeLegs(6, 'C', goal, level, g, eq),
           ];
-          splitName = 'Split 6j Femme · 3× Bas';
+          splitName = i18n.t('program.splits.female6');
         } else if (canPull) {
           // Body part 6 jours : 2× Legs
           days = [
@@ -819,7 +844,7 @@ export function generateProgram(
             makeArmsCore(5, goal, level, g, eq),
             makeLegs(6, 'B', goal, level, g, eq),
           ];
-          splitName = 'Split 6j · Groupes musculaires';
+          splitName = i18n.t('program.splits.bodyPart6');
         } else {
           days = [makeUpper(1, 'A', goal, level, g, eq), makeLower(2, 'A', goal, level, g, eq), makeUpper(3, 'B', goal, level, g, eq), makeLower(4, 'B', goal, level, g, eq), makeUpper(5, 'A', goal, level, g, eq), makeLower(6, 'A', goal, level, g, eq)];
           splitName = 'Upper / Lower × 3';

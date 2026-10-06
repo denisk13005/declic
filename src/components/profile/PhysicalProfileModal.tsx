@@ -20,6 +20,7 @@ import {
   EXERCISE_LABELS,
   GOAL_LABELS,
 } from '@/utils/tdee';
+import { useTranslation } from 'react-i18next';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
 
 interface SaveData {
@@ -47,9 +48,10 @@ interface Props {
   };
 }
 
-const GENDERS: { value: Gender; label: string; icon: string }[] = [
-  { value: 'male', label: 'Homme', icon: '♂' },
-  { value: 'female', label: 'Femme', icon: '♀' },
+// Libellé traduit : t(`fitness.gender.${value}`)
+const GENDERS: { value: Gender; icon: string }[] = [
+  { value: 'male', icon: '♂' },
+  { value: 'female', icon: '♀' },
 ];
 
 const GOALS: FitnessGoal[] = ['lose_fat', 'maintain', 'build_muscle'];
@@ -68,6 +70,7 @@ const LIFESTYLES: LifestyleLevel[] = ['sedentary', 'lightly_active', 'moderately
 const EXERCISES: ExerciseFrequency[] = ['none', '1_2', '3_4', '5_6', 'daily', 'twice_daily'];
 
 export default function PhysicalProfileModal({ visible, onClose, onSave, initial }: Props) {
+  const { t } = useTranslation();
   const [age, setAge] = useState(initial?.age?.toString() ?? '');
   const [height, setHeight] = useState(initial?.height?.toString() ?? '');
   const [weight, setWeight] = useState(initial?.weight?.toString() ?? '');
@@ -121,14 +124,14 @@ export default function PhysicalProfileModal({ visible, onClose, onSave, initial
           <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
             <Ionicons name="close" size={24} color={COLORS.textSecondary} />
           </TouchableOpacity>
-          <Text style={styles.title}>Mon profil physique</Text>
+          <Text style={styles.title}>{t('physicalProfile.title')}</Text>
           <View style={{ width: 44 }} />
         </View>
 
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
           {/* Sexe */}
-          <Text style={styles.label}>Sexe</Text>
+          <Text style={styles.label}>{t('physicalProfile.gender')}</Text>
           <View style={styles.twoCol}>
             {GENDERS.map((g) => (
               <TouchableOpacity
@@ -138,7 +141,7 @@ export default function PhysicalProfileModal({ visible, onClose, onSave, initial
               >
                 <Text style={styles.chipIcon}>{g.icon}</Text>
                 <Text style={[styles.chipText, gender === g.value && styles.chipTextActive]}>
-                  {g.label}
+                  {t(`fitness.gender.${g.value}`)}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -147,15 +150,15 @@ export default function PhysicalProfileModal({ visible, onClose, onSave, initial
           {/* Âge + Taille */}
           <View style={styles.twoCol}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.label}>Âge</Text>
+              <Text style={styles.label}>{t('physicalProfile.age')}</Text>
               <View style={styles.inputWrap}>
                 <TextInput style={styles.input} value={age} onChangeText={setAge}
                   keyboardType="numeric" placeholder="25" placeholderTextColor={COLORS.textTertiary} maxLength={3} />
-                <Text style={styles.inputUnit}>ans</Text>
+                <Text style={styles.inputUnit}>{t('physicalProfile.years')}</Text>
               </View>
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.label}>Taille</Text>
+              <Text style={styles.label}>{t('physicalProfile.height')}</Text>
               <View style={styles.inputWrap}>
                 <TextInput style={styles.input} value={height} onChangeText={setHeight}
                   keyboardType="numeric" placeholder="175" placeholderTextColor={COLORS.textTertiary} maxLength={3} />
@@ -165,7 +168,7 @@ export default function PhysicalProfileModal({ visible, onClose, onSave, initial
           </View>
 
           {/* Poids */}
-          <Text style={styles.label}>Poids actuel</Text>
+          <Text style={styles.label}>{t('physicalProfile.currentWeight')}</Text>
           <View style={styles.inputWrap}>
             <TextInput style={styles.input} value={weight} onChangeText={setWeight}
               keyboardType="decimal-pad" placeholder="70" placeholderTextColor={COLORS.textTertiary} maxLength={5} />
@@ -173,7 +176,7 @@ export default function PhysicalProfileModal({ visible, onClose, onSave, initial
           </View>
 
           {/* Objectif */}
-          <Text style={styles.label}>Objectif</Text>
+          <Text style={styles.label}>{t('physicalProfile.goal')}</Text>
           <View style={styles.threeCol}>
             {GOALS.map((g) => (
               <TouchableOpacity
@@ -190,7 +193,7 @@ export default function PhysicalProfileModal({ visible, onClose, onSave, initial
           </View>
 
           {/* Style de vie */}
-          <Text style={styles.label}>Style de vie quotidien</Text>
+          <Text style={styles.label}>{t('physicalProfile.lifestyle')}</Text>
           <View style={styles.card}>
             {LIFESTYLES.map((l, i) => (
               <TouchableOpacity
@@ -210,7 +213,7 @@ export default function PhysicalProfileModal({ visible, onClose, onSave, initial
           </View>
 
           {/* Fréquence sportive */}
-          <Text style={styles.label}>Activité sportive</Text>
+          <Text style={styles.label}>{t('physicalProfile.exercise')}</Text>
           <View style={styles.card}>
             {EXERCISES.map((e, i) => (
               <TouchableOpacity
@@ -233,7 +236,7 @@ export default function PhysicalProfileModal({ visible, onClose, onSave, initial
             style={[styles.saveButton, !isValid && { opacity: 0.4 }]}
             activeOpacity={0.8}
           >
-            <Text style={styles.saveButtonText}>Calculer mes objectifs</Text>
+            <Text style={styles.saveButtonText}>{t('physicalProfile.submit')}</Text>
           </TouchableOpacity>
 
         </ScrollView>

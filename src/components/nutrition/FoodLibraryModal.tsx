@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { useCalorieStore } from '@/stores/calorieStore';
 import { useAppColors } from '@/hooks/useAppColors';
 import { FoodItem, ComposedMeal, ComposedMealIngredient, Macros, Serving, ServingUnit } from '@/types';
@@ -32,16 +33,13 @@ interface Props {
 
 type LibTab = 'foods' | 'meals';
 
-const UNITS: { value: ServingUnit; label: string }[] = [
-  { value: 'g', label: 'g' },
-  { value: 'ml', label: 'ml' },
-  { value: 'piece', label: 'pièce' },
-  { value: 'portion', label: 'portion' },
-];
+// Libellé traduit : t(`common.units.${unit}`, { count: 1 })
+const UNITS: ServingUnit[] = ['g', 'ml', 'piece', 'portion'];
 
 // ─── Create food form ─────────────────────────────────────────────────────────
 
 function CreateFoodForm({ onCreated }: { onCreated: () => void }) {
+  const { t } = useTranslation();
   const { addFoodItem } = useCalorieStore();
   const [name, setName] = useState('');
   const [cal100, setCal100] = useState('');
@@ -53,12 +51,12 @@ function CreateFoodForm({ onCreated }: { onCreated: () => void }) {
 
   function handleCreate() {
     if (!name.trim() || !cal100.trim()) {
-      Alert.alert('Erreur', 'Nom et calories sont obligatoires.');
+      Alert.alert(t('common.error'), t('library.errors.nameAndCaloriesRequired'));
       return;
     }
     const c100 = parseFloat(cal100);
     if (isNaN(c100) || c100 < 0) {
-      Alert.alert('Erreur', 'Calories invalides.');
+      Alert.alert(t('common.error'), t('library.errors.invalidCalories'));
       return;
     }
 
@@ -86,12 +84,12 @@ function CreateFoodForm({ onCreated }: { onCreated: () => void }) {
 
   return (
     <View style={styles.createForm}>
-      <Text style={styles.createTitle}>Créer un aliment</Text>
+      <Text style={styles.createTitle}>{t('library.createFood')}</Text>
       <TextInput
         style={styles.input}
         value={name}
         onChangeText={setName}
-        placeholder="Nom de l'aliment"
+        placeholder={t('library.foodNamePlaceholder')}
         placeholderTextColor={COLORS.textTertiary}
         autoCapitalize="sentences"
       />
@@ -99,16 +97,16 @@ function CreateFoodForm({ onCreated }: { onCreated: () => void }) {
         style={styles.input}
         value={cal100}
         onChangeText={setCal100}
-        placeholder="Calories / 100g (ou / 1 unité)"
+        placeholder={t('library.caloriesPlaceholder')}
         placeholderTextColor={COLORS.textTertiary}
         keyboardType="numeric"
       />
-      <Text style={styles.sectionLabel}>Macros / 100g (optionnel)</Text>
+      <Text style={styles.sectionLabel}>{t('library.macrosOptional')}</Text>
       <View style={styles.macroRow}>
         {[
-          { val: protein100, set: setProtein100, label: 'Protéines', color: '#60A5FA' },
-          { val: carbs100, set: setCarbs100, label: 'Glucides', color: '#FBBF24' },
-          { val: fat100, set: setFat100, label: 'Lipides', color: '#F472B6' },
+          { val: protein100, set: setProtein100, label: t('common.protein'), color: '#60A5FA' },
+          { val: carbs100, set: setCarbs100, label: t('common.carbs'), color: '#FBBF24' },
+          { val: fat100, set: setFat100, label: t('common.fat'), color: '#F472B6' },
         ].map(({ val, set, label, color }) => (
           <View key={label} style={{ flex: 1 }}>
             <Text style={[styles.macroLabel, { color }]}>{label}</Text>
@@ -123,7 +121,7 @@ function CreateFoodForm({ onCreated }: { onCreated: () => void }) {
           </View>
         ))}
       </View>
-      <Text style={styles.sectionLabel}>Portion par défaut</Text>
+      <Text style={styles.sectionLabel}>{t('library.defaultPortion')}</Text>
       <View style={styles.quantityRow}>
         <TextInput
           style={[styles.input, { width: 80 }]}
@@ -136,19 +134,19 @@ function CreateFoodForm({ onCreated }: { onCreated: () => void }) {
         <View style={styles.unitRow}>
           {UNITS.map((u) => (
             <TouchableOpacity
-              key={u.value}
-              style={[styles.unitBtn, defaultUnit === u.value && styles.unitBtnActive]}
-              onPress={() => setDefaultUnit(u.value)}
+              key={u}
+              style={[styles.unitBtn, defaultUnit === u && styles.unitBtnActive]}
+              onPress={() => setDefaultUnit(u)}
             >
-              <Text style={[styles.unitBtnText, defaultUnit === u.value && styles.unitBtnTextActive]}>
-                {u.label}
+              <Text style={[styles.unitBtnText, defaultUnit === u && styles.unitBtnTextActive]}>
+                {t(`common.units.${u}`, { count: 1 })}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
       </View>
       <TouchableOpacity style={styles.createBtn} onPress={handleCreate} activeOpacity={0.8}>
-        <Text style={styles.createBtnText}>Créer</Text>
+        <Text style={styles.createBtnText}>{t('common.create')}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -157,6 +155,7 @@ function CreateFoodForm({ onCreated }: { onCreated: () => void }) {
 // ─── Create composed meal form ────────────────────────────────────────────────
 
 function CreateMealForm({ onCreated, editMeal }: { onCreated: () => void; editMeal?: ComposedMeal }) {
+  const { t } = useTranslation();
   const { foodLibrary, addFoodItem, addComposedMeal, updateComposedMeal, computeCalories, computeMacros } = useCalorieStore();
   const [name, setName] = useState('');
   const [emoji, setEmoji] = useState('');
@@ -243,8 +242,8 @@ function CreateMealForm({ onCreated, editMeal }: { onCreated: () => void; editMe
 
   function handleCreateCustom() {
     const cal = parseFloat(customCal);
-    if (!customName.trim()) { Alert.alert('Erreur', 'Entre un nom.'); return; }
-    if (isNaN(cal) || cal < 0) { Alert.alert('Erreur', 'Calories invalides.'); return; }
+    if (!customName.trim()) { Alert.alert(t('common.error'), t('library.errors.nameRequired')); return; }
+    if (isNaN(cal) || cal < 0) { Alert.alert(t('common.error'), t('library.errors.invalidCalories')); return; }
     const newItem = addFoodItem({
       name: customName.trim(),
       caloriesPer100: cal,
@@ -317,8 +316,8 @@ function CreateMealForm({ onCreated, editMeal }: { onCreated: () => void; editMe
   }
 
   function handleCreate() {
-    if (!name.trim()) { Alert.alert('Erreur', 'Donne un nom au repas.'); return; }
-    if (ingredients.length === 0) { Alert.alert('Erreur', 'Ajoute au moins un ingrédient.'); return; }
+    if (!name.trim()) { Alert.alert(t('common.error'), t('library.errors.mealNameRequired')); return; }
+    if (ingredients.length === 0) { Alert.alert(t('common.error'), t('library.errors.ingredientRequired')); return; }
 
     const mealIngredients: ComposedMealIngredient[] = ingredients.map((ing) => {
       const serving: Serving = { quantity: parseFloat(ing.qty) || 0, unit: ing.unit };
@@ -359,7 +358,7 @@ function CreateMealForm({ onCreated, editMeal }: { onCreated: () => void; editMe
       return (
         <View style={styles.createForm}>
           <View style={styles.createFormHeader}>
-            <Text style={styles.createTitle}>Créer un aliment</Text>
+            <Text style={styles.createTitle}>{t('library.createFood')}</Text>
             <TouchableOpacity onPress={() => setCreatingCustom(false)}>
               <Ionicons name="arrow-back" size={20} color={COLORS.textTertiary} />
             </TouchableOpacity>
@@ -368,7 +367,7 @@ function CreateMealForm({ onCreated, editMeal }: { onCreated: () => void; editMe
             style={styles.input}
             value={customName}
             onChangeText={setCustomName}
-            placeholder="Nom de l'aliment"
+            placeholder={t('library.foodNamePlaceholder')}
             placeholderTextColor={COLORS.textTertiary}
             autoCapitalize="sentences"
           />
@@ -376,12 +375,12 @@ function CreateMealForm({ onCreated, editMeal }: { onCreated: () => void; editMe
             style={styles.input}
             value={customCal}
             onChangeText={setCustomCal}
-            placeholder="Calories / 100g (ou / 1 unité)"
+            placeholder={t('library.caloriesPlaceholder')}
             placeholderTextColor={COLORS.textTertiary}
             keyboardType="numeric"
           />
           <TouchableOpacity style={styles.createBtn} onPress={handleCreateCustom} activeOpacity={0.8}>
-            <Text style={styles.createBtnText}>Ajouter comme ingrédient</Text>
+            <Text style={styles.createBtnText}>{t('library.addAsIngredient')}</Text>
           </TouchableOpacity>
         </View>
       );
@@ -391,7 +390,7 @@ function CreateMealForm({ onCreated, editMeal }: { onCreated: () => void; editMe
     return (
       <View style={styles.createForm}>
         <View style={styles.createFormHeader}>
-          <Text style={styles.createTitle}>Choisir un ingrédient</Text>
+          <Text style={styles.createTitle}>{t('library.chooseIngredient')}</Text>
           <TouchableOpacity onPress={closePicking}>
             <Ionicons name="close" size={20} color={COLORS.textTertiary} />
           </TouchableOpacity>
@@ -400,7 +399,7 @@ function CreateMealForm({ onCreated, editMeal }: { onCreated: () => void; editMe
           style={styles.searchInput}
           value={search}
           onChangeText={handleSearchChange}
-          placeholder="Rechercher un aliment…"
+          placeholder={t('library.searchFoodPlaceholder')}
           placeholderTextColor={COLORS.textTertiary}
           autoFocus
         />
@@ -408,14 +407,14 @@ function CreateMealForm({ onCreated, editMeal }: { onCreated: () => void; editMe
         {/* Bibliothèque locale */}
         {filtered.length > 0 && (
           <>
-            <Text style={styles.sectionLabel}>Dans ta bibliothèque</Text>
+            <Text style={styles.sectionLabel}>{t('library.inYourLibrary')}</Text>
             {filtered.map((f) => (
               <TouchableOpacity key={f.id} style={styles.foodRow} onPress={() => addIngredient(f)}>
                 <View style={styles.foodInfo}>
                   <Text style={styles.foodName}>{f.name}</Text>
                   <Text style={styles.foodMeta}>
-                    {f.caloriesPer100} kcal/100g
-                    {f.macrosPer100 ? `  ·  P:${f.macrosPer100.protein}g G:${f.macrosPer100.carbs}g L:${f.macrosPer100.fat}g` : ''}
+                    {t('library.kcalPer100', { kcal: f.caloriesPer100, unit: 'g' })}
+                    {f.macrosPer100 ? `  ·  ${t('common.macrosShort', { p: f.macrosPer100.protein, c: f.macrosPer100.carbs, f: f.macrosPer100.fat })}` : ''}
                   </Text>
                 </View>
                 <Ionicons name="add-circle-outline" size={20} color={COLORS.primary} />
@@ -427,7 +426,7 @@ function CreateMealForm({ onCreated, editMeal }: { onCreated: () => void; editMe
         {/* Suggestions base alimentaire (Ciqual) */}
         {foodSuggestions.length > 0 && (
           <>
-            <Text style={styles.sectionLabel}>Base alimentaire</Text>
+            <Text style={styles.sectionLabel}>{t('library.foodDatabase')}</Text>
             {foodSuggestions.map((s, i) => (
               <TouchableOpacity key={i} style={styles.foodRow} onPress={() => addFoodSuggestion(s)}>
                 <View style={styles.foodInfo}>
@@ -435,8 +434,8 @@ function CreateMealForm({ onCreated, editMeal }: { onCreated: () => void; editMe
                     {s.name}{s.brand ? ` · ${s.brand}` : ''}
                   </Text>
                   <Text style={styles.foodMeta}>
-                    {s.caloriesPer100} kcal/100g
-                    {s.macros ? `  ·  P:${s.macros.protein}g G:${s.macros.carbs}g L:${s.macros.fat}g` : ''}
+                    {t('library.kcalPer100', { kcal: s.caloriesPer100, unit: 'g' })}
+                    {s.macros ? `  ·  ${t('common.macrosShort', { p: s.macros.protein, c: s.macros.carbs, f: s.macros.fat })}` : ''}
                   </Text>
                 </View>
                 <Ionicons name="add-circle-outline" size={20} color={COLORS.primary} />
@@ -449,14 +448,14 @@ function CreateMealForm({ onCreated, editMeal }: { onCreated: () => void; editMe
         {isSearchingOFF && (
           <View style={styles.offLoadingRow}>
             <ActivityIndicator size="small" color={COLORS.primary} />
-            <Text style={styles.offLoadingText}>Recherche sur Open Food Facts…</Text>
+            <Text style={styles.offLoadingText}>{t('addEntry.form.searchingOff')}</Text>
           </View>
         )}
 
         {/* Résultats Open Food Facts */}
         {offResults.length > 0 && (
           <>
-            <Text style={styles.sectionLabel}>Open Food Facts</Text>
+            <Text style={styles.sectionLabel}>{t('library.openFoodFacts')}</Text>
             {offResults.map((p, i) => (
               <TouchableOpacity key={i} style={styles.foodRow} onPress={() => addOFFSuggestion(p)}>
                 <View style={styles.foodInfo}>
@@ -464,8 +463,8 @@ function CreateMealForm({ onCreated, editMeal }: { onCreated: () => void; editMe
                     {p.name}{p.brand ? ` · ${p.brand}` : ''}
                   </Text>
                   <Text style={styles.foodMeta}>
-                    {p.caloriesPer100} kcal/100g
-                    {p.macrosPer100 ? `  ·  P:${p.macrosPer100.protein}g G:${p.macrosPer100.carbs}g L:${p.macrosPer100.fat}g` : ''}
+                    {t('library.kcalPer100', { kcal: p.caloriesPer100, unit: 'g' })}
+                    {p.macrosPer100 ? `  ·  ${t('common.macrosShort', { p: p.macrosPer100.protein, c: p.macrosPer100.carbs, f: p.macrosPer100.fat })}` : ''}
                   </Text>
                 </View>
                 <Ionicons name="add-circle-outline" size={20} color={COLORS.primary} />
@@ -478,21 +477,18 @@ function CreateMealForm({ onCreated, editMeal }: { onCreated: () => void; editMe
         {search.trim().length >= 2 && filtered.length === 0 && foodSuggestions.length === 0 && offResults.length === 0 && !isSearchingOFF && (
           <View style={styles.notFoundCard}>
             <Ionicons name="search-outline" size={28} color={COLORS.textTertiary} />
-            <Text style={styles.notFoundTitle}>Introuvable</Text>
-            <Text style={styles.notFoundSub}>
-              "{search.trim()}" n'est pas dans la base.{'\n'}
-              Crée-le manuellement.
-            </Text>
+            <Text style={styles.notFoundTitle}>{t('library.notFoundTitle')}</Text>
+            <Text style={styles.notFoundSub}>{t('library.notFoundMessage', { query: search.trim() })}</Text>
             <TouchableOpacity style={styles.offPrimaryBtn} onPress={openCreateCustom} activeOpacity={0.8}>
               <Ionicons name="create-outline" size={16} color="#fff" />
-              <Text style={styles.offPrimaryBtnText}>Créer "{search.trim()}" manuellement</Text>
+              <Text style={styles.offPrimaryBtnText}>{t('library.createManually', { query: search.trim() })}</Text>
             </TouchableOpacity>
           </View>
         )}
 
         {/* État vide initial */}
         {search.trim().length < 2 && (
-          <Text style={styles.empty}>Tape un nom pour rechercher…</Text>
+          <Text style={styles.empty}>{t('library.typeToSearch')}</Text>
         )}
       </View>
     );
@@ -500,7 +496,7 @@ function CreateMealForm({ onCreated, editMeal }: { onCreated: () => void; editMe
 
   return (
     <View style={styles.createForm}>
-      <Text style={styles.createTitle}>{editMeal ? 'Modifier le repas' : 'Créer un repas composé'}</Text>
+      <Text style={styles.createTitle}>{editMeal ? t('library.editMeal') : t('library.createComposedMeal')}</Text>
       <View style={styles.emojiNameRow}>
         <TextInput
           style={[styles.input, { width: 56, textAlign: 'center' }]}
@@ -514,14 +510,14 @@ function CreateMealForm({ onCreated, editMeal }: { onCreated: () => void; editMe
           style={[styles.input, { flex: 1 }]}
           value={name}
           onChangeText={setName}
-          placeholder="Nom du repas"
+          placeholder={t('library.mealNamePlaceholder')}
           placeholderTextColor={COLORS.textTertiary}
           autoCapitalize="sentences"
         />
       </View>
 
       {/* Ingredients */}
-      <Text style={styles.sectionLabel}>Ingrédients</Text>
+      <Text style={styles.sectionLabel}>{t('library.ingredients')}</Text>
       {ingredients.map((ing, idx) => (
         <View key={idx} style={styles.ingredientRow}>
           {/* Ligne 1 : nom + poubelle */}
@@ -541,12 +537,12 @@ function CreateMealForm({ onCreated, editMeal }: { onCreated: () => void; editMe
             />
             {UNITS.map((u) => (
               <TouchableOpacity
-                key={u.value}
-                style={[styles.ingUnitBtn, ing.unit === u.value && styles.ingUnitBtnActive]}
-                onPress={() => setIngredients((prev) => prev.map((x, i) => i === idx ? { ...x, unit: u.value } : x))}
+                key={u}
+                style={[styles.ingUnitBtn, ing.unit === u && styles.ingUnitBtnActive]}
+                onPress={() => setIngredients((prev) => prev.map((x, i) => i === idx ? { ...x, unit: u } : x))}
               >
-                <Text style={[styles.ingUnitText, ing.unit === u.value && styles.ingUnitTextActive]}>
-                  {u.label}
+                <Text style={[styles.ingUnitText, ing.unit === u && styles.ingUnitTextActive]}>
+                  {t(`common.units.${u}`, { count: 1 })}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -556,23 +552,23 @@ function CreateMealForm({ onCreated, editMeal }: { onCreated: () => void; editMe
 
       <TouchableOpacity style={styles.addIngredientBtn} onPress={() => setPickingFood(true)}>
         <Ionicons name="add" size={16} color={COLORS.primary} />
-        <Text style={styles.addIngredientText}>Ajouter un ingrédient</Text>
+        <Text style={styles.addIngredientText}>{t('library.addIngredient')}</Text>
       </TouchableOpacity>
 
       {ingredients.length > 0 && (
         <View style={styles.totalRow}>
-          <Text style={styles.totalLabel}>Total :</Text>
-          <Text style={styles.totalValue}>{totalCalories()} kcal</Text>
+          <Text style={styles.totalLabel}>{t('library.total')}</Text>
+          <Text style={styles.totalValue}>{totalCalories()} {t('common.kcal')}</Text>
           {totalMacros() && (
             <Text style={styles.totalMacros}>
-              P:{totalMacros()!.protein}g G:{totalMacros()!.carbs}g L:{totalMacros()!.fat}g
+              {t('common.macrosShort', { p: totalMacros()!.protein, c: totalMacros()!.carbs, f: totalMacros()!.fat })}
             </Text>
           )}
         </View>
       )}
 
       <TouchableOpacity style={styles.createBtn} onPress={handleCreate} activeOpacity={0.8}>
-        <Text style={styles.createBtnText}>{editMeal ? 'Enregistrer les modifications' : 'Créer le repas'}</Text>
+        <Text style={styles.createBtnText}>{editMeal ? t('library.saveChanges') : t('library.createMeal')}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -582,6 +578,7 @@ function CreateMealForm({ onCreated, editMeal }: { onCreated: () => void; editMe
 
 export default function FoodLibraryModal({ visible, onClose, onSelectFoodItem, onSelectComposedMeal }: Props) {
   const C = useAppColors();
+  const { t } = useTranslation();
   const { foodLibrary, composedMeals, deleteFoodItem, deleteComposedMeal } = useCalorieStore();
   const insets = useSafeAreaInsets();
   const [tab, setTab] = useState<LibTab>('foods');
@@ -623,16 +620,16 @@ export default function FoodLibraryModal({ visible, onClose, onSelectFoodItem, o
   }
 
   function confirmDeleteFood(food: FoodItem) {
-    Alert.alert('Supprimer', `Supprimer "${food.name}" de la bibliothèque ?`, [
-      { text: 'Annuler', style: 'cancel' },
-      { text: 'Supprimer', style: 'destructive', onPress: () => deleteFoodItem(food.id) },
+    Alert.alert(t('common.delete'), t('library.deleteFoodConfirm', { name: food.name }), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('common.delete'), style: 'destructive', onPress: () => deleteFoodItem(food.id) },
     ]);
   }
 
   function confirmDeleteMeal(meal: ComposedMeal) {
-    Alert.alert('Supprimer', `Supprimer "${meal.name}" ?`, [
-      { text: 'Annuler', style: 'cancel' },
-      { text: 'Supprimer', style: 'destructive', onPress: () => deleteComposedMeal(meal.id) },
+    Alert.alert(t('common.delete'), t('calories.deleteConfirm', { name: meal.name }), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('common.delete'), style: 'destructive', onPress: () => deleteComposedMeal(meal.id) },
     ]);
   }
 
@@ -646,7 +643,7 @@ export default function FoodLibraryModal({ visible, onClose, onSelectFoodItem, o
           <View style={styles.handle} />
 
           <View style={styles.headerRow}>
-            <Text style={styles.title}>Bibliothèque</Text>
+            <Text style={styles.title}>{t('library.title')}</Text>
             <TouchableOpacity onPress={handleClose}>
               <Ionicons name="close" size={22} color={COLORS.textTertiary} />
             </TouchableOpacity>
@@ -654,15 +651,15 @@ export default function FoodLibraryModal({ visible, onClose, onSelectFoodItem, o
 
           {/* Tab pills */}
           <View style={styles.tabRow}>
-            {(['foods', 'meals'] as LibTab[]).map((t) => (
+            {(['foods', 'meals'] as LibTab[]).map((libTab) => (
               <TouchableOpacity
-                key={t}
-                style={[styles.tabPill, tab === t && { backgroundColor: C.primary, borderColor: C.primary }]}
-                onPress={() => { setTab(t); setCreating(null); setEditingMeal(null); }}
+                key={libTab}
+                style={[styles.tabPill, tab === libTab && { backgroundColor: C.primary, borderColor: C.primary }]}
+                onPress={() => { setTab(libTab); setCreating(null); setEditingMeal(null); }}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.tabPillText, tab === t && styles.tabPillTextActive]}>
-                  {t === 'foods' ? 'Aliments' : 'Repas composés'}
+                <Text style={[styles.tabPillText, tab === libTab && styles.tabPillTextActive]}>
+                  {t(`library.tabs.${libTab}`)}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -673,7 +670,7 @@ export default function FoodLibraryModal({ visible, onClose, onSelectFoodItem, o
             <>
               <TouchableOpacity style={styles.backBtn} onPress={() => { setCreating(null); setEditingMeal(null); }}>
                 <Ionicons name="arrow-back" size={16} color={COLORS.textSecondary} />
-                <Text style={styles.backBtnText}>Retour</Text>
+                <Text style={styles.backBtnText}>{t('common.back')}</Text>
               </TouchableOpacity>
               <ScrollView style={styles.flex} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
                 {creating === 'food' ? (
@@ -690,7 +687,7 @@ export default function FoodLibraryModal({ visible, onClose, onSelectFoodItem, o
                 style={styles.searchInput}
                 value={search}
                 onChangeText={setSearch}
-                placeholder="Rechercher…"
+                placeholder={t('common.searchPlaceholder')}
                 placeholderTextColor={COLORS.textTertiary}
               />
 
@@ -699,7 +696,7 @@ export default function FoodLibraryModal({ visible, onClose, onSelectFoodItem, o
                   filteredFoods.length === 0 ? (
                     <View style={styles.emptyState}>
                       <Text style={styles.emptyEmoji}>📦</Text>
-                      <Text style={styles.empty}>Aucun aliment dans ta bibliothèque.</Text>
+                      <Text style={styles.empty}>{t('library.emptyFoods')}</Text>
                     </View>
                   ) : (
                     filteredFoods.map((food) => (
@@ -713,8 +710,15 @@ export default function FoodLibraryModal({ visible, onClose, onSelectFoodItem, o
                         <View style={styles.foodInfo}>
                           <Text style={styles.foodName}>{food.name}</Text>
                           <Text style={styles.foodMeta}>
-                            {food.caloriesPer100} kcal / 100{food.defaultServing.unit === 'ml' ? 'ml' : food.defaultServing.unit === 'piece' || food.defaultServing.unit === 'portion' ? ' unité' : 'g'}
-                            {food.macrosPer100 ? `  ·  P:${food.macrosPer100.protein} G:${food.macrosPer100.carbs} L:${food.macrosPer100.fat}` : ''}
+                            {food.defaultServing.unit === 'piece' || food.defaultServing.unit === 'portion'
+                              ? t('library.kcalPerUnit', { kcal: food.caloriesPer100 })
+                              : t('library.kcalPer100', {
+                                  kcal: food.caloriesPer100,
+                                  unit: food.defaultServing.unit === 'ml' ? 'ml' : 'g',
+                                })}
+                            {food.macrosPer100
+                              ? `  ·  ${t('common.macrosCompact', { p: food.macrosPer100.protein, c: food.macrosPer100.carbs, f: food.macrosPer100.fat })}`
+                              : ''}
                           </Text>
                         </View>
                         <TouchableOpacity onPress={() => confirmDeleteFood(food)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
@@ -727,7 +731,7 @@ export default function FoodLibraryModal({ visible, onClose, onSelectFoodItem, o
                   filteredMeals.length === 0 ? (
                     <View style={styles.emptyState}>
                       <Text style={styles.emptyEmoji}>🍽️</Text>
-                      <Text style={styles.empty}>Aucun repas composé.</Text>
+                      <Text style={styles.empty}>{t('library.emptyMeals')}</Text>
                     </View>
                   ) : (
                     filteredMeals.map((meal) => (
@@ -743,8 +747,10 @@ export default function FoodLibraryModal({ visible, onClose, onSelectFoodItem, o
                             {meal.emoji ? `${meal.emoji} ` : ''}{meal.name}
                           </Text>
                           <Text style={styles.foodMeta}>
-                            {meal.totalCalories} kcal · {meal.ingredients.length} ingrédient{meal.ingredients.length > 1 ? 's' : ''}
-                            {meal.totalMacros ? `  ·  P:${meal.totalMacros.protein} G:${meal.totalMacros.carbs} L:${meal.totalMacros.fat}` : ''}
+                            {t('library.ingredientCount', { kcal: meal.totalCalories, count: meal.ingredients.length })}
+                            {meal.totalMacros
+                              ? `  ·  ${t('common.macrosCompact', { p: meal.totalMacros.protein, c: meal.totalMacros.carbs, f: meal.totalMacros.fat })}`
+                              : ''}
                           </Text>
                         </View>
                         <TouchableOpacity
@@ -771,7 +777,7 @@ export default function FoodLibraryModal({ visible, onClose, onSelectFoodItem, o
               >
                 <Ionicons name="add-circle" size={20} color="#fff" />
                 <Text style={styles.createTriggerText}>
-                  {tab === 'foods' ? 'Créer un aliment' : 'Créer un repas composé'}
+                  {tab === 'foods' ? t('library.createFood') : t('library.createComposedMeal')}
                 </Text>
               </TouchableOpacity>
             </>

@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import { useThemeStore } from '@/stores/themeStore';
 import { useAppColors } from '@/hooks/useAppColors';
 import { THEME_LIST, ThemeId } from '@/constants/themes';
@@ -19,6 +20,7 @@ interface Props {
 }
 
 export default function ThemePickerModal({ visible, onClose }: Props) {
+  const { t } = useTranslation();
   const COLORS = useAppColors();
   const { themeId, setTheme } = useThemeStore();
 
@@ -32,8 +34,8 @@ export default function ThemePickerModal({ visible, onClose }: Props) {
         <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
         <View style={styles.sheet}>
           <View style={styles.handle} />
-          <Text style={styles.title}>Thème de couleur</Text>
-          <Text style={styles.subtitle}>Personnalise les couleurs de l'application</Text>
+          <Text style={styles.title}>{t('themes.title')}</Text>
+          <Text style={styles.subtitle}>{t('themes.subtitle')}</Text>
 
           <View style={styles.grid}>
             {THEME_LIST.map((theme) => {
@@ -58,7 +60,7 @@ export default function ThemePickerModal({ visible, onClose }: Props) {
                   </View>
                   <Text style={styles.themeName}>{theme.emoji} {theme.name}</Text>
                   {active && (
-                    <Text style={[styles.activeLabel, { color: theme.primary }]}>Actif</Text>
+                    <Text style={[styles.activeLabel, { color: theme.primary }]}>{t('themes.active')}</Text>
                   )}
                 </TouchableOpacity>
               );
@@ -70,7 +72,7 @@ export default function ThemePickerModal({ visible, onClose }: Props) {
             onPress={onClose}
             activeOpacity={0.85}
           >
-            <Text style={styles.closeBtnText}>Fermer</Text>
+            <Text style={styles.closeBtnText}>{t('common.close')}</Text>
           </TouchableOpacity>
         </View>
       </View>

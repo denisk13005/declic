@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/services/firebase';
 import GoogleSignInButton from '@/components/auth/GoogleSignInButton';
@@ -21,6 +22,7 @@ import AppleSignInButton from '@/components/auth/AppleSignInButton';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
 
 export default function LoginScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -29,7 +31,7 @@ export default function LoginScreen() {
 
   async function handleLogin() {
     if (!email.trim() || !password) {
-      Alert.alert('Erreur', 'Veuillez remplir tous les champs.');
+      Alert.alert(t('common.error'), t('auth.fillAllFields'));
       return;
     }
     setLoading(true);
@@ -41,11 +43,11 @@ export default function LoginScreen() {
     } catch (err: any) {
       const msg =
         err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password'
-          ? 'Email ou mot de passe incorrect.'
+          ? t('auth.login.wrongCredentials')
           : err.code === 'auth/user-not-found'
-          ? "Aucun compte avec cet email."
-          : err.message ?? 'Une erreur est survenue.';
-      Alert.alert('Connexion échouée', msg);
+          ? t('auth.login.userNotFound')
+          : err.message ?? t('auth.genericError');
+      Alert.alert(t('auth.login.failedTitle'), msg);
     } finally {
       setLoading(false);
     }
@@ -64,18 +66,18 @@ export default function LoginScreen() {
               <Text style={styles.logoEmoji}>✦</Text>
             </LinearGradient>
             <Text style={styles.title}>Vitacairn</Text>
-            <Text style={styles.subtitle}>Connecte-toi pour continuer</Text>
+            <Text style={styles.subtitle}>{t('auth.login.subtitle')}</Text>
           </View>
 
           {/* Form */}
           <View style={styles.form}>
             <View style={styles.inputWrapper}>
-              <Text style={styles.inputLabel}>Email</Text>
+              <Text style={styles.inputLabel}>{t('auth.email')}</Text>
               <TextInput
                 style={styles.input}
                 value={email}
                 onChangeText={setEmail}
-                placeholder="ton@email.com"
+                placeholder={t('auth.emailPlaceholder')}
                 placeholderTextColor={COLORS.textTertiary}
                 keyboardType="email-address"
                 autoCapitalize="none"
@@ -84,7 +86,7 @@ export default function LoginScreen() {
             </View>
 
             <View style={styles.inputWrapper}>
-              <Text style={styles.inputLabel}>Mot de passe</Text>
+              <Text style={styles.inputLabel}>{t('auth.password')}</Text>
               <View style={styles.inputContainer}>
                 <TextInput
                   style={styles.inputWithIcon}
@@ -119,20 +121,20 @@ export default function LoginScreen() {
                 {loading ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
-                  <Text style={styles.btnText}>Se connecter</Text>
+                  <Text style={styles.btnText}>{t('auth.login.submit')}</Text>
                 )}
               </LinearGradient>
             </TouchableOpacity>
 
-            <GoogleSignInButton label="Se connecter avec Google" />
+            <GoogleSignInButton label={t('auth.login.google')} />
             <AppleSignInButton type="signIn" />
           </View>
 
           {/* Footer */}
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Pas encore de compte ? </Text>
+            <Text style={styles.footerText}>{t('auth.login.noAccount')}</Text>
             <TouchableOpacity onPress={() => router.push('/auth/register')}>
-              <Text style={styles.footerLink}>Créer un compte</Text>
+              <Text style={styles.footerLink}>{t('auth.login.createAccount')}</Text>
             </TouchableOpacity>
           </View>
         </View>

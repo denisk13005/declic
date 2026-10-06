@@ -1,8 +1,11 @@
+import i18n from '@/i18n';
+
 export type ThemeId = 'violet' | 'ocean' | 'forest' | 'fire' | 'night';
 
 export interface ThemePalette {
   id: ThemeId;
-  name: string;
+  /** Nom traduit (getter i18n) */
+  readonly name: string;
   emoji: string;
   primary: string;
   primaryLight: string;
@@ -20,7 +23,7 @@ export interface ThemePalette {
 export const THEMES: Record<ThemeId, ThemePalette> = {
   violet: {
     id: 'violet',
-    name: 'Mauve',
+    get name() { return i18n.t('themes.names.violet'); },
     emoji: '💜',
     primary: '#7C3AED',
     primaryLight: '#9D5FF5',
@@ -36,7 +39,7 @@ export const THEMES: Record<ThemeId, ThemePalette> = {
   },
   ocean: {
     id: 'ocean',
-    name: 'Océan',
+    get name() { return i18n.t('themes.names.ocean'); },
     emoji: '🌊',
     primary: '#0EA5E9',
     primaryLight: '#38BDF8',
@@ -52,7 +55,7 @@ export const THEMES: Record<ThemeId, ThemePalette> = {
   },
   forest: {
     id: 'forest',
-    name: 'Forêt',
+    get name() { return i18n.t('themes.names.forest'); },
     emoji: '🌿',
     primary: '#16A34A',
     primaryLight: '#22C55E',
@@ -68,7 +71,7 @@ export const THEMES: Record<ThemeId, ThemePalette> = {
   },
   fire: {
     id: 'fire',
-    name: 'Feu',
+    get name() { return i18n.t('themes.names.fire'); },
     emoji: '🔥',
     primary: '#EA580C',
     primaryLight: '#F97316',
@@ -84,7 +87,7 @@ export const THEMES: Record<ThemeId, ThemePalette> = {
   },
   night: {
     id: 'night',
-    name: 'Indigo',
+    get name() { return i18n.t('themes.names.night'); },
     emoji: '🌌',
     primary: '#6366F1',
     primaryLight: '#818CF8',

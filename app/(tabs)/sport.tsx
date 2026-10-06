@@ -13,7 +13,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { format, subDays, addDays } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
+import i18n, { dateLocale } from '@/i18n';
 import { useWorkoutStore } from '@/stores/workoutStore';
 import { useProfileStore } from '@/stores/profileStore';
 import { useProgramStore } from '@/stores/programStore';
@@ -37,17 +38,17 @@ function todayISO(): string {
 
 function formatDayLabel(dateStr: string): string {
   const today = todayISO();
-  if (dateStr === today) return "Aujourd'hui";
+  if (dateStr === today) return i18n.t('common.today');
   const yesterday = format(subDays(new Date(), 1), 'yyyy-MM-dd');
-  if (dateStr === yesterday) return 'Hier';
-  return format(new Date(dateStr + 'T12:00:00'), 'd MMM', { locale: fr });
+  if (dateStr === yesterday) return i18n.t('common.yesterday');
+  return format(new Date(dateStr + 'T12:00:00'), i18n.t('sport.dayFormat'), { locale: dateLocale() });
 }
 
 function formatDuration(minutes: number): string {
-  if (minutes < 60) return `${minutes} min`;
+  if (minutes < 60) return i18n.t('sport.duration.min', { m: minutes });
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
-  return m > 0 ? `${h}h ${m}min` : `${h}h`;
+  return m > 0 ? i18n.t('sport.duration.hoursMin', { h, m }) : i18n.t('sport.duration.hours', { h });
 }
 
 // ─── Carte d'entrée sport ──────────────────────────────────────────────────────
@@ -88,6 +89,7 @@ function WorkoutCard({
 // ─── Écran ─────────────────────────────────────────────────────────────────────
 
 export default function SportScreen() {
+  const { t } = useTranslation();
   const C = useAppColors();
   const { getEntriesForDate, getTotalBurnedForDate, removeWorkout } = useWorkoutStore();
   const { profile } = useProfileStore();
@@ -141,9 +143,9 @@ export default function SportScreen() {
   }
 
   function confirmDelete(entry: WorkoutEntry) {
-    Alert.alert('Supprimer', `Supprimer "${WORKOUT_META[entry.type].label}" ?`, [
-      { text: 'Annuler', style: 'cancel' },
-      { text: 'Supprimer', style: 'destructive', onPress: () => removeWorkout(entry.id) },
+    Alert.alert(t('common.delete'), t('sport.deleteConfirm', { name: WORKOUT_META[entry.type].label }), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('common.delete'), style: 'destructive', onPress: () => removeWorkout(entry.id) },
     ]);
   }
 
@@ -153,7 +155,7 @@ export default function SportScreen() {
       const ok = await setWorkoutReminder(reminderHour, reminderMinute);
       if (!ok) {
         setReminderEnabled(false);
-        Alert.alert('Permission refusée', 'Active les notifications dans les paramètres de ton téléphone pour recevoir des rappels.');
+        Alert.alert(t('common.permissionDenied'), t('sport.notifDeniedMessage'));
       }
     } else {
       await clearWorkoutReminder();
@@ -172,7 +174,7 @@ export default function SportScreen() {
     <SafeAreaView style={styles.safe} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Sport</Text>
+        <Text style={styles.title}>{t('sport.title')}</Text>
       </View>
 
       {/* Day navigation */}
@@ -198,7 +200,7 @@ export default function SportScreen() {
             <View style={styles.summaryItem}>
               <Ionicons name="flame" size={28} color="#fff" />
               <Text style={styles.summaryValue}>{totalBurned}</Text>
-              <Text style={styles.summaryLabel}>kcal brûlées</Text>
+              <Text style={styles.summaryLabel}>{t('sport.kcalBurned')}</Text>
             </View>
             <View style={styles.summaryDivider} />
             <View style={styles.summaryItem}>
@@ -206,13 +208,13 @@ export default function SportScreen() {
               <Text style={styles.summaryValue}>
                 {formatDuration(entries.reduce((s, e) => s + e.durationMinutes, 0))}
               </Text>
-              <Text style={styles.summaryLabel}>temps total</Text>
+              <Text style={styles.summaryLabel}>{t('sport.totalTime')}</Text>
             </View>
             <View style={styles.summaryDivider} />
             <View style={styles.summaryItem}>
               <Ionicons name="barbell-outline" size={28} color="#fff" />
               <Text style={styles.summaryValue}>{entries.length}</Text>
-              <Text style={styles.summaryLabel}>activité{entries.length > 1 ? 's' : ''}</Text>
+              <Text style={styles.summaryLabel}>{t('sport.activities', { count: entries.length })}</Text>
             </View>
           </View>
         </LinearGradient>
@@ -222,7 +224,7 @@ export default function SportScreen() {
           <View style={styles.infoBox}>
             <Ionicons name="information-circle-outline" size={16} color={COLORS.warning} />
             <Text style={styles.infoText}>
-              Renseigne ton poids dans Profil pour un calcul de calories plus précis (actuellement basé sur 70 kg).
+              {t('sport.noWeightInfo')}
             </Text>
           </View>
         )}
@@ -231,12 +233,12 @@ export default function SportScreen() {
         <View style={styles.infoBox}>
           <Ionicons name="sync-outline" size={16} color={COLORS.primary} />
           <Text style={styles.infoText}>
-            Les calories brûlées ici s'ajoutent automatiquement à ton bilan dans l'onglet Calories.
+            {t('sport.syncInfo')}
           </Text>
         </View>
 
         {/* Programme musculation */}
-        <Text style={styles.sectionTitle}>Programme musculation</Text>
+        <Text style={styles.sectionTitle}>{t('sport.programSection')}</Text>
 
         {program ? (
           <View style={styles.programCard}>
@@ -245,7 +247,7 @@ export default function SportScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={styles.programName}>{program.splitName}</Text>
                 <Text style={styles.programMeta}>
-                  {program.sessionsPerWeek} séances/sem · {GOAL_LABELS[program.goal]}
+                  {t('sport.sessionsPerWeek', { count: program.sessionsPerWeek, goal: GOAL_LABELS[program.goal] })}
                 </Text>
               </View>
               {/* Bouton Performances — visible dans la carte */}
@@ -255,7 +257,7 @@ export default function SportScreen() {
                 activeOpacity={0.7}
               >
                 <Ionicons name="stats-chart" size={13} color={COLORS.primaryLight} />
-                <Text style={styles.perfBtnText}>Perfs</Text>
+                <Text style={styles.perfBtnText}>{t('sport.perfs')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => setProgramModalVisible(true)}
@@ -266,9 +268,9 @@ export default function SportScreen() {
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() =>
-                  Alert.alert('Supprimer le programme', 'Cette action est irréversible.', [
-                    { text: 'Annuler', style: 'cancel' },
-                    { text: 'Supprimer', style: 'destructive', onPress: clearProgram },
+                  Alert.alert(t('sport.deleteProgramTitle'), t('sport.irreversible'), [
+                    { text: t('common.cancel'), style: 'cancel' },
+                    { text: t('common.delete'), style: 'destructive', onPress: clearProgram },
                   ])
                 }
                 style={styles.programEditBtn}
@@ -289,13 +291,13 @@ export default function SportScreen() {
                 <View key={day.dayNumber} style={styles.programDay}>
                   <View style={[styles.programDayBadge, !hasExercises && styles.programDayBadgeEmpty]}>
                     <Text style={[styles.programDayNum, !hasExercises && styles.programDayNumEmpty]}>
-                      J{day.dayNumber}
+                      {t('sport.dayBadge', { n: day.dayNumber })}
                     </Text>
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.programDayLabel}>{day.label}</Text>
                     <Text style={styles.programDayFocus} numberOfLines={1}>
-                      {hasExercises ? day.focus : `${day.exercises.length} exercice — à configurer`}
+                      {hasExercises ? day.focus : t('sport.toConfigure')}
                     </Text>
                     {isThisDay && hasExercises && (
                       <View style={styles.dayProgressBar}>
@@ -324,8 +326,8 @@ export default function SportScreen() {
                       />
                       <Text style={[styles.startBtnText, { color: isThisDay && donePct === 1 ? '#10B981' : C.primary }]}>
                         {isThisDay && donePct > 0
-                          ? donePct === 1 ? 'Terminé' : `${session!.completedExerciseIds.length}/${session!.totalExercises}`
-                          : 'Démarrer'}
+                          ? donePct === 1 ? t('sport.done') : `${session!.completedExerciseIds.length}/${session!.totalExercises}`
+                          : t('sport.start')}
                       </Text>
                     </TouchableOpacity>
                   ) : (
@@ -335,7 +337,7 @@ export default function SportScreen() {
                       activeOpacity={0.7}
                     >
                       <Ionicons name="add" size={12} color={COLORS.textSecondary} />
-                      <Text style={styles.configureBtnText}>Configurer</Text>
+                      <Text style={styles.configureBtnText}>{t('sport.configure')}</Text>
                     </TouchableOpacity>
                   )}
                 </View>
@@ -347,7 +349,7 @@ export default function SportScreen() {
               style={styles.programDetailBtn}
               activeOpacity={0.7}
             >
-              <Text style={styles.programDetailBtnText}>Voir le programme complet</Text>
+              <Text style={styles.programDetailBtnText}>{t('sport.seeFullProgram')}</Text>
               <Ionicons name="chevron-forward" size={14} color={C.primary} />
             </TouchableOpacity>
           </View>
@@ -360,9 +362,9 @@ export default function SportScreen() {
             <LinearGradient colors={['#7C3AED22', '#7C3AED08']} style={[StyleSheet.absoluteFillObject, { borderRadius: RADIUS.lg }]} />
             <Ionicons name="barbell-outline" size={32} color={C.primary} />
             <View style={{ flex: 1 }}>
-              <Text style={[styles.programEmptyTitle, { color: C.primary }]}>Créer mon programme</Text>
+              <Text style={[styles.programEmptyTitle, { color: C.primary }]}>{t('sport.createProgram')}</Text>
               <Text style={styles.programEmptyDesc}>
-                Programme personnalisé selon tes séances et ton objectif
+                {t('sport.createProgramDesc')}
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color={C.primary} />
@@ -374,17 +376,17 @@ export default function SportScreen() {
           const days7 = getLastNDays(7, todayISO());
           const hasSomeData = days7.some((d) => d.session != null);
           if (!hasSomeData) return null;
-          const DAY_LABELS = ['', 'L', 'M', 'M', 'J', 'V', 'S', 'D'];
           return (
             <View style={styles.graphCard}>
-              <Text style={styles.graphTitle}>Progression — 7 derniers jours</Text>
+              <Text style={styles.graphTitle}>{t('sport.progress7Days')}</Text>
               <View style={styles.graphBars}>
                 {days7.map(({ date, session }) => {
                   const pct = session
                     ? session.completedExerciseIds.length / Math.max(session.totalExercises, 1)
                     : 0;
                   const d = new Date(date + 'T12:00:00');
-                  const dayLabel = DAY_LABELS[d.getDay() === 0 ? 7 : d.getDay()];
+                  // Initiale du jour dans la langue (L/M/M… ou M/T/W…)
+                  const dayLabel = format(d, 'EEEEE', { locale: dateLocale() }).toUpperCase();
                   const isToday2 = date === todayISO();
                   const color = pct === 1 ? '#10B981' : pct > 0 ? C.primary : COLORS.border;
                   return (
@@ -421,7 +423,7 @@ export default function SportScreen() {
           <View style={styles.reminderCard}>
             <View style={styles.reminderRow}>
               <Ionicons name="notifications-outline" size={16} color={C.primary} />
-              <Text style={styles.reminderTitle}>Rappels de séance</Text>
+              <Text style={styles.reminderTitle}>{t('sport.reminders')}</Text>
               <Switch
                 value={reminderEnabled}
                 onValueChange={handleReminderToggle}
@@ -476,15 +478,15 @@ export default function SportScreen() {
 
         {/* Liste des activités */}
         <Text style={[styles.sectionTitle, { marginTop: SPACING.md, marginBottom: SPACING.sm }]}>
-          Activités du jour
+          {t('sport.todayActivities')}
         </Text>
 
         {entries.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyEmoji}>🏃</Text>
-            <Text style={styles.emptyTitle}>Aucune activité enregistrée</Text>
+            <Text style={styles.emptyTitle}>{t('sport.emptyTitle')}</Text>
             <Text style={styles.emptySub}>
-              Appuie sur + pour ajouter ton premier entraînement du jour.
+              {t('sport.emptySub')}
             </Text>
           </View>
         ) : (

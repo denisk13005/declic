@@ -1,0 +1,1700 @@
+{
+  "common": {
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "save": "Enregistrer",
+    "close": "Fermer",
+    "ok": "OK",
+    "today": "Aujourd'hui",
+    "yesterday": "Hier",
+    "kcal": "kcal",
+    "protein": "Protéines",
+    "carbs": "Glucides",
+    "fat": "Lipides",
+    "invalidValue": "Valeur invalide",
+    "positiveInteger": "Saisis un nombre entier positif.",
+    "error": "Erreur",
+    "add": "Ajouter",
+    "allow": "Autoriser",
+    "permissionDenied": "Permission refusée",
+    "analyzing": "Analyse en cours…",
+    "macrosShort": "P:{{p}}g · G:{{c}}g · L:{{f}}g",
+    "macrosCompact": "P:{{p}} G:{{c}} L:{{f}}",
+    "back": "Retour",
+    "create": "Créer",
+    "searchPlaceholder": "Rechercher…",
+    "per100g": "pour 100g",
+    "units": {
+      "g": "g",
+      "ml": "ml",
+      "piece_one": "pièce",
+      "piece_other": "pièces",
+      "portion_one": "portion",
+      "portion_other": "portions"
+    }
+  },
+  "meals": {
+    "breakfast": "Petit-déjeuner",
+    "lunch": "Déjeuner",
+    "dinner": "Dîner",
+    "snack": "Collation",
+    "short": {
+      "breakfast": "Petit-déj",
+      "lunch": "Déjeuner",
+      "dinner": "Dîner",
+      "snack": "Collation"
+    }
+  },
+  "addEntry": {
+    "title": "Ajouter un aliment",
+    "tabs": {
+      "manuel": "Manuel",
+      "photo": "Photo IA",
+      "voix": "Voix IA",
+      "barcode": "Code-barres"
+    },
+    "scanner": {
+      "cameraRequired": "Accès à la caméra requis",
+      "searching": "⏳ Recherche…",
+      "aim": "Pointe vers un code-barres"
+    },
+    "perPiece": "1 {{unit}} · {{grams}}g",
+    "perQuantityEnterWeight": "pour {{quantity}} {{unit}} — entre le poids pour recalculer",
+    "perPortions_one": "pour {{count}} portion",
+    "perPortions_other": "pour {{count}} portions",
+    "portionHint": "{{hint}} · {{grams}}g/pièce",
+    "enterPieceWeight": "Indique le poids d'une pièce pour calculer",
+    "photo": {
+      "cameraNeeded": "L'accès à la caméra est nécessaire.",
+      "galleryNeeded": "L'accès à la galerie est nécessaire.",
+      "failedTitle": "Analyse échouée",
+      "failedDefault": "Gemini n'a pas pu identifier le plat.",
+      "chooseTitle": "Analyser un plat",
+      "chooseMessage": "Comment veux-tu ajouter une photo ?",
+      "takePhoto": "Prendre une photo",
+      "fromGallery": "Choisir depuis la galerie",
+      "hint": "Prends une photo ou choisis depuis la galerie.\nL'IA identifiera le plat et estimera les calories."
+    },
+    "barcode": {
+      "notFoundTitle": "Produit introuvable",
+      "notFoundDefault": "Impossible de récupérer les infos nutritionnelles.",
+      "searching": "Recherche du produit…",
+      "hint": "Scanne le code-barres du produit pour récupérer\nautomatiquement les informations nutritionnelles."
+    },
+    "errors": {
+      "nameRequired": "Entre un nom de repas.",
+      "invalidCalories": "Entre un nombre de calories valide."
+    },
+    "form": {
+      "namePlaceholder": "Nom (ex: Yaourt, Poulet…)",
+      "offResults": "Résultats Open Food Facts",
+      "moreProducts": "Produits suivants",
+      "searchingOff": "Recherche sur Open Food Facts…",
+      "pieceWeightPlaceholder": "Poids d'une {{unit}} en g",
+      "caloriesPlaceholder": "Calories (kcal)",
+      "macrosOptional": "Macronutriments (optionnel)",
+      "saveToLibrary": "Sauvegarder dans ma bibliothèque",
+      "saveToLibrarySub": "Réutilisable facilement"
+    }
+  },
+  "calories": {
+    "title": "Calories",
+    "food": "Alimentation",
+    "activityIncluded": "Activité incluse",
+    "remaining": "{{value}} restantes",
+    "defaultGoalBefore": "Objectif par défaut (2 000 kcal). ",
+    "defaultGoalLink": "Renseigne ton profil",
+    "defaultGoalAfter": " pour un calcul personnalisé.",
+    "consumed": "Consommées",
+    "burned": "Brûlées",
+    "burnedManual": "Brûlées ✎",
+    "burnedWorkout": "Brûlées 🏃",
+    "net": "Nettes",
+    "exceeded": "Dépassé",
+    "goal": "Objectif",
+    "remainingLabel": "Restantes",
+    "activityTitle": "Activité physique",
+    "healthUnavailableIos": "L'accès aux données Santé n'est pas disponible sur cet appareil.",
+    "healthUnavailableAndroid": "Health Connect n'est pas disponible sur cet appareil.",
+    "healthConnectPrompt": "Connecte {{app}} pour voir tes calories brûlées et ajuster ton objectif net.",
+    "healthConnectButton": "Connecter {{app}}",
+    "healthPermissionsBlocked": "Permissions bloquées ? Ouvrir les paramètres {{settings}}",
+    "healthAppIos": "Apple Santé",
+    "healthSettingsIos": "Santé",
+    "hcNotInstalled": "Health Connect n'est pas installé sur ton téléphone. Il est nécessaire pour synchroniser Samsung Health.",
+    "hcInstall": "Installer Health Connect",
+    "hcRetry": "Déjà installé ? Réessayer la connexion",
+    "manualWorkouts": "Activités manuelles : {{kcal}} kcal — en ajouter une",
+    "addWorkout": "Ajouter une activité physique",
+    "editManualBurned": "Modifier la valeur manuelle ({{kcal}} kcal)",
+    "enterBurnedManually": "Saisir manuellement les calories brûlées",
+    "mealsOfDay": "Repas du jour",
+    "emptyHint": "Appuie sur + à côté d'un repas pour commencer",
+    "yesterdayShort": "Hier",
+    "addFood": "Ajouter un aliment",
+    "deleteConfirm": "Supprimer « {{name}} » ?",
+    "burnedModal": {
+      "title": "Calories brûlées",
+      "subtitle": "Saisis la valeur manuellement si la synchronisation Health Connect est incorrecte ou indisponible.",
+      "placeholder": "ex. 450",
+      "reset": "Réinitialiser (revenir à Health Connect)"
+    }
+  },
+  "onboarding": {
+    "next": "Suivant →",
+    "continue": "Continuer →",
+    "notNow": "Pas maintenant",
+    "welcome": {
+      "tagline": "Tes habitudes.\nTon rythme.",
+      "pills": {
+        "nutrition": "🍽️ Nutrition & poids",
+        "streaks": "🔥 Séries de jours",
+        "stats": "📊 Stats claires",
+        "reminders": "🔔 Rappels malins"
+      },
+      "cta": "C'est parti 🚀",
+      "sub": "Gratuit · Sans compte requis"
+    },
+    "benefits": {
+      "title": "Pourquoi ça marche ?",
+      "subtitle": "Vitacairn utilise des techniques éprouvées pour t'aider à construire des habitudes durables.",
+      "habit": {
+        "title": "21 jours pour ancrer une habitude",
+        "desc": "La science montre qu'il faut en moyenne 66 jours pour automatiser un comportement. Vitacairn t'aide à tenir."
+      },
+      "streaks": {
+        "title": "Le pouvoir des séries",
+        "desc": "Voir ta série grandir chaque jour crée une motivation puissante pour ne pas briser la chaîne."
+      },
+      "progress": {
+        "title": "Des progrès visibles",
+        "desc": "Tes statistiques te montrent clairement où tu en es et te motivent à continuer."
+      }
+    },
+    "nutrition": {
+      "title": "Nutrition au quotidien",
+      "subtitle": "Suis tes calories et macros sans prise de tête.",
+      "tracking": {
+        "title": "Suivi calorique complet",
+        "desc": "4 repas par jour. Ajoute un aliment en 3 secondes — base Ciqual, scan code-barres ou photo IA."
+      },
+      "database": {
+        "title": "62 000 aliments référencés",
+        "desc": "Base officielle ANSES Ciqual 2025 + Open Food Facts. Recherche instantanée, hors-ligne."
+      },
+      "weight": {
+        "title": "Courbe de poids",
+        "desc": "Note ton poids chaque jour et suis ta progression vers ton objectif."
+      },
+      "free": "Gratuit",
+      "freeDesc": " — nutrition complète + 1 habitude",
+      "premium": "Premium",
+      "premiumDesc": " — habitudes illimitées, sans publicité"
+    },
+    "sport": {
+      "title": "Ton programme sur mesure",
+      "subtitle": "Configure tes préférences pour générer ton programme.",
+      "gender": "Genre",
+      "level": "Niveau",
+      "goal": "Objectif",
+      "daysPerWeek": "Jours par semaine",
+      "equipment": "Équipement disponible",
+      "generate": "Générer mon programme →"
+    },
+    "health": {
+      "connected": "Connecté !",
+      "title": "Calories brûlées",
+      "connectedSubtitle": "Tes données {{app}} seront automatiquement synchronisées chaque jour dans ton suivi.",
+      "subtitle": "Connecte {{app}} pour voir combien tu brûles réellement et adapter ton objectif calorique net.",
+      "featureDaily": "Calories brûlées au quotidien ({{source}})",
+      "featureNetGoal": "Objectif net = objectif − calories brûlées",
+      "featureAdjust": "Ajuste automatiquement selon ton activité",
+      "synced": "{{app}} synchronisé",
+      "openSettings": "Ouvrir les paramètres {{settings}}",
+      "connecting": "Connexion…",
+      "installedContinue": "J'ai installé HC → Continuer",
+      "connect": "Connecter {{app}}",
+      "sourceIos": "Apple Watch / Santé"
+    },
+    "notifications": {
+      "title": "Ne rate aucun jour",
+      "subtitle": "Active les notifications pour recevoir un rappel quotidien et maintenir tes séries.",
+      "previewTime": "maintenant",
+      "previewTitle": "🏃 Temps pour ton habitude !",
+      "previewBody": "N'oublie pas de cocher ta séance de sport du jour.",
+      "enable": "Activer les rappels",
+      "deniedTitle": "Notifications désactivées",
+      "deniedMessage": "Tu peux les activer plus tard depuis les Réglages de ton téléphone.",
+      "continue": "Continuer"
+    }
+  },
+  "fitness": {
+    "gender": {
+      "male": "Homme",
+      "female": "Femme"
+    },
+    "level": {
+      "beginner": "Débutant",
+      "intermediate": "Intermédiaire",
+      "advanced": "Avancé"
+    },
+    "levelDesc": {
+      "beginner": "< 1 an de pratique",
+      "intermediate": "1–3 ans de pratique",
+      "advanced": "3+ ans de pratique"
+    }
+  },
+  "auth": {
+    "email": "Email",
+    "emailPlaceholder": "ton@email.com",
+    "password": "Mot de passe",
+    "passwordMinPlaceholder": "Min. 6 caractères",
+    "confirmPassword": "Confirmer le mot de passe",
+    "or": "ou",
+    "genericError": "Une erreur est survenue.",
+    "fillAllFields": "Veuillez remplir tous les champs.",
+    "login": {
+      "subtitle": "Connecte-toi pour continuer",
+      "submit": "Se connecter",
+      "google": "Se connecter avec Google",
+      "noAccount": "Pas encore de compte ? ",
+      "createAccount": "Créer un compte",
+      "failedTitle": "Connexion échouée",
+      "wrongCredentials": "Email ou mot de passe incorrect.",
+      "userNotFound": "Aucun compte avec cet email."
+    },
+    "register": {
+      "title": "Créer un compte",
+      "subtitle": "Commence ta progression dès aujourd'hui",
+      "submit": "Créer un compte",
+      "google": "S'inscrire avec Google",
+      "haveAccount": "Déjà un compte ? ",
+      "login": "Se connecter",
+      "failedTitle": "Inscription échouée",
+      "passwordMismatch": "Les mots de passe ne correspondent pas.",
+      "passwordTooShort": "Le mot de passe doit comporter au moins 6 caractères.",
+      "emailInUse": "Un compte existe déjà avec cet email.",
+      "invalidEmail": "L'adresse email est invalide."
+    },
+    "google": {
+      "default": "Continuer avec Google",
+      "failedTitle": "Connexion Google échouée",
+      "otherProvider": "Un compte existe déjà avec cet email (via un autre mode de connexion)."
+    },
+    "apple": {
+      "failedTitle": "Connexion Apple échouée"
+    }
+  },
+  "home": {
+    "title": "Mes habitudes",
+    "dateFormat": "EEEE d MMMM",
+    "completed": "{{pct}}% accompli",
+    "emptyTitle": "Aucune habitude pour l'instant",
+    "emptySubtitle": "Appuie sur + pour commencer",
+    "longPressHint": "Appui long pour modifier",
+    "upgradeBanner": "Passe à Premium pour des habitudes illimitées",
+    "streakDays_one": "🔥 {{count}} jour",
+    "streakDays_other": "🔥 {{count}} jours",
+    "dashboard": {
+      "bestStreakValue": "{{count}}j",
+      "bestStreak": "Meilleur streak",
+      "nextSession": "Prochaine séance",
+      "rest": "Repos"
+    },
+    "habitForm": {
+      "newTitle": "Nouvelle habitude",
+      "editTitle": "Modifier l'habitude",
+      "namePlaceholder": "Nom de l'habitude",
+      "emoji": "Emoji",
+      "color": "Couleur",
+      "reminder": "Rappel",
+      "reminderActive": "Actif",
+      "reminderWillUpdate": "Le rappel sera mis à jour.",
+      "reminderWillSchedule": "Un rappel sera planifié.",
+      "archive": "Archiver"
+    },
+    "reminder": {
+      "every": "Toutes les",
+      "timeWindow": "Plage horaire",
+      "from": "De",
+      "to": "À",
+      "atWhatTime": "À quelle heure",
+      "units": {
+        "hours": "Heures",
+        "days": "Jours",
+        "weeks": "Semaines",
+        "months": "Mois"
+      },
+      "hint": {
+        "hours": "Toutes les {{value}}h de {{start}}h à {{end}}h",
+        "days_one": "Chaque jour à {{time}}",
+        "days_other": "Tous les {{count}} jours à {{time}}",
+        "weeks_one": "Toutes les semaines à {{time}}",
+        "weeks_other": "Toutes les {{count}} semaines à {{time}}",
+        "months_one": "Chaque mois à {{time}}",
+        "months_other": "Tous les {{count}} mois à {{time}}"
+      },
+      "short": {
+        "days": "/{{count}}j",
+        "weeks_one": "/sem.",
+        "weeks_other": "/{{count}} sem.",
+        "months_one": "/mois",
+        "months_other": "/{{count}} mois"
+      }
+    },
+    "limit": {
+      "adUnavailableTitle": "Pub indisponible",
+      "adUnavailableMessage": "Impossible de charger la pub, réessaie plus tard.",
+      "title": "Habitude supplémentaire",
+      "message": "Tu as atteint ta limite gratuite. Regarde une courte pub pour débloquer une habitude aujourd'hui, ou passe à Premium pour des habitudes illimitées.",
+      "watchAd": "Regarder une pub",
+      "goPremium": "Passer à Premium"
+    }
+  },
+  "tdee": {
+    "lifestyle": {
+      "sedentary": "Sédentaire",
+      "lightly_active": "Légèrement actif",
+      "moderately_active": "Modérément actif",
+      "very_active": "Très actif"
+    },
+    "lifestyleDescription": {
+      "sedentary": "Bureau, télétravail, peu de marche",
+      "lightly_active": "Quelques déplacements, debout par moments",
+      "moderately_active": "Travail debout, marche régulière, livreur...",
+      "very_active": "Travail physique (chantier, restauration, agriculture...)"
+    },
+    "exercise": {
+      "none": "Aucun sport",
+      "1_2": "1-2 séances / semaine",
+      "3_4": "3-4 séances / semaine",
+      "5_6": "5-6 séances / semaine",
+      "daily": "1 séance / jour",
+      "twice_daily": "2 séances / jour ou +"
+    },
+    "goal": {
+      "lose_fat": "Perte de gras",
+      "maintain": "Maintien",
+      "build_muscle": "Prise de muscle"
+    },
+    "card": {
+      "bmrKcal": "Métabolisme de base (kcal)",
+      "maintenanceKcal": "Maintenance (kcal)",
+      "howCalculated": "Comment c'est calculé ?",
+      "active": "Actif",
+      "applied": "Appliqué",
+      "apply": "Appliquer",
+      "step1": "① Métabolisme de base (BMR)",
+      "formulaMale": "Formule Mifflin-St Jeor (homme)",
+      "formulaFemale": "Formule Mifflin-St Jeor (femme)",
+      "years": "ans",
+      "constantMale": "Constante homme",
+      "constantFemale": "Constante femme",
+      "perDay": "{{kcal}} kcal / jour",
+      "step2": "② Dépense totale (TDEE)",
+      "lifestyleLine": "Niveau de vie : ×{{mult}} ({{label}})",
+      "sportLine": "Sport : {{label}}",
+      "tdeeMaintenance": "TDEE (maintenance)",
+      "step3": "③ Répartition des macros",
+      "protShort": "Prot ",
+      "carbsShort": "Gluc ",
+      "fatShort": "Lip "
+    }
+  },
+  "physicalProfile": {
+    "title": "Mon profil physique",
+    "gender": "Sexe",
+    "age": "Âge",
+    "years": "ans",
+    "height": "Taille",
+    "currentWeight": "Poids actuel",
+    "goal": "Objectif",
+    "lifestyle": "Style de vie quotidien",
+    "exercise": "Activité sportive",
+    "submit": "Calculer mes objectifs"
+  },
+  "themes": {
+    "title": "Thème de couleur",
+    "subtitle": "Personnalise les couleurs de l'application",
+    "active": "Actif",
+    "names": {
+      "violet": "Mauve",
+      "ocean": "Océan",
+      "forest": "Forêt",
+      "fire": "Feu",
+      "night": "Indigo"
+    }
+  },
+  "stats": {
+    "title": "Statistiques",
+    "bestStreak": "Meilleure série",
+    "daysShort": "{{count}}j",
+    "today": "Aujourd'hui",
+    "totalDone": "Total coché",
+    "avgRate": "Taux moyen",
+    "habitsChecked": "Habitudes cochées (7j)",
+    "createHabitsForChart": "Crée des habitudes pour voir le graphique",
+    "completionRate": "Taux de complétion (30j)",
+    "noData": "Pas encore de données",
+    "caloriesPerDay": "Calories / jour (7j)",
+    "goalLegend": "Objectif ({{kcal}} kcal)",
+    "addFoodForChart": "Ajoute des aliments pour voir le graphique",
+    "last7Days": "7 derniers jours",
+    "emptyText": "Crée tes premières habitudes pour voir tes stats !",
+    "perHabit": "Détail par habitude",
+    "shortDateFormat": "d/M"
+  },
+  "sport": {
+    "title": "Sport",
+    "duration": {
+      "min": "{{m}} min",
+      "hours": "{{h}}h",
+      "hoursMin": "{{h}}h {{m}}min"
+    },
+    "dayFormat": "d MMM",
+    "deleteConfirm": "Supprimer « {{name}} » ?",
+    "notifDeniedMessage": "Active les notifications dans les paramètres de ton téléphone pour recevoir des rappels.",
+    "kcalBurned": "kcal brûlées",
+    "totalTime": "temps total",
+    "activities_one": "activité",
+    "activities_other": "activités",
+    "noWeightInfo": "Renseigne ton poids dans Profil pour un calcul de calories plus précis (actuellement basé sur 70 kg).",
+    "syncInfo": "Les calories brûlées ici s'ajoutent automatiquement à ton bilan dans l'onglet Calories.",
+    "programSection": "Programme musculation",
+    "sessionsPerWeek": "{{count}} séances/sem · {{goal}}",
+    "perfs": "Perfs",
+    "deleteProgramTitle": "Supprimer le programme",
+    "irreversible": "Cette action est irréversible.",
+    "dayBadge": "J{{n}}",
+    "toConfigure": "Aucun exercice — à configurer",
+    "done": "Terminé",
+    "start": "Démarrer",
+    "configure": "Configurer",
+    "seeFullProgram": "Voir le programme complet",
+    "createProgram": "Créer mon programme",
+    "createProgramDesc": "Programme personnalisé selon tes séances et ton objectif",
+    "progress7Days": "Progression — 7 derniers jours",
+    "reminders": "Rappels de séance",
+    "todayActivities": "Activités du jour",
+    "emptyTitle": "Aucune activité enregistrée",
+    "emptySub": "Appuie sur + pour ajouter ton premier entraînement du jour."
+  },
+  "workout": {
+    "types": {
+      "marche": "Marche",
+      "course": "Course à pied",
+      "velo": "Vélo",
+      "natation": "Natation",
+      "musculation": "Musculation",
+      "hiit": "HIIT",
+      "yoga": "Yoga",
+      "football": "Football",
+      "basketball": "Basketball",
+      "tennis": "Tennis",
+      "elliptique": "Elliptique",
+      "randonnee": "Randonnée",
+      "danse": "Danse",
+      "escaliers": "Montée d'escaliers",
+      "autre": "Autre activité"
+    },
+    "addTitle": "Ajouter une activité",
+    "type": "Type d'activité",
+    "durationMin": "Durée (minutes)",
+    "durationPlaceholder": "ex. 45",
+    "estimate": "Estimation : ",
+    "basedOn": " (basé sur {{weight}} kg)",
+    "caloriesBurned": "Calories brûlées",
+    "optionalOverride": "(optionnel — remplace l'estimation)",
+    "caloriesPlaceholder": "ex. 300",
+    "saveWithKcal": "Enregistrer — {{kcal}} kcal",
+    "session": {
+      "weightKg": "Poids (kg)",
+      "reps": "Reps",
+      "addSet": "Ajouter une série",
+      "youtubeQuery": "{{name}} exercice musculation",
+      "setsDone": "{{done}}/{{total}} séries",
+      "watchDemo": "Voir une démonstration",
+      "completeSave": "Séance complète ! Sauvegarder",
+      "saveProgress": "Sauvegarder ({{done}}/{{total}})"
+    },
+    "stats": {
+      "title": "Performances",
+      "loggedCount_one": "{{count}} exercice journalisé",
+      "loggedCount_other": "{{count}} exercices journalisés",
+      "searchPlaceholder": "Rechercher un exercice...",
+      "noData": "Aucune donnée",
+      "noDataSub": "Lance une séance et journalise tes séries pour voir tes performances ici.",
+      "sessionsCount_one": "{{count}} séance",
+      "sessionsCount_other": "{{count}} séances",
+      "recordInline": "  ·  record : {{kg}} kg",
+      "noDataExercise": "Aucune donnée pour cet exercice.",
+      "sessions": "Séances",
+      "bestLoad": "Record charge",
+      "bodyweight": "Corps",
+      "est1rm": "1RM estimé",
+      "totalSets": "Séries tot.",
+      "totalReps": "Reps tot.",
+      "progression": "Progression",
+      "avgVolume": "Vol. moy.",
+      "maxLoad": "Charge max",
+      "totalVolume": "Volume total",
+      "weightLegend": "— Charge max par séance  ╌ Charge min",
+      "volumeLegend": "Volume = poids × reps (toutes séries)",
+      "sessionDetail": "Détail des séances",
+      "sessionDateFormat": "EEEE d MMM",
+      "shortDateFormat": "d/M",
+      "colWeight": "Poids",
+      "colReps": "Reps",
+      "col1rm": "1RM est.",
+      "colVolume": "Volume",
+      "footer": "{{sets}} séries · {{reps}} reps · vol. {{volume}} kg"
+    },
+    "picker": {
+      "title": "Choisir des exercices",
+      "all": "Tous",
+      "compound": "Compound",
+      "isolation": "Isolation",
+      "allAdded": "Tous les exercices de ce groupe sont déjà ajoutés",
+      "addCount_one": "Ajouter {{count}} exercice",
+      "addCount_other": "Ajouter {{count}} exercices"
+    },
+    "creator": {
+      "goalDesc": {
+        "lose_fat": "Volume élevé, récupération courte",
+        "maintain": "Équilibre force et endurance",
+        "build_muscle": "Charges lourdes, récupération longue"
+      },
+      "compoundTag": "🏋️ Compound",
+      "isolationTag": "🎯 Isolation",
+      "exCount": "{{count}} ex.",
+      "minutes": "⏱ {{m}} min",
+      "sessionLabel": "Séance {{n}}",
+      "noExercise": "Aucun exercice",
+      "customSplitName": "Programme personnalisé",
+      "replaceTitle": "Remplacer le programme ?",
+      "saveTitle": "Sauvegarder le programme",
+      "replaceMessage": "Tu as déjà un programme. Le remplacer ?",
+      "saveMessage": "Ce programme sera enregistré dans l'onglet Sport.",
+      "confirm": "Confirmer",
+      "titleCreate": "Créer mon programme",
+      "titleCustomizer": "Mes exercices",
+      "programType": "Type de programme",
+      "modeAuto": "Automatique",
+      "modeCustom": "Personnalisé",
+      "modeAutoDesc": "Programme optimisé généré par l'app",
+      "modeCustomDesc": "Tu choisis tes exercices par séance",
+      "equipment": "Matériel disponible",
+      "presetGym": "Salle complète",
+      "presetHome": "Maison équipée",
+      "presetBodyweight": "Corps uniquement",
+      "profile": "Profil",
+      "level": "Niveau de pratique",
+      "sessionsPerWeek": "Séances par semaine",
+      "daysPerWeekShort": "j/sem",
+      "goal": "Objectif",
+      "techIntermediate": "⚡ Techniques intermédiaires incluses",
+      "techAdvanced": "🔥 Techniques avancées incluses",
+      "techDesc": {
+        "supersetIntermediate": "2 muscles antagonistes enchaînés sans repos",
+        "superset": "Muscles antagonistes (ex. biceps + triceps)",
+        "biset": "2 exercices même muscle enchaînés",
+        "dropset": "Réduction de charge à l'échec (-20 à 30 %)",
+        "restPause": "À l'échec → 15 s → on continue"
+      },
+      "generate": "Générer mon programme",
+      "chooseExercises": "Choisir mes exercices",
+      "customizerHint": "Ajoute les exercices de ton choix pour chaque séance",
+      "antagonistLabel": "Muscle antagoniste :",
+      "sameMuscleLabel": "Même muscle :",
+      "addAntagonist": "Ajoute un exercice antagoniste ({{groups}})",
+      "addSameMuscle": "Ajoute un autre exercice de {{group}}",
+      "addExercises": "Ajouter des exercices",
+      "seeProgram": "Voir mon programme",
+      "summaryGym": "Salle",
+      "summaryEquipCount": "{{count}} mat.",
+      "summarySessions": "séances/sem",
+      "summaryPerSession": "/ séance",
+      "summaryTechniques": "techniques",
+      "saveProgram": "Sauvegarder ce programme"
+    }
+  },
+  "profile": {
+    "title": "Profil",
+    "premiumActive": "Premium actif ✨",
+    "premiumActiveSub": "Sans publicité, habitudes illimitées",
+    "upgrade": "Passe à Premium",
+    "upgradeSub": "Débloque toutes les fonctionnalités",
+    "statHabits": "Habitudes",
+    "statTotalChecked": "Total cochés",
+    "statLimit": "Limite",
+    "sectionHealth": "Santé",
+    "physicalProfile": "Profil physique",
+    "physicalSummary": "{{age}} ans · {{height}} cm · {{lifestyle}}",
+    "physicalMissing": "Non renseigné — requis pour le calcul TDEE",
+    "sectionMealReminders": "Rappels repas",
+    "reminderTime": "{{meal}} — heure du rappel",
+    "notificationsDenied": "Active les notifications dans les paramètres.",
+    "sectionCalorieGoals": "Objectifs caloriques",
+    "tdeePromptTitle": "Calcule tes besoins caloriques",
+    "tdeePromptSub": "Renseigne ton profil physique pour obtenir tes macros personnalisées",
+    "goalsAppliedTitle": "Objectifs appliqués",
+    "goalsAppliedMessage": "{{goal}} — {{kcal}} kcal/jour",
+    "sectionAppearance": "Apparence",
+    "colorTheme": "Thème de couleur",
+    "sectionSubscription": "Abonnement",
+    "restorePurchases": "Restaurer mes achats",
+    "restorePurchasesSub": "Récupère ton abonnement existant",
+    "restoredTitle": "Accès restauré 🎉",
+    "restoredMessage": "Ton abonnement Premium est actif.",
+    "noPurchaseTitle": "Aucun achat trouvé",
+    "noPurchaseMessage": "Aucun abonnement actif trouvé pour ce compte Apple/Google.",
+    "sectionAccount": "Compte",
+    "connected": "Connecté",
+    "exportData": "Exporter mes données",
+    "exportDataSub": "Télécharge une copie de tes données (RGPD)",
+    "exportFailed": "Export impossible",
+    "genericError": "Une erreur est survenue.",
+    "logout": "Déconnexion",
+    "logoutConfirm": "Se déconnecter de ton compte ?",
+    "logoutAction": "Se déconnecter",
+    "sectionAbout": "À propos",
+    "version": "Version",
+    "privacyPolicy": "Politique de confidentialité",
+    "terms": "Conditions d'utilisation",
+    "adConsent": "Consentement publicitaire",
+    "adConsentSub": "Gérer mes préférences RGPD",
+    "adConsentUnavailableTitle": "Indisponible",
+    "adConsentUnavailableMessage": "Les options de consentement publicitaire ne sont pas disponibles pour le moment.",
+    "sectionDanger": "Danger",
+    "resetApp": "Réinitialiser l'app",
+    "resetAppSub": "Supprime les données locales (compte conservé)",
+    "resetAppMessage": "Toutes tes données locales (habitudes, nutrition, poids, séances) seront supprimées. Ton compte, lui, est conservé. Cette action est irréversible.",
+    "resetAction": "Réinitialiser",
+    "deleteAccount": "Supprimer mon compte",
+    "deleteAccountSub": "Compte + données, suppression définitive",
+    "deleteAccountMessage": "Ton compte et toutes tes données (habitudes, nutrition, poids, séances) seront définitivement supprimés des serveurs et de cet appareil. Cette action est irréversible.",
+    "deleteForever": "Supprimer définitivement",
+    "reauthTitle": "Reconnexion requise",
+    "reauthMessage": "Pour des raisons de sécurité, reconnecte-toi puis relance la suppression.",
+    "deleteFailed": "Suppression impossible"
+  },
+  "paywall": {
+    "headline": "Construis des habitudes\nqui durent.",
+    "subheadline": "Débloque tout pour rester motivé chaque jour.",
+    "features": {
+      "noAds": "Aucune publicité",
+      "unlimitedHabits_one": "Habitudes illimitées ({{count}} en version gratuite)",
+      "unlimitedHabits_other": "Habitudes illimitées ({{count}} en version gratuite)"
+    },
+    "packages": {
+      "annual": {
+        "label": "Annuel",
+        "period": "/an",
+        "subtitle": "Facturé une fois par an",
+        "subtitleWithMonthly": "Soit {{price}}/mois, facturé une fois par an"
+      },
+      "monthly": {
+        "label": "Mensuel",
+        "period": "/mois",
+        "subtitle": "Facturé chaque mois, sans engagement"
+      },
+      "lifetime": {
+        "label": "À vie",
+        "period": "",
+        "subtitle": "Paiement unique, accès à vie"
+      }
+    },
+    "continue": "Continuer",
+    "continueWithPrice": "Continuer — {{price}}",
+    "restore": "Restaurer mes achats",
+    "legal": "Paiement sécurisé via l'App Store / Google Play. L'abonnement se renouvelle automatiquement. Tu peux annuler à tout moment dans les réglages de ton compte.",
+    "welcomeTitle": "Bienvenue dans Premium ! 🎉",
+    "welcomeMessage": "Profite de toutes les fonctionnalités.",
+    "welcomeButton": "Super !",
+    "restoredTitle": "Accès restauré !",
+    "restoredMessage": "Ton abonnement Premium est de nouveau actif.",
+    "noPurchaseTitle": "Aucun achat",
+    "noPurchaseMessage": "Aucun abonnement actif trouvé."
+  },
+  "goals": {
+    "title": "Objectifs nutritionnels",
+    "caloriesPerDay": "Calories / jour",
+    "macrosOptional": "Macros / jour (optionnel)",
+    "macrosHint": "Laisse vide pour ne pas suivre ce macro",
+    "proteinG": "Protéines (g)",
+    "carbsG": "Glucides (g)",
+    "fatG": "Lipides (g)",
+    "targetWeight": "Poids cible (kg, optionnel)"
+  },
+  "weight": {
+    "title": "Poids corporel",
+    "noData": "Aucune donnée à afficher",
+    "goal": "Objectif : {{weight}} kg",
+    "logToday": "Logger mon poids — {{date}}",
+    "placeholder": "ex: 72.5",
+    "last30Days": "30 derniers jours",
+    "invalid": "Entre un poids valide (en kg)."
+  },
+  "weightChart": {
+    "periods": {
+      "7j": "7j",
+      "30j": "30j",
+      "90j": "90j",
+      "tout": "Tout"
+    },
+    "bmi": {
+      "underweight": "Insuffisance",
+      "normal": "Normal",
+      "overweight": "Surpoids",
+      "obese": "Obésité"
+    },
+    "notes": {
+      "strength": "Plage ajustée : la musculation augmente la masse musculaire, un IMC jusqu'à 27 est sain.",
+      "athlete": "Plage ajustée pour athlète : masse musculaire importante, IMC jusqu'à 28 acceptable.",
+      "intense": "Plage ajustée pour athlète intensif : l'IMC standard n'est pas adapté à ce niveau."
+    },
+    "emptyTitle": "Suivi du poids",
+    "emptySub": "Enregistre ton poids chaque jour pour suivre ton évolution.",
+    "logWeight": "Logger mon poids",
+    "title": "Évolution du poids",
+    "log": "Logger",
+    "currentWeight": "Poids actuel",
+    "overPeriod": "Sur la période",
+    "bmiLabel": "IMC",
+    "goalLine": "Objectif {{weight}} kg (IMC {{bmi}})",
+    "notEnoughData": "Enregistre au moins 2 pesées pour voir le graphe.",
+    "recommendedTitle": "Objectif IMC recommandé",
+    "recommendedRange": "{{min}}–{{max}} kg (IMC {{minBmi}}–{{maxBmi}})",
+    "ideal": "Idéal (IMC {{bmi}})",
+    "toLose": "−{{kg}} kg à perdre",
+    "toGain": "+{{kg}} kg à prendre",
+    "reached": "Objectif atteint ✓",
+    "history": "Historique récent",
+    "historyDateFormat": "EEE d MMM"
+  },
+  "update": {
+    "requiredTitle": "Mise à jour requise",
+    "availableTitle": "Mise à jour disponible",
+    "requiredMessage": "Cette version n’est plus prise en charge. Mets à jour Vitacairn pour continuer.",
+    "availableMessage": "Une nouvelle version de Vitacairn est disponible avec des améliorations.",
+    "button": "Mettre à jour ({{store}})",
+    "later": "Plus tard"
+  },
+  "library": {
+    "title": "Bibliothèque",
+    "tabs": {
+      "foods": "Aliments",
+      "meals": "Repas composés"
+    },
+    "emptyFoods": "Aucun aliment dans ta bibliothèque.",
+    "emptyMeals": "Aucun repas composé.",
+    "kcalPer100": "{{kcal}} kcal / 100{{unit}}",
+    "kcalPerUnit": "{{kcal}} kcal / unité",
+    "ingredientCount_one": "{{kcal}} kcal · {{count}} ingrédient",
+    "ingredientCount_other": "{{kcal}} kcal · {{count}} ingrédients",
+    "createFood": "Créer un aliment",
+    "createComposedMeal": "Créer un repas composé",
+    "editMeal": "Modifier le repas",
+    "foodNamePlaceholder": "Nom de l'aliment",
+    "caloriesPlaceholder": "Calories / 100g (ou / 1 unité)",
+    "macrosOptional": "Macros / 100g (optionnel)",
+    "defaultPortion": "Portion par défaut",
+    "addAsIngredient": "Ajouter comme ingrédient",
+    "chooseIngredient": "Choisir un ingrédient",
+    "searchFoodPlaceholder": "Rechercher un aliment…",
+    "inYourLibrary": "Dans ta bibliothèque",
+    "foodDatabase": "Base alimentaire",
+    "openFoodFacts": "Open Food Facts",
+    "notFoundTitle": "Introuvable",
+    "notFoundMessage": "« {{query}} » n'est pas dans la base.\nCrée-le manuellement.",
+    "createManually": "Créer « {{query}} » manuellement",
+    "typeToSearch": "Tape un nom pour rechercher…",
+    "mealNamePlaceholder": "Nom du repas",
+    "ingredients": "Ingrédients",
+    "addIngredient": "Ajouter un ingrédient",
+    "total": "Total :",
+    "saveChanges": "Enregistrer les modifications",
+    "createMeal": "Créer le repas",
+    "deleteFoodConfirm": "Supprimer « {{name}} » de la bibliothèque ?",
+    "errors": {
+      "nameAndCaloriesRequired": "Nom et calories sont obligatoires.",
+      "invalidCalories": "Calories invalides.",
+      "nameRequired": "Entre un nom.",
+      "mealNameRequired": "Donne un nom au repas.",
+      "ingredientRequired": "Ajoute au moins un ingrédient."
+    }
+  },
+  "voice": {
+    "micDeniedTitle": "Micro refusé",
+    "micDeniedMessage": "L'accès au micro est nécessaire pour dicter ton repas. Tu peux l'activer dans les réglages du téléphone.",
+    "recordingFailedTitle": "Enregistrement impossible",
+    "recordingFailedDefault": "Le micro n'a pas pu démarrer.",
+    "recordingMissing": "L'enregistrement est introuvable.",
+    "tooShort": "Enregistrement trop court : maintiens la parole quelques secondes.",
+    "analysisFailedTitle": "Analyse échouée",
+    "analysisFailedDefault": "L'IA n'a pas pu estimer ton repas.",
+    "a11yStop": "Arrêter l'enregistrement",
+    "a11yStart": "Dicter mon repas",
+    "listening": "Je t’écoute… Appuie sur ◼ quand tu as fini.",
+    "hint": "Appuie sur le micro et décris ton repas avec les quantités.\nEx : « 200 g de riz, un blanc de poulet et une pomme »",
+    "sourceAllDatabase": "Calculé avec la base Ciqual",
+    "sourceNoneDatabase": "Estimation IA (aliments absents de la base)",
+    "sourcePartial": "{{matched}}/{{total}} aliments calculés avec la base Ciqual, le reste estimé par l'IA"
+  },
+  "entryDetail": {
+    "content": "Contenu",
+    "meta": "{{meal}} · {{serving}} · ajouté à {{time}}",
+    "pctOfKcal": "{{pct}} % des kcal",
+    "noMacros": "Macronutriments non renseignés pour cet aliment."
+  },
+  "exercises": {
+    "push_up": {
+      "name": "Pompes",
+      "description": "Corps aligné de la tête aux talons, coudes à 45° du buste. Descends jusqu'à ce que la poitrine frôle le sol puis pousse explosif."
+    },
+    "pec_deck": {
+      "name": "Pec deck (machine)",
+      "description": "Assis sur la machine, referme les bras en arc de cercle devant toi. Contrôle lentement le retour pour étirer les pectoraux."
+    },
+    "cable_fly": {
+      "name": "Croisé poulie",
+      "description": "Debout entre deux poulies, ramène les câbles devant toi en arc de cercle. Garde une légère flexion des coudes tout le long."
+    },
+    "bench_press_db": {
+      "name": "Développé couché haltères",
+      "description": "Allongé sur le banc, haltères au niveau de la poitrine, coudes à 75°. Pousse vers le haut en amenant les haltères sans les toucher en haut. Plus d'amplitude que la barre."
+    },
+    "bench_press": {
+      "name": "Développé couché barre",
+      "description": "Omoplates serrées sur le banc, barre descendue vers le bas des pectoraux. Coudes à 75°, pousse verticalement sans décoller les fesses."
+    },
+    "incline_press": {
+      "name": "Développé incliné haltères",
+      "description": "Banc incliné à 30-45°, haltères au niveau de la poitrine haute. Pousse vers le haut en concentrant le travail sur le haut des pectoraux."
+    },
+    "incline_press_bb": {
+      "name": "Développé incliné barre",
+      "description": "Banc incliné 30-45°, barre descendue vers le haut de la poitrine. Charge plus lourde possible qu'aux haltères pour stimuler les pectoraux supérieurs."
+    },
+    "dips_chest": {
+      "name": "Dips (pectoraux)",
+      "description": "Incline le buste vers l'avant (30-45°) pour cibler les pectoraux. Descends jusqu'à 90° de flexion du coude, pousse en contractant la poitrine."
+    },
+    "fly_dumbbell": {
+      "name": "Écarté haltères",
+      "description": "Allongé, descends les haltères en arc de cercle jusqu'à sentir l'étirement des pectoraux. Remonte sans verrouiller les coudes."
+    },
+    "decline_press": {
+      "name": "Développé décliné haltères",
+      "description": "Banc décliné, cible le bas des pectoraux. Garde les coudes à 75° du buste et pousse en direction du plafond."
+    },
+    "guillotine_press": {
+      "name": "Développé couché cou",
+      "description": "Barre descendue vers la gorge, prise large. Maximise l'étirement pectoral mais exige des épaules saines. Utilise une parade."
+    },
+    "lat_pulldown": {
+      "name": "Tirage poulie haute",
+      "description": "Prise large, tire la barre vers le haut de la poitrine en ramenant les coudes vers le bas et l'arrière. Initie le mouvement avec les dorsaux."
+    },
+    "seated_row": {
+      "name": "Rowing poulie basse",
+      "description": "Assis, dos droit, tire la poignée vers le nombril. Serre les omoplates ensemble en fin de mouvement, contrôle le retour."
+    },
+    "face_pull": {
+      "name": "Face pull",
+      "description": "Poulie haute, tire la corde vers le visage en écartant les mains de chaque côté de la tête. Excellent pour la santé des épaules."
+    },
+    "pull_up": {
+      "name": "Tractions",
+      "description": "Prise pronation légèrement plus large que les épaules. Initie avec les dorsaux, tire jusqu'au menton au-dessus de la barre. Corps gainé."
+    },
+    "barbell_row": {
+      "name": "Rowing barre",
+      "description": "Buste incliné à 45°, genoux légèrement fléchis. Tire la barre vers le bas du sternum en gardant le dos plat et les coudes proches du corps."
+    },
+    "one_arm_row": {
+      "name": "Rowing haltère unilatéral",
+      "description": "Un genou et une main sur le banc. Tire l'haltère vers la hanche avec une légère rotation du buste. Coude haut en fin de mouvement."
+    },
+    "deadlift": {
+      "name": "Soulevé de terre",
+      "description": "Pieds largeur de hanches, barre sur les tibias. Pousse le sol sans arrondir le dos, garde la barre très proche du corps tout le long."
+    },
+    "chest_supported": {
+      "name": "Rowing prise neutre incliné",
+      "description": "Poitrine appuyée sur un banc incliné, tire les haltères vers les hanches. Élimine la compensation lombaire pour isoler le dos."
+    },
+    "chin_up": {
+      "name": "Tractions prise supination",
+      "description": "Prise supination (paumes vers soi), largeur d'épaules. Tire jusqu'au menton au-dessus de la barre. Sollicite plus les biceps que les tractions pronation."
+    },
+    "tbar_row": {
+      "name": "Rowing T-bar",
+      "description": "Barre dans un landmine, poignée en V, buste incliné à 45°. Tire vers le sternum en serrant les omoplates. Permet de charger lourd en sécurité."
+    },
+    "pullover_db": {
+      "name": "Pullover haltère",
+      "description": "Allongé en travers du banc, haltère tenu à deux mains. Passe les bras tendus derrière la tête en gardant les coudes légèrement fléchis. Étirement des dorsaux."
+    },
+    "pendlay_row": {
+      "name": "Pendlay Row",
+      "description": "Barre au sol, buste horizontal. Tire de façon explosive vers le bas du sternum et repose la barre au sol à chaque répétition."
+    },
+    "meadows_row": {
+      "name": "Meadows Row",
+      "description": "Barre dans un landmine, position perpendiculaire. Tire vers la hanche avec rotation du buste. Grande amplitude de mouvement."
+    },
+    "lateral_raise": {
+      "name": "Élévations latérales",
+      "description": "Haltères en prise neutre, lève les bras sur les côtés jusqu'à l'horizontale. Légère flexion du coude, pouce légèrement baissé."
+    },
+    "dumbbell_press": {
+      "name": "Développé épaules haltères",
+      "description": "Assis ou debout, coudes à 90° en bas. Pousse les haltères au-dessus de la tête sans verrouiller les coudes. Gainage serré."
+    },
+    "front_raise": {
+      "name": "Élévations frontales",
+      "description": "Lève un bras (ou les deux) devant toi jusqu'à l'horizontale. Garde le buste droit et évite de balancer."
+    },
+    "ohp": {
+      "name": "Développé militaire barre",
+      "description": "Barre au niveau des clavicules, serre les fessiers et le gainage. Pousse verticalement au-dessus de la tête, barre dans l'axe."
+    },
+    "arnold_press": {
+      "name": "Arnold Press",
+      "description": "Haltères devant le visage prise supination. En montant, ouvre les coudes et tourne les poignets vers l'extérieur. Travaille les 3 faisceaux."
+    },
+    "rear_delt_fly": {
+      "name": "Oiseau haltères (deltoïde post.)",
+      "description": "Penché en avant, bras légèrement fléchis, ouvre les bras en croix jusqu'à l'horizontale. Cible le deltoïde postérieur souvent négligé."
+    },
+    "upright_row": {
+      "name": "Rowing menton",
+      "description": "Barre ou haltères le long du corps, tire vers le menton en gardant les coudes hauts. Attention si tu as des antécédents d'épaules."
+    },
+    "machine_shoulder": {
+      "name": "Développé épaules machine",
+      "description": "Assis dans la machine, pousse les poignées au-dessus de la tête. Idéal pour débuter : pas d'équilibre à gérer, concentre-toi sur la contraction."
+    },
+    "cable_lateral": {
+      "name": "Élévations latérales poulie",
+      "description": "Poulie basse sur le côté, lève le bras en arc jusqu'à l'horizontale. La tension constante de la poulie cible mieux le deltoïde médian."
+    },
+    "behind_neck_press": {
+      "name": "Développé nuque",
+      "description": "Barre derrière la nuque, pousse vers le haut. Réservé aux pratiquants avec une excellente mobilité et sans fragilité aux épaules."
+    },
+    "dumbbell_curl": {
+      "name": "Curl haltères alterné",
+      "description": "En alternant, amène l'haltère jusqu'à l'épaule avec supination du poignet en haut. Coude fixe contre le corps, contrôle la descente."
+    },
+    "hammer_curl": {
+      "name": "Curl marteau",
+      "description": "Prise neutre (pouces vers le haut), amène l'haltère à l'épaule. Travaille le brachial et le brachioradial en plus du biceps."
+    },
+    "cable_curl": {
+      "name": "Curl poulie basse",
+      "description": "Poulie basse, curl avec barre droite ou EZ. La tension constante de la poulie maximise le travail du biceps en bas du mouvement."
+    },
+    "barbell_curl": {
+      "name": "Curl barre",
+      "description": "Barre droite ou EZ, flex les deux bras en gardant les coudes fixes contre le corps. Contrôle lentement la descente."
+    },
+    "incline_curl": {
+      "name": "Curl incliné haltères",
+      "description": "Allongé sur banc incliné, les bras pendent derrière. L'étirement de la longue portion du biceps en position basse est maximal."
+    },
+    "preacher_curl": {
+      "name": "Curl pupitre (Scott curl)",
+      "description": "Bras appuyés sur le coussin incliné du pupitre. Le bras est stabilisé, impossible de tricher. Cible intensément le biceps court."
+    },
+    "concentration_curl": {
+      "name": "Curl concentré",
+      "description": "Assis, coude appuyé contre l'intérieur de la cuisse. Curl en supinant le poignet au sommet. Pic de contraction maximal sur le biceps."
+    },
+    "spider_curl": {
+      "name": "Spider curl",
+      "description": "Poitrine appuyée sur un banc incliné, bras tombant verticalement. Isole parfaitement le biceps sans compensation des épaules."
+    },
+    "bayesian_curl": {
+      "name": "Bayesian curl (poulie haute)",
+      "description": "Poulie haute dans le dos, flex le coude vers l'avant. La tension maximale se produit en position d'étirement, très efficace."
+    },
+    "tricep_pushdown": {
+      "name": "Pushdown poulie (corde)",
+      "description": "Poulie haute avec corde, coudes fixes aux flancs. Pousse vers le bas jusqu'à extension complète, écarte la corde en bas."
+    },
+    "overhead_ext": {
+      "name": "Extension triceps haltère",
+      "description": "Haltère au-dessus de la tête, fléchis les coudes derrière la tête. Cible la longue portion. Garde les coudes pointés vers le plafond."
+    },
+    "dips_triceps": {
+      "name": "Dips banc (triceps)",
+      "description": "Mains sur le banc derrière, buste vertical et proche du banc. Fléchis les coudes à 90° et remonte sans verrouiller."
+    },
+    "skull_crusher": {
+      "name": "Barre au front (EZ)",
+      "description": "Allongé, barre EZ descend vers le front ou derrière la tête. Coudes fixes pointés vers le plafond, extension complète en haut."
+    },
+    "close_grip_bench": {
+      "name": "Développé serré",
+      "description": "Développé couché prise serrée (largeur d'épaules). Garde les coudes proches du corps. Excellent pour le volume des triceps."
+    },
+    "dips_parallel": {
+      "name": "Dips barres parallèles",
+      "description": "Entre les barres, buste vertical pour cibler les triceps. Extension complète en haut, 90° de flexion en bas. Ajoute du poids si trop facile."
+    },
+    "tricep_kickback": {
+      "name": "Kickback haltères",
+      "description": "Penché en avant, bras collé au corps, étends le coude vers l'arrière jusqu'à l'extension complète. Garde le bras fixe, seul l'avant-bras bouge."
+    },
+    "cable_overhead_t": {
+      "name": "Extension triceps poulie haute",
+      "description": "Tourné face à la poulie haute, corde derrière la tête. Étends les coudes vers l'avant en maintenant les bras fixes. Cible la longue portion."
+    },
+    "tate_press": {
+      "name": "Tate Press",
+      "description": "Haltères sur la poitrine, coudes pointés vers le haut et vers l'extérieur. Étends les coudes vers le plafond en pivotant les poignets."
+    },
+    "jm_press": {
+      "name": "JM Press",
+      "description": "Hybride entre skull crusher et développé serré. La barre descend vers la gorge, coudes à 45°. Technique avancée à fort volume triceps."
+    },
+    "leg_press": {
+      "name": "Presse à cuisses",
+      "description": "Pieds largeur de hanches sur la plateforme. Descends jusqu'à 90° et pousse sans verrouiller les genoux en haut. Dos plaqué au dossier."
+    },
+    "leg_extension": {
+      "name": "Leg extension",
+      "description": "Assis sur la machine, étends les jambes jusqu'à la position haute en contractant les quadriceps. Contrôle lentement la descente."
+    },
+    "goblet_squat": {
+      "name": "Squat gobelet",
+      "description": "Haltère tenu à deux mains contre la poitrine, pieds largeur d'épaules. Descends en gardant le buste vertical. Excellent pour apprendre le squat."
+    },
+    "lunge": {
+      "name": "Fentes haltères",
+      "description": "Pas en avant, genou arrière à 2 cm du sol. Genou avant dans l'axe du pied, buste droit. Pousse sur le pied avant pour revenir."
+    },
+    "walking_lunge": {
+      "name": "Fentes marchées",
+      "description": "Avance pas par pas en fente, alternant les jambes. Plus dynamique que les fentes statiques. Ajoute des haltères ou une barre pour progresser."
+    },
+    "step_up": {
+      "name": "Step-up haltères",
+      "description": "Pose un pied sur un banc, pousse pour monter en gardant le buste droit. Travaille le quadriceps et les fessiers de façon unilatérale."
+    },
+    "squat": {
+      "name": "Squat barre",
+      "description": "Barre sur les trapèzes, pieds largeur d'épaules. Descends jusqu'à la parallèle en gardant le buste droit et les genoux dans l'axe des pieds."
+    },
+    "bulgarian_squat": {
+      "name": "Squat bulgare",
+      "description": "Pied arrière sur le banc, pied avant avancé. Descends en gardant le buste droit. Excellent pour corriger les déséquilibres."
+    },
+    "hack_squat": {
+      "name": "Hack squat (machine)",
+      "description": "Dos calé sur la machine, pieds légèrement en avant. Descends à 90° minimum. Plus sûr pour le dos que le squat barre."
+    },
+    "front_squat": {
+      "name": "Squat avant",
+      "description": "Barre sur les clavicules, buste très vertical. Exige une bonne mobilité des chevilles et des épaules. Cible intensément les quadriceps."
+    },
+    "sissy_squat": {
+      "name": "Sissy squat",
+      "description": "Talons surélevés, incline le buste en arrière en fléchissant les genoux vers l'avant. Isolation intense des quadriceps."
+    },
+    "leg_curl": {
+      "name": "Leg curl couché",
+      "description": "Couché sur la machine, ramène les talons vers les fessiers. Hanche plaquée contre le banc. Contrôle lentement la descente."
+    },
+    "rdl": {
+      "name": "Soulevé de terre roumain",
+      "description": "Barre le long des jambes, penche le buste en gardant les genoux légèrement fléchis. Descends jusqu'à l'étirement des ischio, puis remonte."
+    },
+    "good_morning": {
+      "name": "Good morning",
+      "description": "Barre sur les trapèzes, penche le buste en avant jusqu'à l'horizontale. Dos plat, genoux légèrement fléchis. Remonte en poussant les hanches en avant."
+    },
+    "seated_leg_curl": {
+      "name": "Leg curl assis",
+      "description": "Assis sur la machine, jambes fléchies sous le siège. La position assise allonge les ischio en haut pour un étirement plus complet."
+    },
+    "nordic_curl": {
+      "name": "Curl nordique",
+      "description": "Genoux au sol, pieds retenus. Incline le buste vers l'avant en résistant avec les ischio. Exercice excentrique très intense."
+    },
+    "lying_leg_curl": {
+      "name": "Leg curl poulie basse",
+      "description": "Couché à plat, poulie basse attachée aux chevilles. La tension constante de la poulie optimise le travail des ischio sur tout l'arc."
+    },
+    "glute_bridge": {
+      "name": "Pont fessier",
+      "description": "Allongé sur le dos, pieds à plat. Soulève les hanches en contractant fort les fessiers en haut. Maintiens 1 seconde en haut."
+    },
+    "sumo_squat": {
+      "name": "Squat sumo haltère",
+      "description": "Écartement large, pieds en canard, haltère entre les jambes. Le large écartement sollicite davantage les fessiers et les adducteurs."
+    },
+    "cable_kickback": {
+      "name": "Kickback poulie",
+      "description": "Poulie basse attachée à la cheville, buste légèrement incliné. Kick la jambe vers l'arrière-haut en contractant le fessier."
+    },
+    "hip_thrust": {
+      "name": "Hip thrust barre",
+      "description": "Épaules sur le banc, barre sur les hanches. Pousse les hanches vers le plafond en contractant fort les fessiers. Maintiens 1 seconde en haut."
+    },
+    "rdl_glutes": {
+      "name": "SDT roumain focus fessiers",
+      "description": "RDL classique mais avec intention de contraction des fessiers en haut du mouvement. Pousse les hanches en avant en serrant les fessiers."
+    },
+    "banded_abduction": {
+      "name": "Abduction élastique",
+      "description": "Élastique autour des genoux, écarte les jambes contre la résistance. Active les fessiers moyens, souvent négligés."
+    },
+    "single_hip_thrust": {
+      "name": "Hip thrust unilatéral",
+      "description": "Hip thrust sur une seule jambe pour corriger les déséquilibres gauche/droite. Double la résistance sur le fessier travaillé."
+    },
+    "standing_calf": {
+      "name": "Mollets debout (machine)",
+      "description": "Debout sur la machine, monte sur la pointe des pieds en contractant les mollets. Descends en étirement complet et remonte explosif."
+    },
+    "seated_calf": {
+      "name": "Mollets assis",
+      "description": "Assis, genoux à 90°, charge sur les genoux. Cible le soléaire (profond). Étirement complet en bas et contraction en haut."
+    },
+    "donkey_calf": {
+      "name": "Mollets âne",
+      "description": "Buste horizontal appuyé, monte sur la pointe des pieds. La position penchée allonge le gastrocnémien pour un étirement maximal."
+    },
+    "plank": {
+      "name": "Gainage planche",
+      "description": "Corps aligné, appui sur les avant-bras et les orteils. Contracte abdos, fessiers et épaules. Respire normalement sans creuser le dos."
+    },
+    "side_plank": {
+      "name": "Gainage latéral",
+      "description": "Appui sur un avant-bras, corps latéralement aligné. Cible les obliques. Garde les hanches hautes, ne les laisse pas tomber."
+    },
+    "bicycle_crunch": {
+      "name": "Crunch vélo",
+      "description": "Couché sur le dos, amène coude droit vers genou gauche et vice-versa en alternant. Active les obliques et le droit de l'abdomen simultanément."
+    },
+    "crunch": {
+      "name": "Crunch",
+      "description": "Allongé sur le dos, soulève les épaules vers les genoux. Lombaires au sol, pas de tirage sur la nuque. Expire en contractant."
+    },
+    "leg_raise": {
+      "name": "Relevé de jambes",
+      "description": "Allongé ou suspendu, lève les jambes tendues jusqu'à 90°. Plaque les lombaires au sol (ou gainage si suspendu). Contrôle la descente."
+    },
+    "cable_crunch": {
+      "name": "Crunch poulie",
+      "description": "À genoux, poulie haute, flex le buste vers le sol en amenant les coudes vers les genoux. Garde les hanches fixes, tout le mouvement vient des abdos."
+    },
+    "russian_twist": {
+      "name": "Russian twist",
+      "description": "Assis en V (dos incliné), tourne le buste de droite à gauche. Ajoute un disque ou un haltère pour augmenter l'intensité."
+    },
+    "ab_wheel": {
+      "name": "Roulette abdominale",
+      "description": "À genoux, roule la roulette vers l'avant sans creuser le dos. Reviens en contractant fort les abdos. Ne va pas plus loin que tu peux contrôler."
+    },
+    "dragon_flag": {
+      "name": "Dragon flag",
+      "description": "Sur un banc, corps rigide appuyé sur les épaules. Descends les jambes tendues vers le sol et remonte. Exercice de Bruce Lee, très intense."
+    },
+    "hanging_leg_raise": {
+      "name": "Relevé de jambes suspendu",
+      "description": "Suspendu à une barre, lève les jambes tendues jusqu'à l'horizontale (ou plus). Évite le balancement, contrôle la descente."
+    },
+    "machine_chest_press": {
+      "name": "Développé couché machine",
+      "description": "Machine guidée, idéale pour débuter ou finir une séance. Ajuste le siège pour que les poignées soient au niveau de la poitrine basse."
+    },
+    "diamond_push_up": {
+      "name": "Pompes diamant",
+      "description": "Mains rapprochées formant un losange sous la poitrine. Sollicite intensément les triceps et le faisceau sternal des pectoraux."
+    },
+    "push_up_feet_elevated": {
+      "name": "Pompes pieds surélevés",
+      "description": "Pieds posés sur un banc, corps incliné tête vers le sol. Cible le haut des pectoraux comme un développé incliné."
+    },
+    "low_cable_fly": {
+      "name": "Écarté poulie basse",
+      "description": "Poulies basses, tire les câbles vers le haut et vers le centre en arc de cercle. Cible le haut des pectoraux avec une tension constante."
+    },
+    "push_up_ring": {
+      "name": "Pompes sur anneaux",
+      "description": "Mains sur les anneaux de gymnastique, instabilité maximale qui active profondément les pectoraux et les stabilisateurs. Rotation des poignets vers l'intérieur en haut."
+    },
+    "landmine_press": {
+      "name": "Landmine press",
+      "description": "Barre dans un landmine, prise en coupe à une ou deux mains, pousse en arc de cercle vers le haut. Sollicite le haut des pectoraux et les épaules."
+    },
+    "cable_fly_mid": {
+      "name": "Croisé poulie milieu",
+      "description": "Poulies à hauteur des épaules, ramène les câbles devant toi en arc de cercle. Variation qui cible le centre des pectoraux."
+    },
+    "narrow_lat_pulldown": {
+      "name": "Tirage poulie serrée",
+      "description": "Poulie haute avec poignée en V ou prise serrée. Plus d'amplitude en bas, soulage les épaules. Tire vers le bas du sternum."
+    },
+    "machine_row": {
+      "name": "Rowing machine",
+      "description": "Machine guidée, poitrine appuyée. Tire les poignées vers toi en serrant les omoplates. Idéal pour apprendre sans compensation lombaire."
+    },
+    "rack_pull": {
+      "name": "Rack pull",
+      "description": "Soulevé de terre partiel depuis hauteur des genoux. Permet de surcharger lourd pour développer la force du haut du dos et des trapèzes."
+    },
+    "weighted_pull_up": {
+      "name": "Tractions lestées",
+      "description": "Tractions avec ceinture de lest ou haltère entre les pieds. Idéal pour progresser une fois les tractions bodyweight maîtrisées."
+    },
+    "seal_row": {
+      "name": "Seal row",
+      "description": "Poitrine allongée sur un banc surélevé, tire les haltères ou la barre vers le bas du sternum. Élimine totalement la compensation lombaire."
+    },
+    "straight_arm_pulldown": {
+      "name": "Tirage bras tendus poulie",
+      "description": "Poulie haute, bras tendus, amène la barre jusqu'aux hanches en gardant les coudes légèrement fléchis. Isole les dorsaux sans les biceps."
+    },
+    "cable_row_single": {
+      "name": "Rowing poulie unilatéral",
+      "description": "Poulie basse, tire d'un bras vers la hanche en rotation légère du buste. Corrige les déséquilibres gauche/droite."
+    },
+    "assisted_pull_up": {
+      "name": "Tractions assistées machine",
+      "description": "Machine à contre-poids qui réduit ton poids corporel. Permet d'apprendre le geste des tractions avec une charge adaptée à ton niveau."
+    },
+    "machine_lateral_raise": {
+      "name": "Élévations latérales machine",
+      "description": "Machine guidée pour les élévations. La trajectoire fixe aide à cibler le deltoïde médian sans compensation. Contrôle le retour."
+    },
+    "cable_rear_delt": {
+      "name": "Oiseau poulie basse",
+      "description": "Poulie basse de côté ou en croix, tire vers l'arrière-haut en arc de cercle. Tension constante sur le deltoïde postérieur."
+    },
+    "lu_raise": {
+      "name": "Lu raises",
+      "description": "Combinaison frontale + élévation latérale + coup de corps en une seule répétition. Popularisé par Lu Xiaojun, travaille tout le deltoïde."
+    },
+    "handstand_push_up": {
+      "name": "Pompes en équilibre (HSPU)",
+      "description": "En appui renversé contre un mur, fléchis les coudes jusqu'à ce que la tête touche le sol. Force et coordination maximales."
+    },
+    "z_press": {
+      "name": "Z-press",
+      "description": "Assis au sol jambes tendues devant toi, pousse la barre ou les haltères au-dessus de la tête. Exige une excellente mobilité des hanches et du dos."
+    },
+    "reverse_curl": {
+      "name": "Curl reverse",
+      "description": "Prise pronation (dos de la main vers le haut), curl classique. Cible le brachioradial et la longue portion du biceps en position étirée."
+    },
+    "zottman_curl": {
+      "name": "Curl Zottman",
+      "description": "Monte en supination puis tourne en pronation pour la descente. Combine le curl classique et le reverse curl dans un seul mouvement."
+    },
+    "drag_curl": {
+      "name": "Drag curl",
+      "description": "Tire la barre le long du corps en reculant les coudes en arrière. Recrute plus la longue portion du biceps qu'un curl classique."
+    },
+    "cross_body_cable_curl": {
+      "name": "Curl câble croisé",
+      "description": "Poulie haute sur le côté opposé, curl vers ton visage. La rotation de l'humérus crée un pic de contraction exceptionnel sur la courte portion."
+    },
+    "waiter_curl": {
+      "name": "Waiter curl",
+      "description": "Tiens un seul haltère à deux mains en coupe, coudes collés contre le corps. Maintient une supination maximale tout au long du mouvement."
+    },
+    "pushdown_bar": {
+      "name": "Pushdown barre droite",
+      "description": "Poulie haute avec barre droite, coudes fixes aux flancs. Extension complète en bas. Permet de charger plus lourd que la corde."
+    },
+    "single_arm_cable_ext": {
+      "name": "Extension triceps poulie uni.",
+      "description": "Poulie haute, un bras derrière la tête, étends le coude. Corrige les déséquilibres et augmente l'amplitude de la longue portion."
+    },
+    "cable_kickback_tri": {
+      "name": "Kickback câble triceps",
+      "description": "Poulie basse, penché en avant, coude fixe au flanc. Étends le bras vers l'arrière jusqu'à l'extension complète. Tension constante vs haltère."
+    },
+    "band_pushdown": {
+      "name": "Pushdown élastique",
+      "description": "Élastique accroché en hauteur, pushdown classique. Idéal en finisher haute répétition pour le pump des triceps."
+    },
+    "bench_dip_weighted": {
+      "name": "Dips banc lesté",
+      "description": "Dips sur banc avec un disque de poids posé sur les cuisses. Augmente la résistance quand les dips bodyweight deviennent trop faciles."
+    },
+    "reverse_lunge": {
+      "name": "Fentes arrière haltères",
+      "description": "Recule un pied en fente, genou arrière à 2 cm du sol. Plus stable que les fentes avant, moins de stress sur le genou avant."
+    },
+    "single_leg_press": {
+      "name": "Presse unilatérale",
+      "description": "Presse à cuisses sur une jambe pour corriger les déséquilibres. Réduis la charge à 50-60 % de ta charge bilatérale."
+    },
+    "high_foot_leg_press": {
+      "name": "Presse pieds hauts",
+      "description": "Pieds placés haut sur la plateforme, descends profondément. Transfère davantage de charge sur les ischio et les fessiers."
+    },
+    "belt_squat": {
+      "name": "Belt squat",
+      "description": "Charge suspendue à une ceinture de hanches. Squat profond sans charge sur le rachis, idéal pour les personnes ayant des problèmes de dos."
+    },
+    "split_squat": {
+      "name": "Split squat",
+      "description": "Position de fente statique, descends et remonte sans avancer le pied. Travail unilatéral simple et efficace pour les quadriceps."
+    },
+    "leg_press_close": {
+      "name": "Presse pieds rapprochés",
+      "description": "Pieds rapprochés au centre de la plateforme. Cible davantage le vaste latéral et le droit fémoral."
+    },
+    "hyperextension": {
+      "name": "Hyperextension (dos)",
+      "description": "Sur le banc romains, penche le buste en avant et remonte jusqu'à l'alignement. Travaille ischio, fessiers et lombaires. Garde le dos plat."
+    },
+    "single_leg_rdl": {
+      "name": "SDT roumain unilatéral",
+      "description": "RDL sur une jambe, haltère dans la main opposée. Améliore l'équilibre et corrige les déséquilibres. Garde le dos plat et le bassin horizontal."
+    },
+    "glute_ham_raise": {
+      "name": "Glute-Ham Raise",
+      "description": "Machine GHR, fléchis le buste en contractant les ischio en fin de mouvement. Combine la flexion du genou et l'extension de la hanche pour les ischio."
+    },
+    "standing_leg_curl": {
+      "name": "Leg curl debout (machine)",
+      "description": "Machine debout, fléchis le genou pour ramener le talon vers la fesse. Travail unilatéral permettant d'identifier et corriger les déséquilibres."
+    },
+    "banded_good_morning": {
+      "name": "Good morning élastique",
+      "description": "Élastique sous les pieds et sur la nuque, incline le buste vers l'avant. Version débutante du good morning pour apprendre le hip hinge."
+    },
+    "clamshell": {
+      "name": "Clamshell (palourde)",
+      "description": "Allongé sur le côté, genoux fléchis, ouvre le genou supérieur comme une palourde. Cible le fessier moyen et les rotateurs externes. Ajoute un élastique."
+    },
+    "fire_hydrant": {
+      "name": "Fire hydrant",
+      "description": "À quatre pattes, élève un genou fléchi sur le côté jusqu'à l'horizontale. Cible le fessier moyen. Garde le bassin stable, ne laisse pas le dos se creuser."
+    },
+    "cable_pull_through": {
+      "name": "Cable pull-through",
+      "description": "Dos à la poulie basse, attraphe la corde entre les jambes. Hip hinge vers l'avant puis poussée des hanches en avant en contractant fessiers et ischio."
+    },
+    "reverse_hyper": {
+      "name": "Reverse hyperextension",
+      "description": "Haut du corps sur le banc, lève les jambes tendues vers l'arrière. Cible fessiers et lombaires en décompressant les disques vertébraux."
+    },
+    "sumo_squat_bb": {
+      "name": "Squat sumo barre",
+      "description": "Écartement très large, pieds pointés à 45°, barre sur les trapèzes. Sollicite davantage fessiers et adducteurs qu'un squat conventionnel."
+    },
+    "donkey_kick": {
+      "name": "Donkey kick",
+      "description": "À quatre pattes, pousse un pied vers le plafond en gardant le genou fléchi à 90°. Contraction maximale du fessier en haut. Ajoute un élastique."
+    },
+    "single_calf_raise": {
+      "name": "Mollets unilatéral",
+      "description": "Sur une jambe, monte sur la pointe du pied avec ton poids corporel ou en tenant un haltère. Double la résistance et améliore l'équilibre."
+    },
+    "barbell_calf_raise": {
+      "name": "Mollets barre",
+      "description": "Barre sur les trapèzes, monte sur la pointe des pieds. Permet de charger plus lourd qu'à la machine ou au poids de corps."
+    },
+    "step_calf_raise": {
+      "name": "Mollets sur marche",
+      "description": "Pointe du pied sur le bord d'une marche, talon dans le vide. L'amplitude supplémentaire en bas offre un étirement maximal des gastrocnémiens."
+    },
+    "tibia_raise": {
+      "name": "Tibia raise",
+      "description": "Dos au mur, relève la pointe des pieds en gardant les talons au sol. Travaille le tibial antérieur, antagoniste souvent négligé des mollets."
+    },
+    "hollow_body": {
+      "name": "Hollow body hold",
+      "description": "Allongé, lombaires plaquées au sol, bras et jambes en l'air tendus à quelques cm du sol. Corps en forme de banane inversée. Position clé de la gym."
+    },
+    "toes_to_bar": {
+      "name": "Toes to bar",
+      "description": "Suspendu à la barre, lève les orteils jusqu'à toucher la barre. Contrôle le balancement, initie le mouvement avec les abdos pas les épaules."
+    },
+    "pallof_press": {
+      "name": "Pallof press",
+      "description": "De côté par rapport à une poulie, étends les bras devant toi et résiste à la rotation. Travaille l'anti-rotation, fondamental pour la stabilité du core."
+    },
+    "wood_chop": {
+      "name": "Wood chop (bûcheron)",
+      "description": "Poulie haute ou basse, rotation diagonale du buste de façon contrôlée. Travaille les obliques en rotation, mouvement fonctionnel."
+    },
+    "decline_crunch": {
+      "name": "Crunch décliné",
+      "description": "Sur banc décliné, crunch vers les genoux. La déclinaison augmente l'amplitude et la difficulté. Ajoute un disque tenu sur la poitrine."
+    },
+    "flutter_kicks": {
+      "name": "Flutter kicks",
+      "description": "Allongé sur le dos, jambes légèrement au-dessus du sol, bats des pieds en alternance. Lombaires plaquées au sol, travail constant des bas abdos."
+    },
+    "mountain_climber": {
+      "name": "Mountain climbers",
+      "description": "En position de pompe, ramène les genoux vers la poitrine en alternant rapidement. Combine gainage et cardio. Garde les hanches basses."
+    },
+    "l_sit": {
+      "name": "L-sit",
+      "description": "En appui sur des barres parallèles ou au sol, lève les jambes tendues à l'horizontale et maintiens. Exige une force abdominale et des fléchisseurs de hanche exceptionnelle."
+    },
+    "dead_bug": {
+      "name": "Dead bug",
+      "description": "Sur le dos, bras et genoux à 90°. Étends bras opposé et jambe opposée simultanément en gardant les lombaires plaquées. Excellent pour la proprioception du core."
+    },
+    "v_up": {
+      "name": "V-up",
+      "description": "Simultanément, lève les jambes tendues et le buste pour former un V. Touche les orteils avec les doigts. Contracte fort les abdos en haut."
+    }
+  },
+  "muscleGroups": {
+    "chest": "Pectoraux",
+    "back": "Dos",
+    "shoulders": "Épaules",
+    "biceps": "Biceps",
+    "triceps": "Triceps",
+    "quads": "Quadriceps",
+    "hamstrings": "Ischio-jambiers",
+    "glutes": "Fessiers",
+    "calves": "Mollets",
+    "abs": "Abdominaux"
+  },
+  "equipment": {
+    "bodyweight": "Poids de corps",
+    "dumbbells": "Haltères",
+    "barbell": "Barre + rack",
+    "pull_up_bar": "Barre de traction",
+    "resistance_band": "Élastiques",
+    "cables": "Câbles / poulies",
+    "machines": "Machines"
+  },
+  "program": {
+    "focus": {
+      "glutes": "Fessiers",
+      "hamstrings": "Ischio",
+      "quads": "Quadriceps",
+      "chest": "Pectoraux",
+      "back": "Dos",
+      "shoulders": "Épaules",
+      "biceps": "Biceps",
+      "triceps": "Triceps",
+      "abs": "Abdos",
+      "absLong": "Abdominaux",
+      "absOptional": "(Abdos)",
+      "calves": "Mollets",
+      "arms": "Bras",
+      "compoundLowerChest": "Compound Bas + Pec",
+      "heavyCompounds": "Compound lourds",
+      "fullStrength": "Force complète"
+    },
+    "days": {
+      "chestTri": "Pec + Triceps {{v}}",
+      "backBi": "Dos + Biceps {{v}}",
+      "shoulderAbs": "Épaules + Abdos",
+      "armsCore": "Bras + Core"
+    },
+    "splits": {
+      "female3": "Split 3j Femme · 2× Bas",
+      "female4": "Split 4j Femme · 2× Bas",
+      "female5": "Split 5j Femme · 2× Bas",
+      "female6": "Split 6j Femme · 3× Bas",
+      "bodyPart4": "Split 4j · Groupes musculaires",
+      "bodyPart5": "Split 5j · Groupes musculaires",
+      "bodyPart6": "Split 6j · Groupes musculaires"
+    },
+    "splitDesc": {
+      "1": "1 séance complète par semaine",
+      "2": "Alternance 2 séances complètes",
+      "3": "Split classique 3 jours · Femme avancée : 2× Bas du corps",
+      "4": "Haut × 2 + Bas × 2 · Avancé : Split groupes musculaires",
+      "5": "Push·Pull·Legs + Upper·Lower · Avancé : 5j groupes musculaires",
+      "6": "PPL × 2 · Avancé : 6j groupes musculaires (femme : 3× Bas)"
+    },
+    "levelDesc": {
+      "beginner": "Moins d'1 an · Machines & haltères · Séries droites",
+      "intermediate": "1 à 3 ans · Barres & haltères · Supersets antagonistes",
+      "advanced": "3+ ans · Techniques d'intensification · Volume élevé"
+    },
+    "genderDesc": {
+      "female": "Focus fessiers · ischio · abdos · bas du corps",
+      "male": "Focus pectoraux · dos · épaules · bras"
+    },
+    "techniqueNotes": {
+      "none": "",
+      "superset": "Enchaîner A et B sans repos · Repos après B seulement",
+      "biset": "Enchaîner les 2 exercices sans repos · Repos après le 2ᵉ",
+      "dropset": "Dernier set : réduire la charge de 20-30 % à chaque échec (2-3 drops)",
+      "rest_pause": "À l'échec → 15-20 s de repos → continuer jusqu'au prochain échec (2-3 mini-séries)"
+    }
+  },
+  "notifications": {
+    "markDone": "✓ Fait !",
+    "snooze30": "⏰ 30 min",
+    "channels": {
+      "habitsName": "Rappels d'habitudes",
+      "habitsDesc": "Notifications quotidiennes pour tes habitudes",
+      "mealsName": "Rappels repas",
+      "mealsDesc": "Notifications quotidiennes pour logger tes repas",
+      "workoutsName": "Rappels de séance",
+      "workoutsDesc": "Rappels hebdomadaires pour tes séances de musculation"
+    },
+    "habitBody": "C'est l'heure de ton habitude !",
+    "meals": {
+      "breakfastTitle": "🌅 Petit-déjeuner",
+      "breakfastBody": "N'oublie pas de logger ton petit-déjeuner !",
+      "lunchTitle": "☀️ Déjeuner",
+      "lunchBody": "C'est l'heure du déjeuner, pense à le logger !",
+      "dinnerTitle": "🌙 Dîner",
+      "dinnerBody": "N'oublie pas de logger ton dîner !",
+      "snackTitle": "🍎 Collation",
+      "snackBody": "Tu as grignoté ? Pense à le logger !",
+      "defaultTitle": "🍽 Repas",
+      "defaultBody": "N'oublie pas de logger ton repas !"
+    },
+    "workoutTitle": "💪 C'est jour de séance !",
+    "weekdays": {
+      "1": "Dim",
+      "2": "Lun",
+      "3": "Mar",
+      "4": "Mer",
+      "5": "Jeu",
+      "6": "Ven",
+      "7": "Sam"
+    },
+    "permissionDeniedMessage": "Active les notifications pour Vitacairn dans les paramètres de ton téléphone."
+  },
+  "errors": {
+    "googleNoToken": "Google n'a pas renvoyé d'idToken. Vérifie le Web client ID et le SHA-1 dans Firebase.",
+    "appleNoToken": "Apple n'a pas renvoyé d'identityToken.",
+    "noAccount": "Aucun compte connecté.",
+    "reauthCancelled": "Reconnexion annulée.",
+    "exportTitle": "Mes données Vitacairn",
+    "aiUnreadable": "Réponse Gemini illisible : {{text}}",
+    "voiceNoFood": "Je n'ai reconnu aucun aliment. Réessaie en précisant les quantités.",
+    "network": "Réseau : HTTP {{status}}",
+    "productNotFound": "Produit introuvable. Vérifie que le code-barres est lisible.",
+    "noNutrition": "Données nutritionnelles indisponibles pour ce produit.",
+    "unknownFood": "Aliment inconnu",
+    "photoConversion": "Conversion de la photo impossible"
+  },
+  "portions": {
+    "pomme_de_terre": "pomme de terre moyenne",
+    "frite": "portion de frites",
+    "pain_de_mie": "tranche de pain de mie",
+    "pain_complet": "tranche de pain complet",
+    "baguette": "baguette entière",
+    "tranche_pain": "tranche de pain",
+    "croissant": "croissant moyen",
+    "pain_au_chocolat": "pain au chocolat",
+    "pain_aux_raisins": "pain aux raisins",
+    "brioche": "tranche de brioche",
+    "biscotte": "biscotte",
+    "galette_riz": "galette de riz",
+    "pomme": "pomme moyenne",
+    "poire": "poire moyenne",
+    "banane": "banane moyenne (sans peau ~100g)",
+    "orange": "orange moyenne",
+    "clementine": "clémentine",
+    "mandarine": "mandarine",
+    "kiwi": "kiwi moyen",
+    "peche": "pêche moyenne",
+    "nectarine": "nectarine moyenne",
+    "abricot": "abricot moyen",
+    "prune": "prune moyenne",
+    "figue": "figue moyenne",
+    "mangue": "demi-mangue",
+    "avocat": "demi-avocat",
+    "citron": "citron moyen",
+    "pamplemousse": "demi-pamplemousse",
+    "fraise": "fraise moyenne",
+    "cerise": "cerise",
+    "raisin": "grain de raisin",
+    "ananas": "tranche d'ananas",
+    "melon": "tranche de melon",
+    "pasteque": "tranche de pastèque",
+    "litchi": "litchi",
+    "grenade": "grenade entière",
+    "carotte": "carotte moyenne",
+    "tomate": "tomate moyenne",
+    "courgette": "courgette moyenne",
+    "aubergine": "aubergine moyenne",
+    "poivron": "poivron moyen",
+    "oignon": "oignon moyen",
+    "echalote": "échalote",
+    "ail": "gousse d'ail",
+    "champignon": "champignon moyen",
+    "brocoli": "fleurette de brocoli",
+    "chou_fleur": "fleurette de chou-fleur",
+    "concombre": "demi-concombre",
+    "radis": "radis",
+    "cornichon": "cornichon",
+    "endive": "endive",
+    "artichaut": "artichaut entier",
+    "poireau": "poireau moyen",
+    "navet": "navet moyen",
+    "betterave": "petite betterave",
+    "celeri": "branche de céleri",
+    "oeuf": "œuf moyen (coquille ~60g, contenu ~50g)",
+    "yaourt_nature": "pot de yaourt",
+    "fromage_blanc": "portion de fromage blanc",
+    "petit_suisse": "petit-suisse",
+    "camembert": "portion de camembert (1/4)",
+    "brie": "portion de brie",
+    "emmental": "tranche d'emmental",
+    "gruyere": "portion de gruyère",
+    "comte": "portion de comté",
+    "raclette": "tranche de raclette",
+    "roquefort": "portion de roquefort",
+    "mozzarella": "tranche de mozzarella",
+    "vache_qui_rit": "portion La Vache qui rit",
+    "jambon_tranche": "tranche de jambon",
+    "saucisse": "saucisse moyenne",
+    "merguez": "merguez",
+    "chipolata": "chipolata",
+    "steak_hache": "steak haché standard",
+    "steak": "steak moyen",
+    "escalope": "escalope moyenne",
+    "blanc_poulet": "blanc de poulet",
+    "cuisse_poulet": "cuisse de poulet",
+    "cotelette": "côtelette moyenne",
+    "tranche_bacon": "tranche de bacon",
+    "sardine": "sardine",
+    "crevette": "crevette",
+    "moule": "moule (chair)",
+    "huitre": "huître (chair)",
+    "filet_saumon": "filet de saumon",
+    "filet_cabillaud": "filet de cabillaud",
+    "carre_chocolat": "carré de chocolat",
+    "tablette_chocolat": "tablette de chocolat",
+    "biscuit_lu": "biscuit LU",
+    "oreo": "biscuit Oreo",
+    "biscuit": "biscuit moyen",
+    "bonbon": "bonbon",
+    "madeleine": "madeleine",
+    "financier": "financier",
+    "macaron": "macaron",
+    "eclair": "éclair",
+    "choux": "chou à la crème",
+    "muffin": "muffin standard",
+    "sucre_cube": "cube de sucre",
+    "noix": "noix entière (cerneaux ~7g)",
+    "noisette": "noisette",
+    "amande": "amande",
+    "cacahuete": "cacahuète",
+    "datte": "datte",
+    "pruneau": "pruneau"
+  },
+  "tabs": {
+    "home": "Aujourd'hui",
+    "stats": "Statistiques",
+    "calories": "Calories",
+    "sport": "Sport",
+    "profile": "Profil"
+  }
+}

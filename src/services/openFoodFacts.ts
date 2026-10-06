@@ -1,4 +1,5 @@
 import { Macros } from '@/types';
+import i18n from '@/i18n';
 
 export interface ProductInfo {
   name: string;
@@ -155,11 +156,11 @@ export async function searchByName(query: string, signal?: AbortSignal): Promise
 export async function lookupBarcode(barcode: string): Promise<ProductInfo> {
   const url = `https://world.openfoodfacts.org/api/v2/product/${barcode}.json?fields=product_name,product_name_fr,brands,nutriments,serving_size`;
   const response = await fetch(url);
-  if (!response.ok) throw new Error(`Réseau: HTTP ${response.status}`);
+  if (!response.ok) throw new Error(i18n.t('errors.network', { status: response.status }));
   const data = await response.json();
-  if (data.status !== 1) throw new Error('Produit introuvable. Vérifie que le code-barres est lisible.');
+  if (data.status !== 1) throw new Error(i18n.t('errors.productNotFound'));
 
   const product = parseProduct({ ...data.product, code: barcode });
-  if (!product) throw new Error('Données nutritionnelles indisponibles pour ce produit.');
+  if (!product) throw new Error(i18n.t('errors.noNutrition'));
   return product;
 }

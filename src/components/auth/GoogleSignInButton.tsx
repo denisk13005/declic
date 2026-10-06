@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { signInWithGoogle } from '@/services/firebase';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
 
@@ -17,7 +18,8 @@ import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/the
  * Gère le loading, l'annulation (silencieuse) et l'affichage des erreurs.
  * Après succès, redirige vers "/" qui route selon l'état d'onboarding.
  */
-export default function GoogleSignInButton({ label = 'Continuer avec Google' }: { label?: string }) {
+export default function GoogleSignInButton({ label }: { label?: string }) {
+  const { t } = useTranslation();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -32,9 +34,9 @@ export default function GoogleSignInButton({ label = 'Continuer avec Google' }: 
     } catch (err: any) {
       const msg =
         err?.code === 'auth/account-exists-with-different-credential'
-          ? 'Un compte existe déjà avec cet email (via un autre mode de connexion).'
-          : err?.message ?? 'Une erreur est survenue.';
-      Alert.alert('Connexion Google échouée', msg);
+          ? t('auth.google.otherProvider')
+          : err?.message ?? t('auth.genericError');
+      Alert.alert(t('auth.google.failedTitle'), msg);
     } finally {
       setLoading(false);
     }
@@ -44,7 +46,7 @@ export default function GoogleSignInButton({ label = 'Continuer avec Google' }: 
     <View style={styles.wrapper}>
       <View style={styles.dividerRow}>
         <View style={styles.dividerLine} />
-        <Text style={styles.dividerText}>ou</Text>
+        <Text style={styles.dividerText}>{t('auth.or')}</Text>
         <View style={styles.dividerLine} />
       </View>
 
@@ -59,7 +61,7 @@ export default function GoogleSignInButton({ label = 'Continuer avec Google' }: 
         ) : (
           <>
             <Ionicons name="logo-google" size={20} color={COLORS.textPrimary} />
-            <Text style={styles.btnText}>{label}</Text>
+            <Text style={styles.btnText}>{label ?? t('auth.google.default')}</Text>
           </>
         )}
       </TouchableOpacity>

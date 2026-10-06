@@ -13,7 +13,8 @@ import {
 } from 'react-native';
 import Svg, { Polyline, Line, Text as SvgText, Circle } from 'react-native-svg';
 import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
+import { dateLocale } from '@/i18n';
 import { useWeightStore } from '@/stores/weightStore';
 import { useCalorieStore } from '@/stores/calorieStore';
 import { WeightEntry } from '@/types';
@@ -38,10 +39,11 @@ function WeightChart({
   entries: WeightEntry[];
   targetWeight: number | null;
 }) {
+  const { t } = useTranslation();
   if (entries.length === 0) {
     return (
       <View style={styles.chartEmpty}>
-        <Text style={styles.chartEmptyText}>Aucune donnée à afficher</Text>
+        <Text style={styles.chartEmptyText}>{t('weight.noData')}</Text>
       </View>
     );
   }
@@ -137,6 +139,7 @@ function WeightChart({
 }
 
 export default function WeightModal({ visible, onClose }: Props) {
+  const { t } = useTranslation();
   const { logWeight, getRecentWeights, getLatestWeight } = useWeightStore();
   const { goals } = useCalorieStore();
 
@@ -158,7 +161,7 @@ export default function WeightModal({ visible, onClose }: Props) {
   function handleSave() {
     const w = parseFloat(weightInput.replace(',', '.'));
     if (isNaN(w) || w <= 0 || w > 500) {
-      Alert.alert('Erreur', 'Entre un poids valide (en kg).');
+      Alert.alert(t('common.error'), t('weight.invalid'));
       return;
     }
     logWeight(w);
@@ -167,7 +170,7 @@ export default function WeightModal({ visible, onClose }: Props) {
     onClose();
   }
 
-  const today = format(new Date(), 'EEEE d MMMM', { locale: fr });
+  const today = format(new Date(), t('home.dateFormat'), { locale: dateLocale() });
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -178,7 +181,7 @@ export default function WeightModal({ visible, onClose }: Props) {
         <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
         <View style={styles.sheet}>
           <View style={styles.handle} />
-          <Text style={styles.title}>Poids corporel</Text>
+          <Text style={styles.title}>{t('weight.title')}</Text>
 
           <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
             {/* Chart */}
@@ -187,20 +190,20 @@ export default function WeightModal({ visible, onClose }: Props) {
               {goals.targetWeight != null && (
                 <View style={styles.legendRow}>
                   <View style={[styles.legendDot, { backgroundColor: COLORS.success }]} />
-                  <Text style={styles.legendText}>Objectif : {goals.targetWeight} kg</Text>
+                  <Text style={styles.legendText}>{t('weight.goal', { weight: goals.targetWeight })}</Text>
                 </View>
               )}
             </View>
 
             {/* Log weight */}
-            <Text style={styles.sectionLabel}>Logger mon poids — {today}</Text>
+            <Text style={styles.sectionLabel}>{t('weight.logToday', { date: today })}</Text>
             <View style={styles.inputRow}>
               <TextInput
                 style={[styles.input, { flex: 1 }]}
                 value={weightInput}
                 onChangeText={setWeightInput}
                 keyboardType="decimal-pad"
-                placeholder="ex: 72.5"
+                placeholder={t('weight.placeholder')}
                 placeholderTextColor={COLORS.textTertiary}
                 returnKeyType="done"
                 onSubmitEditing={handleSave}
@@ -211,11 +214,11 @@ export default function WeightModal({ visible, onClose }: Props) {
             {/* Recent entries */}
             {recentEntries.length > 0 && (
               <>
-                <Text style={styles.sectionLabel}>30 derniers jours</Text>
+                <Text style={styles.sectionLabel}>{t('weight.last30Days')}</Text>
                 {[...recentEntries].reverse().slice(0, 7).map((e) => (
                   <View key={e.id} style={styles.entryRow}>
                     <Text style={styles.entryDate}>
-                      {format(new Date(e.date), 'd MMM', { locale: fr })}
+                      {format(new Date(e.date), 'd MMM', { locale: dateLocale() })}
                     </Text>
                     <Text style={styles.entryWeight}>{e.weight} kg</Text>
                   </View>
@@ -225,7 +228,7 @@ export default function WeightModal({ visible, onClose }: Props) {
           </ScrollView>
 
           <TouchableOpacity style={styles.btn} onPress={handleSave} activeOpacity={0.8}>
-            <Text style={styles.btnText}>Enregistrer</Text>
+            <Text style={styles.btnText}>{t('common.save')}</Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>

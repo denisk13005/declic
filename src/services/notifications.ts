@@ -3,6 +3,7 @@ import * as Device from 'expo-device';
 import * as IntentLauncher from 'expo-intent-launcher';
 import { Platform } from 'react-native';
 import { ReminderUnit } from '@/types';
+import i18n from '@/i18n';
 
 // ─── Foreground handler ───────────────────────────────────────────────────────
 
@@ -32,12 +33,12 @@ export async function setupHabitNotificationCategory(): Promise<void> {
   await Notifications.setNotificationCategoryAsync(HABIT_REMINDER_CATEGORY_ID, [
     {
       identifier: 'mark_done',
-      buttonTitle: '✓ Fait !',
+      buttonTitle: i18n.t('notifications.markDone'),
       options: { isDestructive: false, isAuthenticationRequired: false },
     },
     {
       identifier: 'snooze_30',
-      buttonTitle: '⏰ 30 min',
+      buttonTitle: i18n.t('notifications.snooze30'),
       options: { isDestructive: false, isAuthenticationRequired: false },
     },
   ]);
@@ -52,8 +53,8 @@ export async function initNotificationChannel(): Promise<void> {
   if (Platform.OS !== 'android') return;
   await setupHabitNotificationCategory();
   await Notifications.setNotificationChannelAsync(HABIT_CHANNEL_ID, {
-    name: 'Rappels d\'habitudes',
-    description: 'Notifications quotidiennes pour tes habitudes',
+    name: i18n.t('notifications.channels.habitsName'),
+    description: i18n.t('notifications.channels.habitsDesc'),
     importance: Notifications.AndroidImportance.HIGH,
     vibrationPattern: [0, 250, 250, 250],
     lightColor: '#7C3AED',
@@ -61,13 +62,13 @@ export async function initNotificationChannel(): Promise<void> {
     enableVibrate: true,
   });
   await Notifications.setNotificationChannelAsync(MEAL_CHANNEL_ID, {
-    name: 'Rappels repas',
-    description: 'Notifications quotidiennes pour logger tes repas',
+    name: i18n.t('notifications.channels.mealsName'),
+    description: i18n.t('notifications.channels.mealsDesc'),
     importance: Notifications.AndroidImportance.DEFAULT,
   });
   await Notifications.setNotificationChannelAsync(WORKOUT_CHANNEL_ID, {
-    name: 'Rappels de séance',
-    description: 'Rappels hebdomadaires pour tes séances de musculation',
+    name: i18n.t('notifications.channels.workoutsName'),
+    description: i18n.t('notifications.channels.workoutsDesc'),
     importance: Notifications.AndroidImportance.HIGH,
     vibrationPattern: [0, 250, 250, 250],
     lightColor: '#F97316',
@@ -103,7 +104,7 @@ export async function scheduleHabitReminder(
   return Notifications.scheduleNotificationAsync({
     content: {
       title: `${emoji} ${habitName}`,
-      body: "C'est l'heure de ton habitude !",
+      body: i18n.t('notifications.habitBody'),
       sound: 'default',
       data: { type: 'habit', habitId: habitId ?? null },
       categoryIdentifier: HABIT_REMINDER_CATEGORY_ID,
@@ -147,7 +148,7 @@ export async function scheduleHabitReminderFull(
 ): Promise<string> {
   const content = {
     title: `${emoji} ${habitName}`,
-    body: "C'est l'heure de ton habitude !",
+    body: i18n.t('notifications.habitBody'),
     sound: 'default' as const,
     data: { type: 'habit', habitId: habitId ?? null },
     categoryIdentifier: HABIT_REMINDER_CATEGORY_ID,
@@ -211,7 +212,7 @@ export async function scheduleHourlyWindowReminders(
 ): Promise<string[]> {
   const content = {
     title: `${emoji} ${habitName}`,
-    body: "C'est l'heure de ton habitude !",
+    body: i18n.t('notifications.habitBody'),
     sound: 'default' as const,
     data: { type: 'habit', habitId: habitId ?? null },
     categoryIdentifier: HABIT_REMINDER_CATEGORY_ID,
@@ -236,19 +237,18 @@ export async function scheduleHourlyWindowReminders(
 
 export const MEAL_CHANNEL_ID = 'meals';
 
-const MEAL_LABELS: Record<string, { title: string; body: string }> = {
-  breakfast: { title: '🌅 Petit-déjeuner', body: "N'oublie pas de logger ton petit-déjeuner !" },
-  lunch:     { title: '☀️ Déjeuner',       body: "C'est l'heure du déjeuner, pense à le logger !" },
-  dinner:    { title: '🌙 Dîner',          body: "N'oublie pas de logger ton dîner !" },
-  snack:     { title: '🍎 Collation',      body: 'Tu as grignoté ? Pense à le logger !' },
-};
+const MEALS_WITH_REMINDER = ['breakfast', 'lunch', 'dinner', 'snack'];
 
 export async function scheduleMealReminder(
   meal: string,
   hour: number,
   minute: number,
 ): Promise<string> {
-  const content = MEAL_LABELS[meal] ?? { title: '🍽 Repas', body: "N'oublie pas de logger ton repas !" };
+  const key = MEALS_WITH_REMINDER.includes(meal) ? meal : 'default';
+  const content = {
+    title: i18n.t(`notifications.meals.${key}Title`),
+    body: i18n.t(`notifications.meals.${key}Body`),
+  };
   return Notifications.scheduleNotificationAsync({
     content: {
       title: content.title,
@@ -288,13 +288,11 @@ export function getWorkoutWeekdays(sessionsPerWeek: number): number[] {
   return presets[Math.max(1, Math.min(7, sessionsPerWeek))] ?? [2, 4, 6];
 }
 
-/** Noms courts des jours de semaine pour l'affichage (index Expo 1-7 → libellé FR). */
-const WEEKDAY_LABELS: Record<number, string> = {
-  1: 'Dim', 2: 'Lun', 3: 'Mar', 4: 'Mer', 5: 'Jeu', 6: 'Ven', 7: 'Sam',
-};
-
 export function formatWorkoutWeekdays(sessionsPerWeek: number): string {
-  return getWorkoutWeekdays(sessionsPerWeek).map((d) => WEEKDAY_LABELS[d]).join(' · ');
+  return getWorkoutWeekdays(sessionsPerWeek)
+    // Noms courts des jours (index Expo 1-7 : 1 = dimanche)
+    .map((d) => i18n.t(`notifications.weekdays.${d}`))
+    .join(' · ');
 }
 
 /**
@@ -312,7 +310,7 @@ export async function scheduleWorkoutReminders(
   for (const weekday of weekdays) {
     const id = await Notifications.scheduleNotificationAsync({
       content: {
-        title: '💪 C\'est jour de séance !',
+        title: i18n.t('notifications.workoutTitle'),
         body: splitName,
         sound: 'default',
         data: { type: 'workout' },

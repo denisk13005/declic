@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTranslation } from 'react-i18next';
 import {
   RecordingPresets,
   requestRecordingPermissionsAsync,
@@ -10,7 +11,8 @@ import {
   type RecordingOptions,
 } from 'expo-audio';
 import * as FileSystem from 'expo-file-system/legacy';
-import { analyzeFoodVoice, FoodAnalysis } from '@/services/gemini';
+import { extractMealItemsFromVoice, FoodAnalysis } from '@/services/gemini';
+import { estimateMeal, estimateSourceLabel } from '@/services/mealEstimate';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
 
 // Voix uniquement : mono 16 kHz / 32 kbps suffit (~240 Ko par minute) → upload rapide.
@@ -36,7 +38,13 @@ function formatDuration(ms: number): string {
  * Onglet « Voix IA » : l'utilisateur décrit son repas à voix haute, l'enregistrement
  * est analysé par Gemini et le résultat est remonté via `onResult`.
  */
-export default function VoiceMealInput({ onResult }: { onResult: (analysis: FoodAnalysis) => void }) {
+export default function VoiceMealInput({
+  onResult,
+}: {
+  /** `sourceLabel` indique d'où viennent les valeurs (base Ciqual ou estimation IA) */
+  onResult: (analysis: FoodAnalysis, sourceLabel: string) => void;
+}) {
+  const { t } = useTranslation();
   const recorder = useAudioRecorder(VOICE_RECORDING);
   const recorderState = useAudioRecorderState(recorder, 250);
   const [phase, setPhase] = useState<Phase>('idle');
@@ -67,7 +75,7 @@ export default function VoiceMealInput({ onResult }: { onResult: (analysis: Food
   async function startRecording() {
     const { granted } = await requestRecordingPermissionsAsync();
     if (!granted) {
-      Alert.alert('Micro refusé', "L'accès au micro est nécessaire pour dicter ton repas. Tu peux l'activer dans les réglages du téléphone.");
+      Alert.alert(t('voice.micDeniedTitle'), t('voice.micDeniedMessage'));
       return;
     }
     try {
@@ -77,7 +85,7 @@ export default function VoiceMealInput({ onResult }: { onResult: (analysis: Food
       setPhase('recording');
     } catch (err: any) {
       setPhase('idle');
-      Alert.alert('Enregistrement impossible', err?.message ?? "Le micro n'a pas pu démarrer.");
+      Alert.alert(t('voice.recordingFailedTitle'), err?.message ?? t('voice.recordingFailedDefault'));
     }
   }
 
@@ -91,16 +99,17 @@ export default function VoiceMealInput({ onResult }: { onResult: (analysis: Food
       await recorder.stop();
       await setAudioModeAsync({ allowsRecording: false });
       uri = recorder.uri;
-      if (!uri) throw new Error("L'enregistrement est introuvable.");
+      if (!uri) throw new Error(t('voice.recordingMissing'));
       if (duration < MIN_DURATION_MS) {
-        throw new Error('Enregistrement trop court : maintiens la parole quelques secondes.');
+        throw new Error(t('voice.tooShort'));
       }
 
       const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
-      const analysis = await analyzeFoodVoice(base64);
-      onResult(analysis);
+      const items = await extractMealItemsFromVoice(base64);
+      const estimate = await estimateMeal(items);
+      onResult(estimate.analysis, estimateSourceLabel(estimate));
     } catch (err: any) {
-      Alert.alert('Analyse échouée', err?.message ?? "L'IA n'a pas pu estimer ton repas.");
+      Alert.alert(t('voice.analysisFailedTitle'), err?.message ?? t('voice.analysisFailedDefault'));
     } finally {
       // Fichier temporaire : inutile de le garder (et contient la voix de l'utilisateur)
       if (uri) FileSystem.deleteAsync(uri, { idempotent: true }).catch(() => undefined);
@@ -119,7 +128,7 @@ export default function VoiceMealInput({ onResult }: { onResult: (analysis: Food
         disabled={analyzing}
         activeOpacity={0.8}
         accessibilityRole="button"
-        accessibilityLabel={recording ? "Arrêter l'enregistrement" : 'Dicter mon repas'}
+        accessibilityLabel={recording ? t('voice.a11yStop') : t('voice.a11yStart')}
       >
         {analyzing ? (
           <ActivityIndicator color={COLORS.primary} />
@@ -136,10 +145,10 @@ export default function VoiceMealInput({ onResult }: { onResult: (analysis: Food
 
       <Text style={styles.hint}>
         {analyzing
-          ? 'Analyse en cours…'
+          ? t('common.analyzing')
           : recording
-            ? 'Je t’écoute… Appuie sur ◼ quand tu as fini.'
-            : 'Appuie sur le micro et décris ton repas avec les quantités.\nEx : « 200 g de riz, un blanc de poulet et une pomme »'}
+            ? t('voice.listening')
+            : t('voice.hint')}
       </Text>
     </View>
   );
