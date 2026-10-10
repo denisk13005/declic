@@ -1,5 +1,9 @@
 # Déclic — Dev Log
 
+## 2026-10-06 — Langue de secours : anglais
+
+- Téléphone dans une langue non traduite (espagnol, ourdou…) → l'app s'affiche en **anglais** (avant : français). `FALLBACK = 'en'` dans `src/i18n/index.ts` (+ secours de la langue de sortie Gemini). Téléphones en français : inchangé.
+
 ## 2026-10-06 — Internationalisation (i18n) : mise en place + nutrition (EN COURS)
 
 - **Objectif** : commercialisation internationale. Aucune trad. existante, ~650 textes en dur dans 76 fichiers.

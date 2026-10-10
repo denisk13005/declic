@@ -193,7 +193,7 @@ Réappliquer manuellement dans cet ordre :
 
 - **Aucun texte affiché en dur** : tout texte visible passe par `t('section.cle')` (`useTranslation()` de `react-i18next` dans un composant, `i18n.t()` depuis `@/i18n` ailleurs).
 - Ajouter chaque nouvelle clé dans **`src/i18n/locales/fr.json` ET `en.json`** (le test `__tests__/i18n/locales.test.ts` échoue sinon).
-- Langue = celle du téléphone, français par défaut. Dates : `dateLocale()` de `@/i18n`.
+- Langue = celle du téléphone (fr ou en) ; **anglais** si le téléphone est dans une autre langue. Dates : `dateLocale()` de `@/i18n`.
 
 ---
 

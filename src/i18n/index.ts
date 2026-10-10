@@ -2,7 +2,7 @@
  * Traductions de l'interface (i18next).
  *
  * - Les textes sont dans `src/i18n/locales/<langue>.json` (un fichier par langue).
- * - La langue suit celle du téléphone ; français par défaut, et pour toute clé
+ * - La langue suit celle du téléphone ; anglais si elle n'est pas traduite, et pour toute clé
  *   manquante dans une langue (fallback).
  * - Usage dans un composant : `const { t } = useTranslation();` puis `t('calories.addFood')`.
  *   Hors composant : `import i18n from '@/i18n'` puis `i18n.t('...')`.
@@ -18,7 +18,8 @@ import en from './locales/en.json';
 export const SUPPORTED_LANGUAGES = ['fr', 'en'] as const;
 export type AppLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 
-const FALLBACK: AppLanguage = 'fr';
+// Langue des téléphones réglés dans une langue non traduite (anglais : la plus comprise dans le monde)
+const FALLBACK: AppLanguage = 'en';
 
 function deviceLanguage(): AppLanguage {
   const code = getLocales()[0]?.languageCode ?? FALLBACK;

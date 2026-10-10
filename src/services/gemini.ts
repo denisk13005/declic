@@ -13,7 +13,7 @@ const OUTPUT_LANGUAGE: Record<AppLanguage, string> = {
 };
 
 function outputLanguage(): string {
-  return OUTPUT_LANGUAGE[currentLanguage()] ?? OUTPUT_LANGUAGE.fr;
+  return OUTPUT_LANGUAGE[currentLanguage()] ?? OUTPUT_LANGUAGE.en;
 }
 
 const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY ?? '';
