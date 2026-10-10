@@ -684,7 +684,9 @@
     "features": {
       "noAds": "Aucune publicité",
       "unlimitedHabits_one": "Habitudes illimitées ({{count}} en version gratuite)",
-      "unlimitedHabits_other": "Habitudes illimitées ({{count}} en version gratuite)"
+      "unlimitedHabits_other": "Habitudes illimitées ({{count}} en version gratuite)",
+      "unlimitedAi_one": "Photo et voix IA illimitées ({{count}}/jour en version gratuite)",
+      "unlimitedAi_other": "Photo et voix IA illimitées ({{count}}/jour en version gratuite)"
     },
     "packages": {
       "annual": {
@@ -1696,5 +1698,14 @@
     "calories": "Calories",
     "sport": "Sport",
     "profile": "Profil"
+  },
+  "aiLimit": {
+    "title": "Limite du jour atteinte",
+    "message_one": "Tu as utilisé ton analyse IA gratuite d'aujourd'hui (photo ou voix). Passe à Premium pour des analyses illimitées, ou reviens demain.",
+    "message_other": "Tu as utilisé tes {{count}} analyses IA gratuites d'aujourd'hui (photo ou voix). Passe à Premium pour des analyses illimitées, ou reviens demain.",
+    "goPremium": "Passer à Premium",
+    "remaining_one": "{{count}} analyse IA gratuite restante aujourd’hui",
+    "remaining_other": "{{count}} analyses IA gratuites restantes aujourd’hui",
+    "noneLeft": "Plus d’analyse gratuite aujourd’hui — illimité avec Premium"
   }
 }

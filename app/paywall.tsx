@@ -23,8 +23,9 @@ import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/the
 // Uniquement ce que `isPremium` débloque réellement dans l'app (exigence stores :
 // ne jamais promettre une fonctionnalité absente).
 const FEATURES = [
-  { icon: '🚫', key: 'paywall.features.noAds' },
-  { icon: '✅', key: 'paywall.features.unlimitedHabits' },
+  { icon: '🚫', key: 'paywall.features.noAds', count: undefined },
+  { icon: '✅', key: 'paywall.features.unlimitedHabits', count: CONFIG.FREE_HABIT_LIMIT },
+  { icon: '📸', key: 'paywall.features.unlimitedAi', count: CONFIG.FREE_AI_DAILY_LIMIT },
 ] as const;
 
 // Sur Google Play, les forfaits d'un même abonnement partagent le même titre produit
@@ -141,7 +142,7 @@ export default function PaywallScreen() {
             {FEATURES.map((f) => (
               <View key={f.key} style={styles.featureRow}>
                 <Text style={styles.featureIcon}>{f.icon}</Text>
-                <Text style={styles.featureLabel}>{t(f.key, { count: CONFIG.FREE_HABIT_LIMIT })}</Text>
+                <Text style={styles.featureLabel}>{t(f.key, { count: f.count })}</Text>
               </View>
             ))}
           </View>

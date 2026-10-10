@@ -1,4 +1,8 @@
-import { Platform } from 'react-native';
+import { AppState, Platform } from 'react-native';
+import {
+  getTrackingPermissionsAsync,
+  requestTrackingPermissionsAsync,
+} from 'expo-tracking-transparency';
 import {
   MobileAds,
   BannerAd,
@@ -70,7 +74,36 @@ export async function initAds(): Promise<void> {
   } catch (e) {
     console.warn('[ads] UMP consent error:', e);
   }
+  await requestIosTracking();
   await MobileAds().initialize();
+}
+
+/**
+ * iOS uniquement : fenêtre Apple « Autoriser le suivi ? » (App Tracking Transparency).
+ * Obligatoire avant que le SDK pub n'utilise l'identifiant publicitaire (IDFA).
+ * Posée une seule fois (iOS ne la réaffiche pas) ; refus → pubs non ciblées, l'app marche pareil.
+ * Texte de la fenêtre : `user_tracking_usage_description` (plugin AdMob, app.config.js).
+ * Appelée après le message RGPD, comme le recommande Google.
+ */
+async function requestIosTracking(): Promise<void> {
+  if (Platform.OS !== 'ios') return;
+  try {
+    // iOS ignore la demande si l'app n'est pas au premier plan (ex. lancement en arrière-plan)
+    if (AppState.currentState !== 'active') {
+      await new Promise<void>((resolve) => {
+        const sub = AppState.addEventListener('change', (state) => {
+          if (state === 'active') {
+            sub.remove();
+            resolve();
+          }
+        });
+      });
+    }
+    const { status } = await getTrackingPermissionsAsync();
+    if (status === 'undetermined') await requestTrackingPermissionsAsync();
+  } catch (e) {
+    console.warn('[ads] ATT request error:', e);
+  }
 }
 
 /**

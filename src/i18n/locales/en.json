@@ -684,7 +684,9 @@
     "features": {
       "noAds": "No ads",
       "unlimitedHabits_one": "Unlimited habits ({{count}} in the free version)",
-      "unlimitedHabits_other": "Unlimited habits ({{count}} in the free version)"
+      "unlimitedHabits_other": "Unlimited habits ({{count}} in the free version)",
+      "unlimitedAi_one": "Unlimited photo & voice AI ({{count}}/day in the free version)",
+      "unlimitedAi_other": "Unlimited photo & voice AI ({{count}}/day in the free version)"
     },
     "packages": {
       "annual": {
@@ -1696,5 +1698,14 @@
     "calories": "Calories",
     "sport": "Workout",
     "profile": "Profile"
+  },
+  "aiLimit": {
+    "title": "Daily limit reached",
+    "message_one": "You've used today's free AI analysis (photo or voice). Go Premium for unlimited analyses, or come back tomorrow.",
+    "message_other": "You've used your {{count}} free AI analyses for today (photo or voice). Go Premium for unlimited analyses, or come back tomorrow.",
+    "goPremium": "Go Premium",
+    "remaining_one": "{{count}} free AI analysis left today",
+    "remaining_other": "{{count}} free AI analyses left today",
+    "noneLeft": "No free analyses left today — unlimited with Premium"
   }
 }

@@ -1,5 +1,18 @@
 # Déclic — Dev Log
 
+## 2026-10-10 — Limite IA pour les utilisateurs gratuits
+
+- **1 analyse IA par jour** (3 au départ, réduit à 1 sur décision de l'user : 3 = autant que de repas, aucune incitation à payer) (photo + voix confondues, `CONFIG.FREE_AI_DAILY_LIMIT`), illimité en Premium. Seules les analyses **réussies** sont comptées ; remise à zéro chaque jour.
+- `src/stores/aiUsageStore.ts` (compteur persisté `@declic/ai_usage`, logique pure `remainingFreeAnalyses` testée) ; `src/hooks/useAiQuota.ts` (`ensureQuota()` avant l'analyse → alerte « Passer à Premium » ; `recordUse()` après succès) ; `AiQuotaHint` affiche « N analyses IA gratuites restantes aujourd'hui » sous les boutons Photo IA / Voix IA.
+- `AddEntryModal` : le quota est partagé avec `VoiceMealInput` ; la modale se ferme avant d'ouvrir le paywall (sinon il s'ouvre derrière).
+- Paywall : nouvel avantage « Photo et voix IA illimitées (1/jour en version gratuite) ». Textes fr/en (`aiLimit`). 107/107.
+
+## 2026-10-10 — iOS : fenêtre de suivi (ATT) + textes d'autorisation traduits
+
+- **ATT** : `expo-tracking-transparency` (module natif → nouveau build iOS). `ads.ts > requestIosTracking()` affiche « Autoriser le suivi ? » une seule fois, après le message RGPD (UMP) et avant `MobileAds().initialize()`, en attendant que l'app soit au premier plan. Refus = pubs non ciblées. Plugin `expo-tracking-transparency` volontairement **non** ajouté (le texte vient du plugin AdMob ; évite un doublon / la permission Android AD_ID).
+- **Bug corrigé (`app.config.js`)** : options du plugin AdMob écrites en snake_case (`user_tracking_usage_description`, `delay_app_measurement_init`) → ignorées ; le texte ATT n'était dans aucun build iOS (≤ 18). Passées en camelCase, vérifié via `expo config --type introspect`.
+- **Textes d'autorisation iOS traduits** (caméra, photos, micro, Santé, suivi) : `locales` dans `app.config.js` → `src/i18n/ios/{fr,en}.json` ; `CFBundleAllowMixedLocalizations: true`. Autres langues → anglais (langue de développement iOS).
+
 ## 2026-10-06 — Langue de secours : anglais
 
 - Téléphone dans une langue non traduite (espagnol, ourdou…) → l'app s'affiche en **anglais** (avant : français). `FALLBACK = 'en'` dans `src/i18n/index.ts` (+ secours de la langue de sortie Gemini). Téléphones en français : inchangé.

@@ -12,6 +12,8 @@ export const CONFIG = {
 
   // App limits (free tier)
   FREE_HABIT_LIMIT: 1,
+  // Analyses IA (photo + voix confondues) par jour en version gratuite — Premium : illimité
+  FREE_AI_DAILY_LIMIT: 1,
 
   // Notification defaults
   DEFAULT_REMINDER_HOUR: 9,
@@ -30,5 +32,6 @@ export const CONFIG = {
     SESSIONS: '@declic/sessions',
     LAST_APP_OPEN_AD: '@declic/last_app_open_ad',
     LAST_INTERSTITIAL_AD: '@declic/last_interstitial_ad',
+    AI_USAGE: '@declic/ai_usage',
   },
 } as const;

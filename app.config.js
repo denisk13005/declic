@@ -13,12 +13,20 @@ export default ({ config }) => ({
     backgroundColor: '#0A0A0F',
   },
   assetBundlePatterns: ['**/*'],
+  // Textes des fenêtres d'autorisation iOS traduits selon la langue du téléphone
+  // (les textes de infoPlist / des plugins ci-dessous restent la version par défaut, en français)
+  locales: {
+    fr: './src/i18n/ios/fr.json',
+    en: './src/i18n/ios/en.json',
+  },
   ios: {
     supportsTablet: false,
     bundleIdentifier: 'com.declic.nutrition',
     usesAppleSignIn: true,
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
+      // Laisse iOS choisir la langue des textes système (autorisations) selon les fichiers `locales`
+      CFBundleAllowMixedLocalizations: true,
       NSUserNotificationUsageDescription:
         'Vitacairn uses notifications to remind you of your daily habits.',
       NSCameraUsageDescription:
@@ -57,10 +65,11 @@ export default ({ config }) => ({
       {
         androidAppId: 'ca-app-pub-6176341588651241~3333714691',
         iosAppId: 'ca-app-pub-6176341588651241~8983063328', // app AdMob « Vitacairn » (iOS)
-        // Délai de démarrage de l'app pour charger la pub App Open (en ms)
-        delay_app_measurement_init: false,
-        // NSUserTrackingUsageDescription : affiché si l'autorisation de suivi (ATT) est demandée sur iOS
-        user_tracking_usage_description:
+        // Noms d'options en camelCase (le plugin ignorait l'ancienne écriture snake_case)
+        delayAppMeasurementInit: false,
+        // NSUserTrackingUsageDescription : texte de la fenêtre ATT (« Autoriser le suivi ? », iOS).
+        // Obligatoire : sans lui, requestTrackingPermissionsAsync fait planter l'app.
+        userTrackingUsageDescription:
           'Ton identifiant publicitaire permet d’afficher des publicités plus pertinentes et de financer la version gratuite de Vitacairn.',
       },
     ],

@@ -13,6 +13,8 @@ import {
 import * as FileSystem from 'expo-file-system/legacy';
 import { extractMealItemsFromVoice, FoodAnalysis } from '@/services/gemini';
 import { estimateMeal, estimateSourceLabel } from '@/services/mealEstimate';
+import type { AiQuota } from '@/hooks/useAiQuota';
+import AiQuotaHint from '@/components/nutrition/AiQuotaHint';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
 
 // Voix uniquement : mono 16 kHz / 32 kbps suffit (~240 Ko par minute) → upload rapide.
@@ -40,7 +42,10 @@ function formatDuration(ms: number): string {
  */
 export default function VoiceMealInput({
   onResult,
+  aiQuota,
 }: {
+  /** Limite quotidienne d'analyses IA (partagée avec la photo) */
+  aiQuota: AiQuota;
   /** `sourceLabel` indique d'où viennent les valeurs (base Ciqual ou estimation IA) */
   onResult: (analysis: FoodAnalysis, sourceLabel: string) => void;
 }) {
@@ -73,6 +78,7 @@ export default function VoiceMealInput({
   }, [recorder]);
 
   async function startRecording() {
+    if (!aiQuota.ensureQuota()) return;
     const { granted } = await requestRecordingPermissionsAsync();
     if (!granted) {
       Alert.alert(t('voice.micDeniedTitle'), t('voice.micDeniedMessage'));
@@ -107,6 +113,7 @@ export default function VoiceMealInput({
       const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
       const items = await extractMealItemsFromVoice(base64);
       const estimate = await estimateMeal(items);
+      aiQuota.recordUse();
       onResult(estimate.analysis, estimateSourceLabel(estimate));
     } catch (err: any) {
       Alert.alert(t('voice.analysisFailedTitle'), err?.message ?? t('voice.analysisFailedDefault'));
@@ -150,6 +157,8 @@ export default function VoiceMealInput({
             ? t('voice.listening')
             : t('voice.hint')}
       </Text>
+
+      {phase === 'idle' && <AiQuotaHint remaining={aiQuota.remaining} />}
     </View>
   );
 }

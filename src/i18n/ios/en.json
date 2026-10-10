@@ -1,0 +1,10 @@
+{
+  "ios": {
+    "NSCameraUsageDescription": "Vitacairn uses the camera to scan barcodes and take photos of your meals.",
+    "NSPhotoLibraryUsageDescription": "Vitacairn accesses your photos to analyze a meal from your photo library.",
+    "NSMicrophoneUsageDescription": "Vitacairn uses the microphone so you can dictate what you ate.",
+    "NSHealthShareUsageDescription": "Vitacairn reads your burned calories (Apple Watch / Health app) to calculate your net calorie goal.",
+    "NSHealthUpdateUsageDescription": "Vitacairn does not write any data to the Health app.",
+    "NSUserTrackingUsageDescription": "Your advertising identifier is used to show more relevant ads and to fund the free version of Vitacairn."
+  }
+}

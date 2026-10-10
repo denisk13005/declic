@@ -22,6 +22,8 @@ import * as ImagePicker from 'expo-image-picker';
 import { useCalorieStore } from '@/stores/calorieStore';
 import { useAppColors } from '@/hooks/useAppColors';
 import { analyzeFoodPhoto, prepareFoodPhoto } from '@/services/gemini';
+import { useAiQuota } from '@/hooks/useAiQuota';
+import AiQuotaHint from '@/components/nutrition/AiQuotaHint';
 import VoiceMealInput from './VoiceMealInput';
 import { searchFood } from '@/services/foodDb';
 import { lookupPortionWeight } from '@/data/portionWeights';
@@ -177,6 +179,8 @@ function BarcodeScanner({
 // ─── Main modal ───────────────────────────────────────────────────────────────
 
 export default function AddEntryModal({ visible, onClose, date, initialMeal, prefillFood, initialTab }: Props) {
+  // Limite IA gratuite : on ferme la modale avant d'ouvrir l'écran Premium
+  const aiQuota = useAiQuota(onClose);
   const C = useAppColors();
   const { t } = useTranslation();
   const { addEntry, addFoodItem, foodLibrary } = useCalorieStore();
@@ -594,6 +598,7 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
       // Réduite à 768 px avant envoi : moins de tokens facturés et upload plus rapide
       const base64 = await prepareFoodPhoto(asset.uri, asset.width, asset.height);
       const analysis = await analyzeFoodPhoto(base64);
+      aiQuota.recordUse();
       prefillFromAnalysis(analysis.name, analysis.calories, analysis.macros);
     } catch (err: any) {
       Alert.alert(t('addEntry.photo.failedTitle'), err.message ?? t('addEntry.photo.failedDefault'));
@@ -603,6 +608,7 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
   }
 
   function showPhotoOptions() {
+    if (!aiQuota.ensureQuota()) return;
     Alert.alert(t('addEntry.photo.chooseTitle'), t('addEntry.photo.chooseMessage'), [
       { text: t('addEntry.photo.takePhoto'), onPress: () => pickImage(true) },
       { text: t('addEntry.photo.fromGallery'), onPress: () => pickImage(false) },
@@ -794,12 +800,14 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
                       ? t('common.analyzing')
                       : t('addEntry.photo.hint')}
                   </Text>
+                  {!analyzing && <AiQuotaHint remaining={aiQuota.remaining} />}
                 </View>
               )}
 
               {/* ── Voix IA tab ────────────────────────────────────────────── */}
               {tab === 'voix' && (
                 <VoiceMealInput
+                  aiQuota={aiQuota}
                   onResult={(a, sourceLabel) => prefillFromAnalysis(a.name, a.calories, a.macros, sourceLabel)}
                 />
               )}

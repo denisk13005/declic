@@ -59,6 +59,7 @@
     "expo-splash-screen": "*",
     "expo-sqlite": "~55.0.10",
     "expo-status-bar": "*",
+    "expo-tracking-transparency": "~55.0.18",
     "firebase": "^12.9.0",
     "fuse.js": "^7.1.0",
     "i18next": "^26.4.2",
