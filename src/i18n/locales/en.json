@@ -153,14 +153,14 @@
         "reminders": "🔔 Smart reminders"
       },
       "cta": "Let's go 🚀",
-      "sub": "Free · No account required"
+      "sub": "Free · No commitment"
     },
     "benefits": {
       "title": "Why does it work?",
       "subtitle": "Vitacairn uses proven techniques to help you build lasting habits.",
       "habit": {
-        "title": "21 days to build a habit",
-        "desc": "Research shows it takes 66 days on average to make a behavior automatic. Vitacairn helps you stick with it."
+        "title": "66 days to build a habit",
+        "desc": "Research shows it takes 66 days on average to make a behavior automatic. Vitacairn helps you stick with it until then."
       },
       "streaks": {
         "title": "The power of streaks",
@@ -179,7 +179,7 @@
         "desc": "4 meals a day. Add a food in 3 seconds — Ciqual database, barcode scan or AI photo."
       },
       "database": {
-        "title": "62,000 foods listed",
+        "title": "69,000 foods listed",
         "desc": "Official ANSES Ciqual 2025 database + Open Food Facts. Instant, offline search."
       },
       "weight": {
@@ -1583,7 +1583,10 @@
     "productNotFound": "Product not found. Make sure the barcode is readable.",
     "noNutrition": "No nutrition data available for this product.",
     "unknownFood": "Unknown food",
-    "photoConversion": "Could not convert the photo"
+    "photoConversion": "Could not convert the photo",
+    "aiUnavailable": "AI analysis is temporarily unavailable. Please try again a little later.",
+    "aiFailed": "AI analysis failed (error {{status}}). Please try again.",
+    "aiOffline": "No internet connection: AI analysis needs one."
   },
   "portions": {
     "pomme_de_terre": "medium potato",

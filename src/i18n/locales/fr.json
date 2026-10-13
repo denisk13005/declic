@@ -153,14 +153,14 @@
         "reminders": "🔔 Rappels malins"
       },
       "cta": "C'est parti 🚀",
-      "sub": "Gratuit · Sans compte requis"
+      "sub": "Gratuit · Sans engagement"
     },
     "benefits": {
       "title": "Pourquoi ça marche ?",
       "subtitle": "Vitacairn utilise des techniques éprouvées pour t'aider à construire des habitudes durables.",
       "habit": {
-        "title": "21 jours pour ancrer une habitude",
-        "desc": "La science montre qu'il faut en moyenne 66 jours pour automatiser un comportement. Vitacairn t'aide à tenir."
+        "title": "66 jours pour ancrer une habitude",
+        "desc": "La science montre qu'il faut en moyenne 66 jours pour automatiser un comportement. Vitacairn t'aide à tenir jusque-là."
       },
       "streaks": {
         "title": "Le pouvoir des séries",
@@ -179,7 +179,7 @@
         "desc": "4 repas par jour. Ajoute un aliment en 3 secondes — base Ciqual, scan code-barres ou photo IA."
       },
       "database": {
-        "title": "62 000 aliments référencés",
+        "title": "69 000 aliments référencés",
         "desc": "Base officielle ANSES Ciqual 2025 + Open Food Facts. Recherche instantanée, hors-ligne."
       },
       "weight": {
@@ -1583,7 +1583,10 @@
     "productNotFound": "Produit introuvable. Vérifie que le code-barres est lisible.",
     "noNutrition": "Données nutritionnelles indisponibles pour ce produit.",
     "unknownFood": "Aliment inconnu",
-    "photoConversion": "Conversion de la photo impossible"
+    "photoConversion": "Conversion de la photo impossible",
+    "aiUnavailable": "L'analyse IA est momentanément indisponible. Réessaie un peu plus tard.",
+    "aiFailed": "L'analyse IA a échoué (erreur {{status}}). Réessaie.",
+    "aiOffline": "Pas de connexion internet : l'analyse IA en a besoin."
   },
   "portions": {
     "pomme_de_terre": "pomme de terre moyenne",

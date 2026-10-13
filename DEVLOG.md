@@ -1,5 +1,10 @@
 # Déclic — Dev Log
 
+## 2026-10-13 — Messages d'erreur IA lisibles + textes d'accueil corrigés
+
+- **`gemini.ts > askGeminiWithMedia`** : plus de JSON brut de Google affiché à l'utilisateur. 402 (crédits prépayés épuisés), 403/429 (plafond ou quota), 5xx → `errors.aiUnavailable` (« momentanément indisponible ») ; autres codes → `errors.aiFailed` (avec le code) ; pas de réseau → `errors.aiOffline`. Une analyse ratée ne consomme toujours pas le quota gratuit (`recordUse()` seulement après succès).
+- **Onboarding** : « Sans compte requis » (faux, connexion Google/Apple obligatoire) → « Sans engagement » ; « 21 jours » → « 66 jours » (cohérent avec la description) ; « 62 000 » → « 69 000 aliments » (69 500 lignes dans `assets/food.db`). fr + en. 107/107.
+
 ## 2026-10-10 — Limite IA pour les utilisateurs gratuits
 
 - **1 analyse IA par jour** (3 au départ, réduit à 1 sur décision de l'user : 3 = autant que de repas, aucune incitation à payer) (photo + voix confondues, `CONFIG.FREE_AI_DAILY_LIMIT`), illimité en Premium. Seules les analyses **réussies** sont comptées ; remise à zéro chaque jour.

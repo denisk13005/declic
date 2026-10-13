@@ -143,25 +143,34 @@ export function parseFoodAnalysis(text: string): FoodAnalysis {
 
 /** Envoie une consigne + un média (image ou audio, en base64) à Gemini et renvoie sa réponse texte. */
 async function askGeminiWithMedia(prompt: string, mimeType: string, base64Data: string): Promise<string> {
-  const response = await fetch(GEMINI_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [
-        {
-          parts: [
-            { text: prompt },
-            { inline_data: { mime_type: mimeType, data: base64Data } },
-          ],
-        },
-      ],
-      generationConfig: GENERATION_CONFIG,
-    }),
-  });
+  let response: Response;
+  try {
+    response = await fetch(GEMINI_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              { text: prompt },
+              { inline_data: { mime_type: mimeType, data: base64Data } },
+            ],
+          },
+        ],
+        generationConfig: GENERATION_CONFIG,
+      }),
+    });
+  } catch {
+    // fetch ne rejette qu'en cas d'échec réseau (pas de connexion, DNS…)
+    throw new Error(i18n.t('errors.aiOffline'));
+  }
 
   if (!response.ok) {
-    const err = await response.text();
-    throw new Error(`Gemini ${response.status}: ${err}`);
+    // Crédits épuisés (402), plafond/quota atteint (403, 429), Gemini surchargé (5xx) :
+    // message lisible pour l'utilisateur plutôt que le JSON brut de Google.
+    const status = response.status;
+    const unavailable = status === 402 || status === 403 || status === 429 || status >= 500;
+    throw new Error(unavailable ? i18n.t('errors.aiUnavailable') : i18n.t('errors.aiFailed', { status }));
   }
 
   const data = await response.json();
