@@ -135,9 +135,9 @@
     "deleteConfirm": "Delete “{{name}}”?",
     "burnedModal": {
       "title": "Burned calories",
-      "subtitle": "Enter the value manually if Health Connect sync is wrong or unavailable.",
+      "subtitle": "Enter the value manually if automatic sync is wrong or unavailable.",
       "placeholder": "e.g. 450",
-      "reset": "Reset (back to Health Connect)"
+      "reset": "Reset (back to automatic sync)"
     }
   },
   "onboarding": {
@@ -709,7 +709,10 @@
     "continue": "Continue",
     "continueWithPrice": "Continue — {{price}}",
     "restore": "Restore purchases",
-    "legal": "Secure payment through the App Store / Google Play. Your subscription renews automatically. You can cancel anytime in your account settings.",
+    "legalIos": "Payment will be charged to your Apple ID account at confirmation of purchase. The subscription renews automatically at the same price unless it is canceled at least 24 hours before the end of the current period. You can manage and cancel it anytime in your App Store account settings.",
+    "legalAndroid": "Secure payment via Google Play. The subscription renews automatically. You can cancel anytime in your Google Play account settings.",
+    "termsLink": "Terms of Use",
+    "privacyLink": "Privacy Policy",
     "welcomeTitle": "Welcome to Premium! 🎉",
     "welcomeMessage": "Enjoy all the features.",
     "welcomeButton": "Great!",

@@ -1,5 +1,10 @@
 # Déclic — Dev Log
 
+## 2026-10-16 — Paywall conforme App Store (règle 3.1.2)
+
+- **`app/paywall.tsx`** : liens cliquables « Conditions d'utilisation » + « Politique de confidentialité » (`LEGAL.termsUrl` / `privacyUrl`), obligatoires pour un abonnement à renouvellement automatique. Texte légal séparé par plateforme : `paywall.legalIos` (prélèvement sur le compte Apple, renouvellement sauf annulation 24 h avant) / `paywall.legalAndroid` — plus de « Google Play » affiché sur iPhone.
+- Modal « Calories brûlées » : « Health Connect » → « synchronisation automatique » (texte affiché aussi sur iOS).
+
 ## 2026-10-13 — Messages d'erreur IA lisibles + textes d'accueil corrigés
 
 - **`gemini.ts > askGeminiWithMedia`** : plus de JSON brut de Google affiché à l'utilisateur. 402 (crédits prépayés épuisés), 403/429 (plafond ou quota), 5xx → `errors.aiUnavailable` (« momentanément indisponible ») ; autres codes → `errors.aiFailed` (avec le code) ; pas de réseau → `errors.aiOffline`. Une analyse ratée ne consomme toujours pas le quota gratuit (`recordUse()` seulement après succès).

@@ -7,6 +7,8 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
+  Linking,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -16,6 +18,7 @@ import { PurchasesPackage } from 'react-native-purchases';
 import { getOfferings, purchasePackage, restorePurchases } from '@/services/revenueCat';
 import { useProfileStore } from '@/stores/profileStore';
 import { CONFIG } from '@/constants/config';
+import { LEGAL } from '@/constants/legal';
 import { useTranslation } from 'react-i18next';
 import i18n from '@/i18n';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
@@ -231,7 +234,18 @@ export default function PaywallScreen() {
             <Text style={styles.restoreText}>{t('paywall.restore')}</Text>
           </TouchableOpacity>
 
-          <Text style={styles.legal}>{t('paywall.legal')}</Text>
+          <Text style={styles.legal}>{t(Platform.OS === 'ios' ? 'paywall.legalIos' : 'paywall.legalAndroid')}</Text>
+
+          {/* Liens obligatoires pour un abonnement à renouvellement automatique (App Store 3.1.2) */}
+          <View style={styles.legalLinks}>
+            <TouchableOpacity onPress={() => Linking.openURL(LEGAL.termsUrl)} hitSlop={8}>
+              <Text style={styles.legalLink}>{t('paywall.termsLink')}</Text>
+            </TouchableOpacity>
+            <Text style={styles.legal}>·</Text>
+            <TouchableOpacity onPress={() => Linking.openURL(LEGAL.privacyUrl)} hitSlop={8}>
+              <Text style={styles.legalLink}>{t('paywall.privacyLink')}</Text>
+            </TouchableOpacity>
+          </View>
         </ScrollView>
       </SafeAreaView>
     </View>
@@ -326,5 +340,16 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 16,
     paddingHorizontal: SPACING.md,
+  },
+  legalLinks: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    marginTop: SPACING.sm,
+  },
+  legalLink: {
+    fontSize: FONT_SIZE.xs,
+    color: COLORS.textSecondary,
+    textDecorationLine: 'underline',
   },
 });

@@ -135,9 +135,9 @@
     "deleteConfirm": "Supprimer « {{name}} » ?",
     "burnedModal": {
       "title": "Calories brûlées",
-      "subtitle": "Saisis la valeur manuellement si la synchronisation Health Connect est incorrecte ou indisponible.",
+      "subtitle": "Saisis la valeur manuellement si la synchronisation automatique est incorrecte ou indisponible.",
       "placeholder": "ex. 450",
-      "reset": "Réinitialiser (revenir à Health Connect)"
+      "reset": "Réinitialiser (revenir à la synchronisation automatique)"
     }
   },
   "onboarding": {
@@ -709,7 +709,10 @@
     "continue": "Continuer",
     "continueWithPrice": "Continuer — {{price}}",
     "restore": "Restaurer mes achats",
-    "legal": "Paiement sécurisé via l'App Store / Google Play. L'abonnement se renouvelle automatiquement. Tu peux annuler à tout moment dans les réglages de ton compte.",
+    "legalIos": "Le paiement est débité sur ton compte Apple à la confirmation de l'achat. L'abonnement se renouvelle automatiquement au même prix, sauf s'il est annulé au moins 24 h avant la fin de la période en cours. Tu peux le gérer et l'annuler à tout moment dans les réglages de ton compte App Store.",
+    "legalAndroid": "Paiement sécurisé via Google Play. L'abonnement se renouvelle automatiquement. Tu peux annuler à tout moment dans les réglages de ton compte Google Play.",
+    "termsLink": "Conditions d'utilisation",
+    "privacyLink": "Politique de confidentialité",
     "welcomeTitle": "Bienvenue dans Premium ! 🎉",
     "welcomeMessage": "Profite de toutes les fonctionnalités.",
     "welcomeButton": "Super !",
