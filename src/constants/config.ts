@@ -33,5 +33,6 @@ export const CONFIG = {
     LAST_APP_OPEN_AD: '@declic/last_app_open_ad',
     LAST_INTERSTITIAL_AD: '@declic/last_interstitial_ad',
     AI_USAGE: '@declic/ai_usage',
+    REVIEW_PROMPT: '@declic/review_prompt',
   },
 } as const;

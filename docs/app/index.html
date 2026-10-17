@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Vitacairn — calories, habitudes et sport</title>
+  <meta name="description" content="Vitacairn réunit compteur de calories, suivi d'habitudes et programme de musculation. Ajoute un repas en photo ou à la voix. Gratuit sur iPhone et Android." />
+  <meta name="apple-itunes-app" content="app-id=6802006611" />
+  <meta property="og:title" content="Vitacairn — calories, habitudes et sport" />
+  <meta property="og:description" content="Ajoute un repas en photo ou à la voix, suis tes habitudes et ton sport dans une seule app." />
+  <meta property="og:image" content="https://denisk13005.github.io/declic/app/img/icon-512.png" />
+  <meta property="og:type" content="website" />
+  <link rel="icon" href="img/icon-192.png" />
+  <link rel="apple-touch-icon" href="img/icon-192.png" />
+  <style>
+    /* Page sombre comme l'app (fond #0A0A0F, violet + orange). Polices système : aucune requête vers un tiers. */
+    :root {
+      --bg: #0A0A0F; --surface: #13131A; --raised: #1A1A26; --line: #24243A;
+      --violet: #7C3AED; --violet-2: #A78BFA; --orange: #F97316; --pink: #EC4899;
+      --text: #F3F4F6; --muted: #9CA3AF;
+      --radius: 18px;
+      color-scheme: dark;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+    body {
+      margin: 0; background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 17px; line-height: 1.6;
+    }
+    .wrap {
+      max-width: 1080px; margin: 0 auto;
+      padding-left: max(20px, env(safe-area-inset-left, 0px));
+      padding-right: max(20px, env(safe-area-inset-right, 0px));
+    }
+    a { color: var(--violet-2); }
+    a:focus-visible, button:focus-visible { outline: 2px solid var(--violet-2); outline-offset: 3px; border-radius: 6px; }
+    h1, h2, h3 { line-height: 1.12; margin: 0; text-wrap: balance; letter-spacing: -0.02em; }
+    p { margin: 0; }
+
+    /* Barre du haut */
+    .top { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 18px; }
+    .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); font-weight: 800; font-size: 20px; }
+    .brand img { width: 36px; height: 36px; border-radius: 10px; }
+    .lang { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
+    .lang button { background: none; border: 0; color: var(--muted); font: inherit; font-size: 13px; font-weight: 700; padding: 5px 12px; border-radius: 999px; cursor: pointer; }
+    .lang button[aria-pressed="true"] { background: var(--raised); color: var(--text); }
+
+    /* Ouverture */
+    .hero { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 48px; align-items: center; padding-block: 40px 72px; }
+    .hero h1 { font-size: clamp(2.3rem, 5.4vw, 3.9rem); font-weight: 850; }
+    .hero h1 .accent { background: linear-gradient(100deg, var(--violet-2), var(--pink) 55%, var(--orange)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .hero .lede { color: var(--muted); font-size: 1.15rem; margin-top: 18px; max-width: 34em; }
+    .stores { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+    .store {
+      display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text);
+      background: var(--raised); border: 1px solid var(--line); border-radius: 14px; padding: 10px 18px 10px 14px;
+      transition: border-color .15s, transform .15s;
+    }
+    .store:hover { border-color: var(--violet); transform: translateY(-1px); }
+    .store svg { width: 26px; height: 26px; flex-shrink: 0; }
+    .store small { display: block; font-size: 11px; color: var(--muted); line-height: 1.1; }
+    .store strong { display: block; font-size: 17px; line-height: 1.2; }
+    .fine { margin-top: 14px; font-size: 14px; color: var(--muted); }
+    .phone {
+      justify-self: center; width: min(300px, 78vw); aspect-ratio: 1206 / 2622;
+      border-radius: 38px; padding: 10px; background: linear-gradient(160deg, #2A2140, #0F0D16);
+      box-shadow: 0 30px 80px rgba(124, 58, 237, .28), 0 0 0 1px var(--line);
+    }
+    .phone img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 30px; }
+
+    /* Points forts */
+    .proof { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; padding-block: 8px 72px; }
+    .proof div { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; }
+    .proof b { display: block; font-size: 1.6rem; font-weight: 850; font-variant-numeric: tabular-nums; }
+    .proof span { color: var(--muted); font-size: 14px; }
+
+    /* Fonctionnalités */
+    .feature { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; padding-block: 48px; border-top: 1px solid var(--line); }
+    .feature:nth-of-type(even) .shot { order: -1; }
+    .feature .eyebrow { font-size: 12px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--orange); }
+    .feature h2 { font-size: clamp(1.7rem, 3.4vw, 2.4rem); font-weight: 800; margin-top: 10px; }
+    .feature ul { list-style: none; padding: 0; margin: 20px 0 0; display: flex; flex-direction: column; gap: 10px; color: var(--muted); }
+    .feature li { padding-left: 26px; position: relative; }
+    .feature li::before { content: ""; position: absolute; left: 0; top: .55em; width: 12px; height: 12px; border-radius: 4px; background: linear-gradient(135deg, var(--violet), var(--orange)); }
+    .shot { justify-self: center; width: min(280px, 72vw); border-radius: 30px; overflow: hidden; border: 1px solid var(--line); box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+    .shot img { display: block; width: 100%; height: auto; }
+
+    /* Tarifs */
+    .pricing { padding-block: 72px; border-top: 1px solid var(--line); }
+    .pricing h2 { font-size: clamp(1.7rem, 3.4vw, 2.4rem); font-weight: 800; text-align: center; }
+    .plans { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 32px; max-width: 820px; margin-inline: auto; }
+    .plan { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 26px; display: flex; flex-direction: column; gap: 14px; }
+    .plan.premium { border-color: var(--violet); background: linear-gradient(180deg, rgba(124,58,237,.16), var(--surface) 60%); }
+    .plan h3 { font-size: 1.25rem; }
+    .price { font-size: 2rem; font-weight: 850; font-variant-numeric: tabular-nums; }
+    .price small { font-size: .95rem; color: var(--muted); font-weight: 600; }
+    .plan ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; color: var(--muted); font-size: 15.5px; }
+    .plan li::before { content: "✓  "; color: var(--violet-2); font-weight: 800; }
+    .plan .alt { font-size: 14px; color: var(--muted); }
+
+    /* Questions */
+    .faq { padding-block: 72px; border-top: 1px solid var(--line); max-width: 760px; margin-inline: auto; }
+    .faq h2 { font-size: clamp(1.7rem, 3.4vw, 2.4rem); font-weight: 800; margin-bottom: 20px; }
+    details { border-bottom: 1px solid var(--line); padding-block: 16px; }
+    summary { cursor: pointer; font-weight: 700; list-style: none; display: flex; justify-content: space-between; gap: 16px; }
+    summary::-webkit-details-marker { display: none; }
+    summary::after { content: "+"; color: var(--violet-2); font-weight: 800; }
+    details[open] summary::after { content: "–"; }
+    details p { color: var(--muted); margin-top: 10px; }
+
+    /* Appel final + pied */
+    .cta { text-align: center; padding-block: 72px; border-top: 1px solid var(--line); }
+    .cta h2 { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 850; }
+    .cta .stores { justify-content: center; }
+    footer { border-top: 1px solid var(--line); padding-block: 28px calc(28px + env(safe-area-inset-bottom, 0px)); color: var(--muted); font-size: 14px; }
+    footer .row { display: flex; flex-wrap: wrap; gap: 10px 24px; justify-content: space-between; }
+    footer nav { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+    footer a { color: var(--muted); }
+
+    [data-lang-en] { display: none; }
+    html[lang="en"] [data-lang-en] { display: revert; }
+    html[lang="en"] [data-lang-fr] { display: none; }
+
+    @media (max-width: 860px) {
+      .hero, .feature { grid-template-columns: 1fr; gap: 36px; }
+      .feature:nth-of-type(even) .shot { order: 0; }
+      .hero { padding-block: 16px 56px; }
+      .proof { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .plans { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="top">
+      <a class="brand" href="#"><img src="img/icon-192.png" alt="" width="36" height="36" />Vitacairn</a>
+      <div class="lang" role="group" aria-label="Langue / Language">
+        <button type="button" id="lang-fr" aria-pressed="true">FR</button>
+        <button type="button" id="lang-en" aria-pressed="false">EN</button>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div>
+        <h1>
+          <span data-lang-fr>Tes calories, tes habitudes et ton sport. <span class="accent">Dans une seule app.</span></span>
+          <span data-lang-en>Your calories, habits and workouts. <span class="accent">In one app.</span></span>
+        </h1>
+        <p class="lede">
+          <span data-lang-fr>Ajoute un repas en photo ou à la voix, coche tes habitudes chaque jour et suis un programme de musculation fait pour toi.</span>
+          <span data-lang-en>Log a meal by photo or voice, check off your habits every day and follow a strength program built for you.</span>
+        </p>
+        <div class="stores">
+          <a class="store" href="https://apps.apple.com/app/id6802006611" rel="noopener">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.37 12.62c-.02-2.3 1.88-3.4 1.96-3.46-1.07-1.56-2.73-1.77-3.32-1.8-1.41-.14-2.76.83-3.48.83-.72 0-1.83-.81-3-.79-1.55.02-2.97.9-3.77 2.28-1.61 2.79-.41 6.92 1.16 9.18.77 1.11 1.68 2.35 2.88 2.31 1.16-.05 1.59-.75 2.99-.75 1.4 0 1.79.75 3.01.72 1.24-.02 2.03-1.13 2.79-2.24.88-1.29 1.24-2.53 1.26-2.6-.03-.01-2.42-.93-2.44-3.68zM14.08 5.86c.64-.77 1.07-1.85.95-2.92-.92.04-2.03.61-2.69 1.38-.59.68-1.11 1.77-.97 2.82 1.03.08 2.07-.52 2.71-1.28z"/></svg>
+            <span><small data-lang-fr>Télécharger sur</small><small data-lang-en>Download on the</small><strong>App Store</strong></span>
+          </a>
+          <a class="store" href="https://play.google.com/store/apps/details?id=com.declic.nutrition" rel="noopener">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#34A853" d="M3.6 2.3c-.2.2-.3.6-.3 1v17.4c0 .4.1.8.3 1l9.5-9.7z"/><path fill="#FBBC04" d="M16.3 15.2l-3.2-3.2 3.2-3.2 3.7 2.1c1 .6 1 1.6 0 2.2z"/><path fill="#EA4335" d="M16.3 15.2L13.1 12l-9.5 9.7c.4.4.9.4 1.6.1z"/><path fill="#4285F4" d="M16.3 8.8L5.2 2.2c-.7-.4-1.2-.3-1.6.1l9.5 9.7z"/></svg>
+            <span><small data-lang-fr>Disponible sur</small><small data-lang-en>Get it on</small><strong>Google Play</strong></span>
+          </a>
+        </div>
+        <p class="fine">
+          <span data-lang-fr>Gratuit · Premium sans engagement · En français et en anglais</span>
+          <span data-lang-en>Free · Premium with no commitment · In English and French</span>
+        </p>
+      </div>
+      <div class="phone"><img src="img/habits.jpg" alt="Écran des habitudes de Vitacairn" width="540" height="1174" /></div>
+    </section>
+
+    <section class="proof" aria-label="Chiffres clés">
+      <div><b>69 000</b><span data-lang-fr>aliments, même hors connexion</span><span data-lang-en>foods, even offline</span></div>
+      <div><b>150+</b><span data-lang-fr>exercices avec démonstration</span><span data-lang-en>exercises with demos</span></div>
+      <div><b>3 s</b><span data-lang-fr>pour ajouter un repas en photo</span><span data-lang-en>to log a meal by photo</span></div>
+      <div><b>0 €</b><span data-lang-fr>pour commencer</span><span data-lang-en>to get started</span></div>
+    </section>
+
+    <section class="feature">
+      <div>
+        <span class="eyebrow"><span data-lang-fr>Nutrition</span><span data-lang-en>Nutrition</span></span>
+        <h2><span data-lang-fr>Compter ses calories sans prise de tête</span><span data-lang-en>Calorie counting without the hassle</span></h2>
+        <ul>
+          <li><span data-lang-fr><strong>Photo IA</strong> : prends ton assiette, l'IA reconnaît le plat et estime ses calories.</span><span data-lang-en><strong>Photo AI</strong>: snap your plate, the AI recognizes the dish and estimates its calories.</span></li>
+          <li><span data-lang-fr><strong>Voix IA</strong> : dis « deux œufs et une tranche de pain », c'est noté.</span><span data-lang-en><strong>Voice AI</strong>: say "two eggs and a slice of bread", done.</span></li>
+          <li><span data-lang-fr>Base officielle ANSES Ciqual + Open Food Facts, scan de code-barres.</span><span data-lang-en>Official ANSES Ciqual database + Open Food Facts, barcode scanner.</span></li>
+          <li><span data-lang-fr>Objectifs calculés selon ton profil : perte de gras, maintien ou prise de muscle.</span><span data-lang-en>Goals based on your profile: fat loss, maintenance or muscle gain.</span></li>
+        </ul>
+      </div>
+      <div class="shot"><img src="img/goals.jpg" alt="Objectifs caloriques dans Vitacairn" width="540" height="1174" loading="lazy" /></div>
+    </section>
+
+    <section class="feature">
+      <div>
+        <span class="eyebrow"><span data-lang-fr>Habitudes</span><span data-lang-en>Habits</span></span>
+        <h2><span data-lang-fr>Des habitudes qui durent</span><span data-lang-en>Habits that stick</span></h2>
+        <ul>
+          <li><span data-lang-fr>Rappels flexibles : chaque jour, toutes les X heures, chaque semaine ou chaque mois.</span><span data-lang-en>Flexible reminders: daily, every few hours, weekly or monthly.</span></li>
+          <li><span data-lang-fr>Coche une habitude directement depuis la notification.</span><span data-lang-en>Check off a habit right from the notification.</span></li>
+          <li><span data-lang-fr>Séries de jours 🔥 et taux de réussite pour rester motivé.</span><span data-lang-en>Day streaks 🔥 and completion rates to stay motivated.</span></li>
+        </ul>
+      </div>
+      <div class="shot"><img src="img/statistics.jpg" alt="Statistiques des habitudes" width="540" height="1174" loading="lazy" /></div>
+    </section>
+
+    <section class="feature">
+      <div>
+        <span class="eyebrow"><span data-lang-fr>Sport</span><span data-lang-en>Workouts</span></span>
+        <h2><span data-lang-fr>Un programme de muscu fait pour toi</span><span data-lang-en>A strength program made for you</span></h2>
+        <ul>
+          <li><span data-lang-fr>Programme généré selon tes séances par semaine, ton niveau et ton matériel.</span><span data-lang-en>Program built from your weekly sessions, level and equipment.</span></li>
+          <li><span data-lang-fr>Note tes séries, charges et répétitions, suis tes records.</span><span data-lang-en>Log your sets, weights and reps, track your records.</span></li>
+          <li><span data-lang-fr>Course, vélo, natation… les calories brûlées s'ajoutent à ton bilan.</span><span data-lang-en>Running, cycling, swimming… burned calories add to your daily balance.</span></li>
+        </ul>
+      </div>
+      <div class="shot"><img src="img/workout.jpg" alt="Écran sport de Vitacairn" width="540" height="1174" loading="lazy" /></div>
+    </section>
+
+    <section class="pricing" id="tarifs">
+      <h2><span data-lang-fr>Gratuit pour commencer</span><span data-lang-en>Free to start</span></h2>
+      <div class="plans">
+        <div class="plan">
+          <h3><span data-lang-fr>Gratuit</span><span data-lang-en>Free</span></h3>
+          <div class="price">0 €</div>
+          <ul>
+            <li><span data-lang-fr>Calories, macros, poids et sport</span><span data-lang-en>Calories, macros, weight and workouts</span></li>
+            <li><span data-lang-fr>1 habitude suivie</span><span data-lang-en>1 tracked habit</span></li>
+            <li><span data-lang-fr>1 analyse IA (photo ou voix) par jour</span><span data-lang-en>1 AI analysis (photo or voice) per day</span></li>
+            <li><span data-lang-fr>Avec publicités</span><span data-lang-en>With ads</span></li>
+          </ul>
+        </div>
+        <div class="plan premium">
+          <h3>Premium</h3>
+          <div class="price">35,99 € <small data-lang-fr>/ an</small><small data-lang-en>/ year</small></div>
+          <ul>
+            <li><span data-lang-fr>Aucune publicité</span><span data-lang-en>No ads</span></li>
+            <li><span data-lang-fr>Habitudes illimitées</span><span data-lang-en>Unlimited habits</span></li>
+            <li><span data-lang-fr>Photo et voix IA illimitées</span><span data-lang-en>Unlimited photo &amp; voice AI</span></li>
+          </ul>
+          <p class="alt"><span data-lang-fr>Soit 2,99 €/mois, ou 5,99 € au mois. Sans engagement, résiliable à tout moment.</span><span data-lang-en>That's €2.99/month, or €5.99 monthly. No commitment, cancel anytime.</span></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="faq">
+      <h2><span data-lang-fr>Questions fréquentes</span><span data-lang-en>FAQ</span></h2>
+      <details>
+        <summary><span data-lang-fr>Où sont stockées mes données ?</span><span data-lang-en>Where is my data stored?</span></summary>
+        <p><span data-lang-fr>Tes repas, habitudes, poids et séances restent sur ton téléphone. Les photos et enregistrements vocaux ne sont envoyés à l'IA que quand tu lances une analyse. Tu peux exporter ou supprimer toutes tes données et ton compte depuis l'app.</span><span data-lang-en>Your meals, habits, weight and workouts stay on your phone. Photos and voice recordings are only sent to the AI when you start an analysis. You can export or delete all your data and your account from the app.</span></p>
+      </details>
+      <details>
+        <summary><span data-lang-fr>L'app marche-t-elle sans internet ?</span><span data-lang-en>Does it work offline?</span></summary>
+        <p><span data-lang-fr>Oui pour la recherche d'aliments, les habitudes et le sport. La photo IA, la voix IA et le scan de produits peu connus demandent une connexion.</span><span data-lang-en>Yes for food search, habits and workouts. Photo AI, voice AI and scanning less common products need a connection.</span></p>
+      </details>
+      <details>
+        <summary><span data-lang-fr>Mon abonnement marche-t-il sur iPhone et Android ?</span><span data-lang-en>Does my subscription work on iPhone and Android?</span></summary>
+        <p><span data-lang-fr>Oui : il est lié à ton compte Vitacairn (connexion Google ou Apple). Connecte-toi avec le même compte sur ton nouvel appareil.</span><span data-lang-en>Yes: it is linked to your Vitacairn account (Google or Apple sign-in). Sign in with the same account on your new device.</span></p>
+      </details>
+      <details>
+        <summary><span data-lang-fr>Comment annuler Premium ?</span><span data-lang-en>How do I cancel Premium?</span></summary>
+        <p><span data-lang-fr>Dans les réglages de ton compte App Store ou Google Play, rubrique Abonnements. Tu gardes Premium jusqu'à la fin de la période payée.</span><span data-lang-en>In your App Store or Google Play account settings, under Subscriptions. You keep Premium until the end of the paid period.</span></p>
+      </details>
+      <details>
+        <summary><span data-lang-fr>Vitacairn remplace-t-il un médecin ou un diététicien ?</span><span data-lang-en>Does Vitacairn replace a doctor or dietitian?</span></summary>
+        <p><span data-lang-fr>Non. Vitacairn est une app de bien-être. Pour un suivi médical, demande conseil à un professionnel de santé.</span><span data-lang-en>No. Vitacairn is a wellness app. For medical advice, ask a health professional.</span></p>
+      </details>
+    </section>
+
+    <section class="cta">
+      <h2><span data-lang-fr>Prêt à démarrer ?</span><span data-lang-en>Ready to start?</span></h2>
+      <div class="stores">
+        <a class="store" href="https://apps.apple.com/app/id6802006611" rel="noopener"><span><small data-lang-fr>Télécharger sur</small><small data-lang-en>Download on the</small><strong>App Store</strong></span></a>
+        <a class="store" href="https://play.google.com/store/apps/details?id=com.declic.nutrition" rel="noopener"><span><small data-lang-fr>Disponible sur</small><small data-lang-en>Get it on</small><strong>Google Play</strong></span></a>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    <div class="wrap row">
+      <span>© 2026 eg consulting · Vitacairn</span>
+      <nav>
+        <a href="../"><span data-lang-fr>Confidentialité</span><span data-lang-en>Privacy</span></a>
+        <a href="../terms.html"><span data-lang-fr>Conditions d'utilisation</span><span data-lang-en>Terms of use</span></a>
+        <span>contact@declic-app.fr</span>
+      </nav>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      var root = document.documentElement;
+      function setLang(l) {
+        root.lang = l;
+        document.getElementById('lang-fr').setAttribute('aria-pressed', l === 'fr');
+        document.getElementById('lang-en').setAttribute('aria-pressed', l === 'en');
+        try { localStorage.setItem('vitacairn-lang', l); } catch (e) {}
+      }
+      var saved = null;
+      try { saved = localStorage.getItem('vitacairn-lang'); } catch (e) {}
+      var nav = (navigator.language || 'fr').toLowerCase();
+      setLang(saved || (nav.indexOf('fr') === 0 ? 'fr' : 'en'));
+      document.getElementById('lang-fr').addEventListener('click', function () { setLang('fr'); });
+      document.getElementById('lang-en').addEventListener('click', function () { setLang('en'); });
+    })();
+  </script>
+</body>
+</html>

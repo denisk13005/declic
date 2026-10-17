@@ -442,7 +442,8 @@
     "last7Days": "Last 7 days",
     "emptyText": "Create your first habits to see your stats!",
     "perHabit": "Per-habit breakdown",
-    "shortDateFormat": "M/d"
+    "shortDateFormat": "M/d",
+    "shareStreak": "Share my streak"
   },
   "sport": {
     "title": "Workout",
@@ -1713,5 +1714,16 @@
     "remaining_one": "{{count}} free AI analysis left today",
     "remaining_other": "{{count}} free AI analyses left today",
     "noneLeft": "No free analyses left today — unlimited with Premium"
+  },
+  "share": {
+    "button": "Share",
+    "dialogTitle": "Share my streak",
+    "daysInARow_one": "day in a row 💪",
+    "daysInARow_other": "days in a row 💪",
+    "totalDone_one": "{{count}} habit checked in total",
+    "totalDone_other": "{{count}} habits checked in total",
+    "tagline": "Calories, habits & workouts",
+    "text_one": "🔥 {{count}} day in a row on my habits with Vitacairn! {{url}}",
+    "text_other": "🔥 {{count}} days in a row on my habits with Vitacairn! {{url}}"
   }
 }

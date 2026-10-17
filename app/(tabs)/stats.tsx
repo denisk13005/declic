@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { format, subDays, parseISO } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { dateLocale } from '@/i18n';
@@ -12,6 +13,7 @@ import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/the
 import { Habit } from '@/types';
 import WeightChartCard from '@/components/profile/WeightChartCard';
 import WeightModal from '@/components/nutrition/WeightModal';
+import ShareStreakModal from '@/components/stats/ShareStreakModal';
 
 const { width: screenWidth } = Dimensions.get('window');
 const CHART_WIDTH = screenWidth - SPACING.lg * 2;
@@ -87,6 +89,7 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 export default function StatsScreen() {
   const { t } = useTranslation();
   const [weightModalVisible, setWeightModalVisible] = useState(false);
+  const [shareVisible, setShareVisible] = useState(false);
   const { habits, getStats } = useHabitStore();
   const { getCaloriesForDate, goals } = useCalorieStore();
   const dailyGoal = goals.calories;
@@ -169,6 +172,13 @@ export default function StatsScreen() {
             gradient={COLORS.gradientAccent}
           />
         </View>
+
+        {bestStreak > 0 && (
+          <TouchableOpacity style={styles.shareBtn} onPress={() => setShareVisible(true)} activeOpacity={0.8}>
+            <Ionicons name="share-social-outline" size={18} color={COLORS.primaryLight} />
+            <Text style={styles.shareBtnText}>{t('stats.shareStreak')}</Text>
+          </TouchableOpacity>
+        )}
 
         {/* ── Bar chart — 7 derniers jours ── */}
         <ChartCard title={t('stats.habitsChecked')}>
@@ -329,6 +339,12 @@ export default function StatsScreen() {
       </ScrollView>
 
       <WeightModal visible={weightModalVisible} onClose={() => setWeightModalVisible(false)} />
+      <ShareStreakModal
+        visible={shareVisible}
+        onClose={() => setShareVisible(false)}
+        streak={bestStreak}
+        totalDone={totalDone}
+      />
     </SafeAreaView>
   );
 }
@@ -343,7 +359,19 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.lg,
   },
 
-  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm, marginBottom: SPACING.xl },
+  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm, marginBottom: SPACING.md },
+  shareBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    paddingVertical: SPACING.sm + 4,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.borderFocus,
+    marginBottom: SPACING.xl,
+  },
+  shareBtnText: { fontSize: FONT_SIZE.md, fontWeight: FONT_WEIGHT.semibold, color: COLORS.primaryLight },
   statCard: {
     flex: 1,
     minWidth: '45%',

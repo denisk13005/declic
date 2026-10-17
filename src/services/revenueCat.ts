@@ -95,12 +95,20 @@ export function addPremiumListener(): () => void {
 /**
  * Associe l'utilisateur RevenueCat au compte Firebase (App User ID = uid).
  * Permet de retrouver un abonnement d'une plateforme à l'autre (iOS ↔ Android).
+ * L'e-mail et le nom permettent de retrouver la personne dans le tableau de bord RevenueCat
+ * (ex. offrir Premium à un proche via « Grant entitlement »).
  */
-export async function logInRevenueCat(uid: string): Promise<void> {
+export async function logInRevenueCat(
+  uid: string,
+  email?: string | null,
+  displayName?: string | null,
+): Promise<void> {
   if (!Purchases || !configured) return;
   try {
     const { customerInfo } = await Purchases.logIn(uid);
     applyPremium(customerInfo);
+    if (email) await Purchases.setEmail(email);
+    if (displayName) await Purchases.setDisplayName(displayName);
   } catch (e) {
     console.warn('[RevenueCat] logIn error', e);
   }

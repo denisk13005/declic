@@ -442,7 +442,8 @@
     "last7Days": "7 derniers jours",
     "emptyText": "Crée tes premières habitudes pour voir tes stats !",
     "perHabit": "Détail par habitude",
-    "shortDateFormat": "d/M"
+    "shortDateFormat": "d/M",
+    "shareStreak": "Partager ma série"
   },
   "sport": {
     "title": "Sport",
@@ -1713,5 +1714,16 @@
     "remaining_one": "{{count}} analyse IA gratuite restante aujourd’hui",
     "remaining_other": "{{count}} analyses IA gratuites restantes aujourd’hui",
     "noneLeft": "Plus d’analyse gratuite aujourd’hui — illimité avec Premium"
+  },
+  "share": {
+    "button": "Partager",
+    "dialogTitle": "Partager ma série",
+    "daysInARow_one": "jour de suite 💪",
+    "daysInARow_other": "jours de suite 💪",
+    "totalDone_one": "{{count}} habitude cochée au total",
+    "totalDone_other": "{{count}} habitudes cochées au total",
+    "tagline": "Calories, habitudes et sport",
+    "text_one": "🔥 {{count}} jour de suite sur mes habitudes avec Vitacairn ! {{url}}",
+    "text_other": "🔥 {{count}} jours de suite sur mes habitudes avec Vitacairn ! {{url}}"
   }
 }

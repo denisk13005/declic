@@ -1,5 +1,13 @@
 # Déclic — Dev Log
 
+## 2026-10-17 — Outils marketing (version 1.0.4, non buildée)
+
+- **Demande de note** (`expo-store-review`, module natif) : `src/stores/reviewPromptStore.ts` (logique pure `shouldAskForReview`, testée) + `src/services/storeReview.ts`. Déclenchée sur l'accueil quand on coche une habitude dont la série atteint 3/7/14/30/60/100 jours, au moins 3 jours après la 1ʳᵉ ouverture, 120 jours mini entre deux demandes, 3 max.
+- **Partager ma série** (`react-native-view-shot` + `expo-sharing`, natifs ; plugin `expo-sharing` ajouté dans `app.config.js`) : bouton sous les cartes de l'onglet Stats → `src/components/stats/ShareStreakModal.tsx` (carte 9:16 capturée en PNG ; repli texte via `Share`). Textes `share.*` fr/en.
+- **RevenueCat** : `logInRevenueCat(uid, email, displayName)` → `Purchases.setEmail` / `setDisplayName` (retrouver un client par e-mail pour lui offrir Premium). Politique de confidentialité mise à jour (e-mail + nom transmis à RevenueCat).
+- **Site web** : `docs/app/index.html` (→ https://denisk13005.github.io/declic/app/), bilingue fr/en (langue du navigateur + bouton), liens stores, tarifs, FAQ ; images légères dans `docs/app/img/`. La politique reste à la racine `docs/index.html` (URL déclarée dans les stores). `src/constants/links.ts` centralise les liens.
+- 113/113 tests.
+
 ## 2026-10-16 — Paywall conforme App Store (règle 3.1.2)
 
 - **`app/paywall.tsx`** : liens cliquables « Conditions d'utilisation » + « Politique de confidentialité » (`LEGAL.termsUrl` / `privacyUrl`), obligatoires pour un abonnement à renouvellement automatique. Texte légal séparé par plateforme : `paywall.legalIos` (prélèvement sur le compte Apple, renouvellement sauf annulation 24 h avant) / `paywall.legalAndroid` — plus de « Google Play » affiché sur iPhone.

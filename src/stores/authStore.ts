@@ -33,7 +33,7 @@ export function listenToAuthState(): () => void {
         displayName: firebaseUser.displayName,
       });
       // Lie l'abonnement RevenueCat au compte (retrouvé d'un device/plateforme à l'autre).
-      logInRevenueCat(firebaseUser.uid);
+      logInRevenueCat(firebaseUser.uid, firebaseUser.email, firebaseUser.displayName);
     } else {
       useAuthStore.getState().clearUser();
       logOutRevenueCat();

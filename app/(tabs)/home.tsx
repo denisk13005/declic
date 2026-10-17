@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -24,6 +24,8 @@ import { useSessionStore } from '@/stores/sessionStore';
 import { useProgramStore } from '@/stores/programStore';
 import { usePremium } from '@/hooks/usePremium';
 import { useHabitNotifications } from '@/hooks/useHabitNotifications';
+import { useReviewPromptStore } from '@/stores/reviewPromptStore';
+import { maybeAskForReview } from '@/services/storeReview';
 import { BannerAd, BannerAdSize, AD_UNITS, RewardedAd, RewardedAdEventType, AdEventType } from '@/services/ads';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
 import { useAppColors } from '@/hooks/useAppColors';
@@ -930,6 +932,22 @@ export default function HomeScreen() {
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
 
+  const markFirstSeen = useReviewPromptStore((s) => s.markFirstSeen);
+  useEffect(() => {
+    markFirstSeen();
+  }, [markFirstSeen]);
+
+  // Coche / décoche ; une série qui atteint un palier peut déclencher la demande de note.
+  const handleToggle = useCallback(
+    (id: string) => {
+      const today = format(new Date(), 'yyyy-MM-dd');
+      const wasDone = useHabitStore.getState().habits.find((h) => h.id === id)?.completions.includes(today);
+      toggleCompletion(id);
+      if (!wasDone) maybeAskForReview(useHabitStore.getState().getStats(id).currentStreak);
+    },
+    [toggleCompletion]
+  );
+
   const activeHabits = habits.filter((h) => !h.archived);
   const completionRate = getTodayCompletionRate();
   const todayLabel = format(new Date(), t('home.dateFormat'), { locale: dateLocale() });
@@ -1056,7 +1074,7 @@ export default function HomeScreen() {
               <HabitCard
                 key={habit.id}
                 habit={habit}
-                onToggle={toggleCompletion}
+                onToggle={handleToggle}
                 onLongPress={handleLongPress}
               />
             ))}

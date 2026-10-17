@@ -47,6 +47,7 @@ export default ({ config }) => ({
   plugins: [
     'expo-router',
     'expo-font',
+    'expo-sharing',
     '@react-native-google-signin/google-signin',
     [
       '@kingstinct/react-native-healthkit',
