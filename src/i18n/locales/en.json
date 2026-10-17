@@ -157,10 +157,10 @@
     },
     "benefits": {
       "title": "Why does it work?",
-      "subtitle": "Vitacairn uses proven techniques to help you build lasting habits.",
+      "subtitle": "Burnstreak uses proven techniques to help you build lasting habits.",
       "habit": {
         "title": "66 days to build a habit",
-        "desc": "Research shows it takes 66 days on average to make a behavior automatic. Vitacairn helps you stick with it until then."
+        "desc": "Research shows it takes 66 days on average to make a behavior automatic. Burnstreak helps you stick with it until then."
       },
       "streaks": {
         "title": "The power of streaks",
@@ -781,8 +781,8 @@
   "update": {
     "requiredTitle": "Update required",
     "availableTitle": "Update available",
-    "requiredMessage": "This version is no longer supported. Update Vitacairn to continue.",
-    "availableMessage": "A new version of Vitacairn is available with improvements.",
+    "requiredMessage": "This version is no longer supported. Update Burnstreak to continue.",
+    "availableMessage": "A new version of Burnstreak is available with improvements.",
     "button": "Update ({{store}})",
     "later": "Later"
   },
@@ -1573,14 +1573,14 @@
       "6": "Fri",
       "7": "Sat"
     },
-    "permissionDeniedMessage": "Enable notifications for Vitacairn in your phone settings."
+    "permissionDeniedMessage": "Enable notifications for Burnstreak in your phone settings."
   },
   "errors": {
     "googleNoToken": "Google did not return an idToken. Check the Web client ID and SHA-1 in Firebase.",
     "appleNoToken": "Apple did not return an identityToken.",
     "noAccount": "No account signed in.",
     "reauthCancelled": "Sign-in cancelled.",
-    "exportTitle": "My Vitacairn data",
+    "exportTitle": "My Burnstreak data",
     "aiUnreadable": "Unreadable Gemini response: {{text}}",
     "voiceNoFood": "I didn't recognize any food. Try again and mention the quantities.",
     "network": "Network: HTTP {{status}}",
@@ -1723,7 +1723,7 @@
     "totalDone_one": "{{count}} habit checked in total",
     "totalDone_other": "{{count}} habits checked in total",
     "tagline": "Calories, habits & workouts",
-    "text_one": "🔥 {{count}} day in a row on my habits with Vitacairn! {{url}}",
-    "text_other": "🔥 {{count}} days in a row on my habits with Vitacairn! {{url}}"
+    "text_one": "🔥 {{count}} day in a row on my habits with Burnstreak! {{url}}",
+    "text_other": "🔥 {{count}} days in a row on my habits with Burnstreak! {{url}}"
   }
 }

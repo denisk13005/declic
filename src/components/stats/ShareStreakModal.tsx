@@ -55,7 +55,7 @@ export default function ShareStreakModal({ visible, onClose, streak, totalDone }
             <View style={styles.brandRow}>
               <Image source={require('../../../assets/icon.png')} style={styles.brandIcon} />
               <View>
-                <Text style={styles.brandName}>Vitacairn</Text>
+                <Text style={styles.brandName}>Burnstreak</Text>
                 <Text style={styles.brandTagline}>{t('share.tagline')}</Text>
               </View>
             </View>

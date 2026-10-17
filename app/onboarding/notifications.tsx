@@ -51,7 +51,7 @@ export default function NotificationsScreen() {
         {/* Notification preview */}
         <View style={styles.preview}>
           <View style={styles.previewHeader}>
-            <Text style={styles.previewApp}>⚡️ Vitacairn</Text>
+            <Text style={styles.previewApp}>⚡️ Burnstreak</Text>
             <Text style={styles.previewTime}>{t('onboarding.notifications.previewTime')}</Text>
           </View>
           <Text style={styles.previewTitle}>{t('onboarding.notifications.previewTitle')}</Text>

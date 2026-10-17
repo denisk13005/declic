@@ -157,10 +157,10 @@
     },
     "benefits": {
       "title": "Pourquoi ça marche ?",
-      "subtitle": "Vitacairn utilise des techniques éprouvées pour t'aider à construire des habitudes durables.",
+      "subtitle": "Burnstreak utilise des techniques éprouvées pour t'aider à construire des habitudes durables.",
       "habit": {
         "title": "66 jours pour ancrer une habitude",
-        "desc": "La science montre qu'il faut en moyenne 66 jours pour automatiser un comportement. Vitacairn t'aide à tenir jusque-là."
+        "desc": "La science montre qu'il faut en moyenne 66 jours pour automatiser un comportement. Burnstreak t'aide à tenir jusque-là."
       },
       "streaks": {
         "title": "Le pouvoir des séries",
@@ -781,8 +781,8 @@
   "update": {
     "requiredTitle": "Mise à jour requise",
     "availableTitle": "Mise à jour disponible",
-    "requiredMessage": "Cette version n’est plus prise en charge. Mets à jour Vitacairn pour continuer.",
-    "availableMessage": "Une nouvelle version de Vitacairn est disponible avec des améliorations.",
+    "requiredMessage": "Cette version n’est plus prise en charge. Mets à jour Burnstreak pour continuer.",
+    "availableMessage": "Une nouvelle version de Burnstreak est disponible avec des améliorations.",
     "button": "Mettre à jour ({{store}})",
     "later": "Plus tard"
   },
@@ -1573,14 +1573,14 @@
       "6": "Ven",
       "7": "Sam"
     },
-    "permissionDeniedMessage": "Active les notifications pour Vitacairn dans les paramètres de ton téléphone."
+    "permissionDeniedMessage": "Active les notifications pour Burnstreak dans les paramètres de ton téléphone."
   },
   "errors": {
     "googleNoToken": "Google n'a pas renvoyé d'idToken. Vérifie le Web client ID et le SHA-1 dans Firebase.",
     "appleNoToken": "Apple n'a pas renvoyé d'identityToken.",
     "noAccount": "Aucun compte connecté.",
     "reauthCancelled": "Reconnexion annulée.",
-    "exportTitle": "Mes données Vitacairn",
+    "exportTitle": "Mes données Burnstreak",
     "aiUnreadable": "Réponse Gemini illisible : {{text}}",
     "voiceNoFood": "Je n'ai reconnu aucun aliment. Réessaie en précisant les quantités.",
     "network": "Réseau : HTTP {{status}}",
@@ -1723,7 +1723,7 @@
     "totalDone_one": "{{count}} habitude cochée au total",
     "totalDone_other": "{{count}} habitudes cochées au total",
     "tagline": "Calories, habitudes et sport",
-    "text_one": "🔥 {{count}} jour de suite sur mes habitudes avec Vitacairn ! {{url}}",
-    "text_other": "🔥 {{count}} jours de suite sur mes habitudes avec Vitacairn ! {{url}}"
+    "text_one": "🔥 {{count}} jour de suite sur mes habitudes avec Burnstreak ! {{url}}",
+    "text_other": "🔥 {{count}} jours de suite sur mes habitudes avec Burnstreak ! {{url}}"
   }
 }

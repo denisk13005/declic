@@ -25,7 +25,7 @@ export async function exportUserData(): Promise<void> {
 
   const payload = {
     exportedAt: new Date().toISOString(),
-    app: 'Vitacairn',
+    app: 'Burnstreak',
     account: user ? { uid: user.uid, email: user.email, displayName: user.displayName } : null,
     profile: useProfileStore.getState().profile,
     habits: useHabitStore.getState().habits,

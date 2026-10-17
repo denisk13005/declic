@@ -1,5 +1,18 @@
 # Déclic — Dev Log
 
+## 2026-10-17 — Nouveau nom : Burnstreak (ex-Vitacairn)
+
+- Raison : vitacairn.com déjà pris (enregistré le 18/07/2026 chez Cloudflare) par un autre service de **santé** en ligne (« Vitacairn — your health, kept straight ») → risque de confusion et de litige de marque. Burnstreak : .com et .fr libres (RDAP Verisign / AFNIC, 17/10), aucune app ni marque trouvée sur le web.
+- Renommé partout où le nom est affiché : `app.config.js` (nom + textes d'autorisation iOS), écrans login / onboarding / paywall (« BURNSTREAK PREMIUM »), carte de partage, export des données, textes fr/en, site (`docs/app`), pages légales, fiche store (`docs/store-listing.md`, titre FR raccourci à « Burnstreak: calories & sport », 30 car. max), site VPS (`burnstreak.com`, `deploy/website/nginx-burnstreak.conf`), `LINKS.website`.
+- **Inchangés volontairement** : identifiants d'abonnement `vitacairn_pro*` (RevenueCat / stores), package `com.declic.nutrition`, slug EAS `declic`, clés de stockage `@declic/…`, noms des apps AdMob.
+- 113/113 tests ; `expo config` → name « Burnstreak ».
+
+## 2026-10-17 — Site vitacairn.com sur le VPS (préparé, pas encore en ligne)
+
+- `scripts/website/build.mjs` : construit `dist-website/` (ignoré par git) depuis `docs/` — accueil, `/confidentialite/`, `/conditions/`, `robots.txt`, `sitemap.xml`, balises canonical + données structurées `SoftwareApplication`. Refuse de construire tant que l'hébergeur (mention légale) n'est pas renseigné (`--check` pour tester).
+- `deploy/website/` : config Nginx (HTTPS Let's Encrypt, www / .fr / http → 301 vers https://vitacairn.com), `deploy.sh` (envoi tar + ssh, bascule d'un coup), `README.md` (domaines, DNS, certbot, Search Console, bascule des liens stores/app).
+- GitHub Pages reste en place tant que les stores pointent dessus.
+
 ## 2026-10-17 — Outils marketing (version 1.0.4, non buildée)
 
 - **Demande de note** (`expo-store-review`, module natif) : `src/stores/reviewPromptStore.ts` (logique pure `shouldAskForReview`, testée) + `src/services/storeReview.ts`. Déclenchée sur l'accueil quand on coche une habitude dont la série atteint 3/7/14/30/60/100 jours, au moins 3 jours après la 1ʳᵉ ouverture, 120 jours mini entre deux demandes, 3 max.

@@ -75,3 +75,9 @@ scripts/*.csv
 /@dk13__declic.jks
 /upload_cert.der
 /upload_cert.pem
+
+# Site burnstreak.com (généré par scripts/website/build.mjs)
+dist-website/
+
+# Site burnstreak.com (généré par scripts/website/build.mjs)
+dist-website/

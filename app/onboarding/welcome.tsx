@@ -26,7 +26,7 @@ export default function WelcomeScreen() {
         {/* Hero */}
         <View style={styles.hero}>
           <Text style={styles.logoEmoji}>⚡️</Text>
-          <Text style={styles.appName}>Vitacairn</Text>
+          <Text style={styles.appName}>Burnstreak</Text>
           <Text style={styles.tagline}>{t('onboarding.welcome.tagline')}</Text>
         </View>
 

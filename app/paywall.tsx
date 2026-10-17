@@ -136,7 +136,7 @@ export default function PaywallScreen() {
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
           {/* Hero */}
-          <Text style={styles.badge}>✨ VITACAIRN PREMIUM</Text>
+          <Text style={styles.badge}>✨ BURNSTREAK PREMIUM</Text>
           <Text style={styles.headline}>{t('paywall.headline')}</Text>
           <Text style={styles.subheadline}>{t('paywall.subheadline')}</Text>
 

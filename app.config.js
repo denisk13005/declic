@@ -1,6 +1,6 @@
 export default ({ config }) => ({
   ...config,
-  name: 'Vitacairn',
+  name: 'Burnstreak',
   slug: 'declic',
   owner: 'dk13',
   version: '1.0.3',
@@ -28,11 +28,11 @@ export default ({ config }) => ({
       // Laisse iOS choisir la langue des textes système (autorisations) selon les fichiers `locales`
       CFBundleAllowMixedLocalizations: true,
       NSUserNotificationUsageDescription:
-        'Vitacairn uses notifications to remind you of your daily habits.',
+        'Burnstreak uses notifications to remind you of your daily habits.',
       NSCameraUsageDescription:
-        'Vitacairn utilise la caméra pour scanner les codes-barres et photographier tes plats.',
+        'Burnstreak utilise la caméra pour scanner les codes-barres et photographier tes plats.',
       NSPhotoLibraryUsageDescription:
-        'Vitacairn accède à tes photos pour analyser un plat depuis ta photothèque.',
+        'Burnstreak accède à tes photos pour analyser un plat depuis ta photothèque.',
     },
   },
   android: {
@@ -53,11 +53,11 @@ export default ({ config }) => ({
       '@kingstinct/react-native-healthkit',
       {
         NSHealthShareUsageDescription:
-          'Vitacairn lit tes calories brûlées (Apple Watch / app Santé) pour calculer ton objectif calorique net.',
+          'Burnstreak lit tes calories brûlées (Apple Watch / app Santé) pour calculer ton objectif calorique net.',
         // Apple exige aussi la purpose string d'écriture dès que l'entitlement HealthKit est présent,
-        // même si l'app ne fait que lire. On la fournit (honnête : Vitacairn n'écrit rien dans Santé).
+        // même si l'app ne fait que lire. On la fournit (honnête : Burnstreak n'écrit rien dans Santé).
         NSHealthUpdateUsageDescription:
-          'Vitacairn n’enregistre aucune donnée dans l’app Santé.',
+          'Burnstreak n’enregistre aucune donnée dans l’app Santé.',
         background: false, // pas de background delivery (lecture à la demande)
       },
     ],
@@ -71,14 +71,14 @@ export default ({ config }) => ({
         // NSUserTrackingUsageDescription : texte de la fenêtre ATT (« Autoriser le suivi ? », iOS).
         // Obligatoire : sans lui, requestTrackingPermissionsAsync fait planter l'app.
         userTrackingUsageDescription:
-          'Ton identifiant publicitaire permet d’afficher des publicités plus pertinentes et de financer la version gratuite de Vitacairn.',
+          'Ton identifiant publicitaire permet d’afficher des publicités plus pertinentes et de financer la version gratuite de Burnstreak.',
       },
     ],
     [
       'expo-audio',
       {
         microphonePermission:
-          'Vitacairn utilise le micro pour que tu puisses dicter le contenu de ton repas.',
+          'Burnstreak utilise le micro pour que tu puisses dicter le contenu de ton repas.',
         // Enregistrement au premier plan uniquement : pas de mode audio en arrière-plan
         // (évite UIBackgroundModes=audio, que l'App Review demanderait de justifier).
         enableBackgroundPlayback: false,
