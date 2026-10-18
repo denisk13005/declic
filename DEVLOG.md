@@ -1,5 +1,10 @@
 # Déclic — Dev Log
 
+## 2026-10-18 — Adresse de contact : contact@burnstreak.com
+
+- Redirection e-mail OVH (MX Plan, gratuite) `contact@burnstreak.com` → `e.grange.consulting@gmail.com`.
+- Remplace `contact@declic-app.fr` (jamais relevée) dans `docs/` (site, confidentialité, CGU), `docs/store-listing.md` et `LEGAL.contactEmail` (`src/constants/legal.ts`, pris en compte au prochain build).
+
 ## 2026-10-17 — Nouveau nom : Burnstreak (ex-Vitacairn)
 
 - Raison : vitacairn.com déjà pris (enregistré le 18/07/2026 chez Cloudflare) par un autre service de **santé** en ligne (« Vitacairn — your health, kept straight ») → risque de confusion et de litige de marque. Burnstreak : .com et .fr libres (RDAP Verisign / AFNIC, 17/10), aucune app ni marque trouvée sur le web.

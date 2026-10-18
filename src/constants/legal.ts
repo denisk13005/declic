@@ -5,5 +5,5 @@
 export const LEGAL = {
   privacyUrl: 'https://denisk13005.github.io/declic/',
   termsUrl: 'https://denisk13005.github.io/declic/terms.html',
-  contactEmail: 'contact@declic-app.fr',
+  contactEmail: 'contact@burnstreak.com',
 } as const;
