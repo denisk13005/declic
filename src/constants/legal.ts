@@ -1,9 +1,9 @@
 /**
- * Liens légaux (RGPD). Les pages HTML sont hébergées via GitHub Pages (dossier docs/).
- * ⚠️ Vérifier que GitHub Pages est activé sur le repo (Settings → Pages → branche main / dossier /docs).
+ * Liens légaux (RGPD). Pages servies par le site burnstreak.com (construit depuis docs/,
+ * cf. deploy/website/README.md).
  */
 export const LEGAL = {
-  privacyUrl: 'https://denisk13005.github.io/declic/',
-  termsUrl: 'https://denisk13005.github.io/declic/terms.html',
+  privacyUrl: 'https://burnstreak.com/confidentialite/',
+  termsUrl: 'https://burnstreak.com/conditions/',
   contactEmail: 'contact@burnstreak.com',
 } as const;

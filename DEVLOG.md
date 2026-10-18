@@ -1,5 +1,13 @@
 # Déclic — Dev Log
 
+## 2026-10-18 — Fix scanner code-barres sur iPhone
+
+- Cause : `BarcodeScanner` était une `<Modal>` sœur de la modale d'ajout déjà ouverte → iOS refuse de présenter une 2ᵉ modale (la caméra ne s'affichait jamais) ; Android l'acceptait.
+- Fix (`AddEntryModal.tsx`) : le scanner est une surcouche plein écran **dans** la modale d'ajout (plus de 2ᵉ `<Modal>`) ; le bouton retour Android ferme d'abord le scanner.
+- Caméra refusée définitivement (`canAskAgain = false`, cas iOS) → bouton « Ouvrir les réglages » (`addEntry.scanner.openSettings`) au lieu d'un « Autoriser » sans effet.
+- 113/113 tests ; aucune nouvelle erreur TS. À valider sur iPhone (build EAS) + non-régression Android.
+- Version **1.0.4** ; `LEGAL.privacyUrl` / `termsUrl` → `https://burnstreak.com/confidentialite/` et `/conditions/` (au lieu de GitHub Pages).
+
 ## 2026-10-18 — Adresse de contact : contact@burnstreak.com
 
 - Redirection e-mail OVH (MX Plan, gratuite) `contact@burnstreak.com` → `e.grange.consulting@gmail.com`.

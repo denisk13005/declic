@@ -56,7 +56,8 @@
     "scanner": {
       "cameraRequired": "Camera access required",
       "searching": "⏳ Searching…",
-      "aim": "Point at a barcode"
+      "aim": "Point at a barcode",
+      "openSettings": "Open settings"
     },
     "perPiece": "1 {{unit}} · {{grams}}g",
     "perQuantityEnterWeight": "for {{quantity}} {{unit}} — enter the weight to recalculate",

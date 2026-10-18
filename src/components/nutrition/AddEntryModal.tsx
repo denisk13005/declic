@@ -13,6 +13,7 @@ import {
   ActivityIndicator,
   ScrollView,
   Switch,
+  Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -98,81 +99,86 @@ function BarcodeScanner({
 
   if (!visible) return null;
 
+  // Rendu en surcouche plein écran DANS la modale d'ajout, pas dans une 2ᵉ <Modal> :
+  // iOS refuse de présenter une modale sœur tant qu'une autre est ouverte (caméra jamais affichée).
   if (!permission) {
     return (
-      <Modal visible animationType="slide">
-        <View style={scanStyles.loading}>
-          <ActivityIndicator color={COLORS.primary} />
-        </View>
-      </Modal>
+      <View style={[StyleSheet.absoluteFill, scanStyles.loading]}>
+        <ActivityIndicator color={COLORS.primary} />
+      </View>
     );
   }
 
   if (!permission.granted) {
+    // Refus définitif (iOS ne redemande jamais) → seuls les Réglages permettent de réactiver.
+    const mustOpenSettings = !permission.canAskAgain;
     return (
-      <Modal visible animationType="slide">
+      <View style={StyleSheet.absoluteFill}>
         <SafeAreaView style={scanStyles.permContainer}>
           <Ionicons name="camera-outline" size={64} color={COLORS.textTertiary} />
           <Text style={scanStyles.permText}>{t('addEntry.scanner.cameraRequired')}</Text>
-          <TouchableOpacity style={scanStyles.permBtn} onPress={requestPermission}>
-            <Text style={scanStyles.permBtnText}>{t('common.allow')}</Text>
+          <TouchableOpacity
+            style={scanStyles.permBtn}
+            onPress={mustOpenSettings ? () => Linking.openSettings() : requestPermission}
+          >
+            <Text style={scanStyles.permBtnText}>
+              {mustOpenSettings ? t('addEntry.scanner.openSettings') : t('common.allow')}
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={onClose} style={{ marginTop: SPACING.md }}>
             <Text style={{ color: COLORS.textSecondary }}>{t('common.cancel')}</Text>
           </TouchableOpacity>
         </SafeAreaView>
-      </Modal>
+      </View>
     );
   }
 
   return (
-    <Modal visible animationType="slide" statusBarTranslucent>
-      <View style={{ flex: 1, backgroundColor: '#000' }}>
-        <CameraView
-          style={StyleSheet.absoluteFill}
-          facing="back"
-          onBarcodeScanned={
-            scanned
-              ? undefined
-              : ({ data }) => {
-                  setScanned(true);
-                  onScanned(data);
-                }
-          }
-          barcodeScannerSettings={{ barcodeTypes: ['ean13', 'ean8', 'upc_a', 'upc_e', 'qr'] }}
-        />
-        <View style={StyleSheet.absoluteFill}>
+    <View style={[StyleSheet.absoluteFill, { backgroundColor: '#000' }]}>
+      <CameraView
+        style={StyleSheet.absoluteFill}
+        facing="back"
+        onBarcodeScanned={
+          scanned
+            ? undefined
+            : ({ data }) => {
+                setScanned(true);
+                onScanned(data);
+              }
+        }
+        barcodeScannerSettings={{ barcodeTypes: ['ean13', 'ean8', 'upc_a', 'upc_e', 'qr'] }}
+      />
+      <View style={StyleSheet.absoluteFill}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)' }} />
+        <View style={{ flexDirection: 'row', height: 240 }}>
           <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)' }} />
-          <View style={{ flexDirection: 'row', height: 240 }}>
-            <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)' }} />
-            <View style={{ width: 240, height: 240 }}>
-              {[
-                { top: 0, left: 0, borderRightWidth: 0, borderBottomWidth: 0, borderTopLeftRadius: 4 },
-                { top: 0, right: 0, borderLeftWidth: 0, borderBottomWidth: 0, borderTopRightRadius: 4 },
-                { bottom: 0, left: 0, borderRightWidth: 0, borderTopWidth: 0, borderBottomLeftRadius: 4 },
-                { bottom: 0, right: 0, borderLeftWidth: 0, borderTopWidth: 0, borderBottomRightRadius: 4 },
-              ].map((s, i) => (
-                <View key={i} style={[{ position: 'absolute', width: 24, height: 24, borderColor: COLORS.primary, borderWidth: 3 }, s]} />
-              ))}
-            </View>
-            <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)' }} />
+          <View style={{ width: 240, height: 240 }}>
+            {[
+              { top: 0, left: 0, borderRightWidth: 0, borderBottomWidth: 0, borderTopLeftRadius: 4 },
+              { top: 0, right: 0, borderLeftWidth: 0, borderBottomWidth: 0, borderTopRightRadius: 4 },
+              { bottom: 0, left: 0, borderRightWidth: 0, borderTopWidth: 0, borderBottomLeftRadius: 4 },
+              { bottom: 0, right: 0, borderLeftWidth: 0, borderTopWidth: 0, borderBottomRightRadius: 4 },
+            ].map((s, i) => (
+              <View key={i} style={[{ position: 'absolute', width: 24, height: 24, borderColor: COLORS.primary, borderWidth: 3 }, s]} />
+            ))}
           </View>
-          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', paddingTop: SPACING.lg }}>
-            <Text style={{ color: '#fff', fontSize: FONT_SIZE.sm }}>
-              {scanned ? t('addEntry.scanner.searching') : t('addEntry.scanner.aim')}
-            </Text>
-          </View>
+          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)' }} />
         </View>
-        <SafeAreaView style={{ position: 'absolute', top: 0, left: 0, right: 0 }} pointerEvents="box-none">
-          <TouchableOpacity
-            onPress={onClose}
-            style={{ margin: SPACING.md, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center' }}
-          >
-            <Ionicons name="close" size={24} color="#fff" />
-          </TouchableOpacity>
-        </SafeAreaView>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', paddingTop: SPACING.lg }}>
+          <Text style={{ color: '#fff', fontSize: FONT_SIZE.sm }}>
+            {scanned ? t('addEntry.scanner.searching') : t('addEntry.scanner.aim')}
+          </Text>
+        </View>
       </View>
-    </Modal>
+      <SafeAreaView style={{ position: 'absolute', top: 0, left: 0, right: 0 }} pointerEvents="box-none">
+        <TouchableOpacity
+          onPress={onClose}
+          style={{ margin: SPACING.md, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <Ionicons name="close" size={24} color="#fff" />
+        </TouchableOpacity>
+      </SafeAreaView>
+    </View>
   );
 }
 
@@ -729,7 +735,12 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
 
   return (
     <>
-      <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
+      <Modal
+        visible={visible}
+        transparent
+        animationType="slide"
+        onRequestClose={scannerVisible ? () => setScannerVisible(false) : handleClose}
+      >
         <KeyboardAvoidingView
           behavior="padding"
           style={styles.overlay}
@@ -1043,13 +1054,13 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
             )}
           </View>
         </KeyboardAvoidingView>
-      </Modal>
 
-      <BarcodeScanner
-        visible={scannerVisible}
-        onScanned={handleBarcodeScanned}
-        onClose={() => setScannerVisible(false)}
-      />
+        <BarcodeScanner
+          visible={scannerVisible}
+          onScanned={handleBarcodeScanned}
+          onClose={() => setScannerVisible(false)}
+        />
+      </Modal>
     </>
   );
 }

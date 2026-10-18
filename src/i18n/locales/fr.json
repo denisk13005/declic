@@ -56,7 +56,8 @@
     "scanner": {
       "cameraRequired": "Accès à la caméra requis",
       "searching": "⏳ Recherche…",
-      "aim": "Pointe vers un code-barres"
+      "aim": "Pointe vers un code-barres",
+      "openSettings": "Ouvrir les réglages"
     },
     "perPiece": "1 {{unit}} · {{grams}}g",
     "perQuantityEnterWeight": "pour {{quantity}} {{unit}} — entre le poids pour recalculer",
