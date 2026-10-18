@@ -25,9 +25,9 @@ const SITE = 'https://burnstreak.com';
  * coordonnées du fournisseur du VPS avant la première mise en ligne.
  */
 const HOSTING = {
-  name: 'À COMPLÉTER',
-  address: 'À COMPLÉTER',
-  website: 'À COMPLÉTER',
+  name: 'OVH SAS',
+  address: '2 rue Kellermann, 59100 Roubaix, France',
+  website: 'https://www.ovhcloud.com',
 };
 
 // `--check` : construit quand même, pour vérifier le script (le résultat ne doit pas être mis en ligne).

@@ -1,0 +1,3 @@
+# Scripts et configs serveur : toujours en fins de ligne Unix (sinon bash / nginx échouent)
+*.sh text eol=lf
+*.conf text eol=lf

@@ -9,7 +9,9 @@ site prêt pour le VPS (`dist-website/`), et `deploy/website/deploy.sh` l'envoie
 | `https://burnstreak.com/confidentialite/` | politique de confidentialité + mentions légales (`docs/index.html`) |
 | `https://burnstreak.com/conditions/` | CGU (`docs/terms.html`) |
 
-`www.burnstreak.com`, `burnstreak.fr` et `www.burnstreak.fr` redirigent vers `https://burnstreak.com`.
+`www.burnstreak.com`, `burnstreak.fr`, `burnstreak.app` (et leurs `www.`) redirigent vers `https://burnstreak.com`.
+
+VPS : OVH `ubuntu@141.227.133.101` (héberge aussi lapi-backend et budget : ne jamais toucher au site `regulpark` ni faire `pm2 restart all`).
 
 ---
 
@@ -20,12 +22,12 @@ Au nom de la société (eg consulting). Activer le renouvellement automatique.
 
 ## 2. DNS (chez le registrar)
 
-Pour **chacun** des deux domaines :
+Pour **chacun** des domaines (.com, .fr, .app) :
 
 | Type | Nom | Valeur |
 |---|---|---|
-| A | `@` | adresse IPv4 du VPS |
-| A | `www` | adresse IPv4 du VPS |
+| A | `@` | `141.227.133.101` |
+| A | `www` | `141.227.133.101` |
 | AAAA | `@` et `www` | adresse IPv6 du VPS (seulement si le VPS en a une) |
 
 Supprimer les enregistrements A/AAAA « parking » créés par défaut par le registrar.
@@ -46,7 +48,7 @@ sudo tee /etc/nginx/sites-available/burnstreak >/dev/null <<'EOF'
 server {
     listen 80;
     listen [::]:80;
-    server_name burnstreak.com www.burnstreak.com burnstreak.fr www.burnstreak.fr;
+    server_name burnstreak.com www.burnstreak.com burnstreak.fr www.burnstreak.fr burnstreak.app www.burnstreak.app;
     root /var/www/burnstreak/site;
 }
 EOF
@@ -54,12 +56,13 @@ sudo ln -s /etc/nginx/sites-available/burnstreak /etc/nginx/sites-enabled/burnst
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
-Certificat HTTPS (un seul certificat pour les 4 adresses) :
+Certificat HTTPS (un seul certificat pour les 6 adresses) :
 
 ```bash
 sudo apt install certbot   # si absent
 sudo certbot certonly --webroot -w /var/www/burnstreak/site \
-  -d burnstreak.com -d www.burnstreak.com -d burnstreak.fr -d www.burnstreak.fr
+  -d burnstreak.com -d www.burnstreak.com -d burnstreak.fr -d www.burnstreak.fr \
+  -d burnstreak.app -d www.burnstreak.app
 ```
 
 Puis la config **définitive** : copier le contenu de `deploy/website/nginx-burnstreak.conf` dans
@@ -81,7 +84,7 @@ construction du site s'arrête volontairement.
 Depuis Git Bash, à la racine du projet :
 
 ```bash
-VPS=utilisateur@ip-du-vps bash deploy/website/deploy.sh
+VPS=regulpark bash deploy/website/deploy.sh   # alias SSH existant (= ubuntu@141.227.133.101)
 ```
 
 ## 6. Référencement Google (une fois)
