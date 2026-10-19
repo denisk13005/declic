@@ -1,5 +1,12 @@
 import { Macros } from '@/types';
 import i18n from '@/i18n';
+import Constants from 'expo-constants';
+
+// OFF demande un User-Agent identifiant l'app (« NomApp/Version (contact) ») ;
+// les requêtes anonymes sont limitées plus sévèrement.
+const OFF_HEADERS = {
+  'User-Agent': `Burnstreak/${Constants.expoConfig?.version ?? '0.0.0'} (contact@burnstreak.com)`,
+};
 
 export interface ProductInfo {
   name: string;
@@ -119,7 +126,7 @@ export async function searchByName(query: string, signal?: AbortSignal): Promise
     sort_by: 'unique_scans_n',
   });
   const url = `https://world.openfoodfacts.org/cgi/search.pl?${params}`;
-  const response = await fetch(url, { signal });
+  const response = await fetch(url, { signal, headers: OFF_HEADERS });
   if (!response.ok) return [];
   const data = await response.json();
 
@@ -154,8 +161,14 @@ export async function searchByName(query: string, signal?: AbortSignal): Promise
 }
 
 export async function lookupBarcode(barcode: string): Promise<ProductInfo> {
-  const url = `https://world.openfoodfacts.org/api/v2/product/${barcode}.json?fields=product_name,product_name_fr,brands,nutriments,serving_size`;
-  const response = await fetch(url);
+  const url = `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(barcode)}.json?fields=product_name,product_name_fr,brands,nutriments,serving_size`;
+  let response = await fetch(url, { headers: OFF_HEADERS });
+  // 429 = limite de débit OFF (souvent passagère, IP opérateur partagée) → un seul nouvel essai.
+  if (response.status === 429) {
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    response = await fetch(url, { headers: OFF_HEADERS });
+  }
+  if (response.status === 429) throw new Error(i18n.t('errors.offBusy'));
   if (!response.ok) throw new Error(i18n.t('errors.network', { status: response.status }));
   const data = await response.json();
   if (data.status !== 1) throw new Error(i18n.t('errors.productNotFound'));

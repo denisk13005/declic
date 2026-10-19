@@ -92,9 +92,15 @@ function BarcodeScanner({
   const { t } = useTranslation();
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
+  // Verrou synchrone : la caméra iOS rappelle onBarcodeScanned à chaque image, avant que
+  // setScanned(true) ait re-rendu → sans ref, une rafale de requêtes OFF (→ HTTP 429).
+  const scannedRef = useRef(false);
 
   useEffect(() => {
-    if (visible) setScanned(false);
+    if (visible) {
+      scannedRef.current = false;
+      setScanned(false);
+    }
   }, [visible]);
 
   if (!visible) return null;
@@ -142,6 +148,8 @@ function BarcodeScanner({
           scanned
             ? undefined
             : ({ data }) => {
+                if (scannedRef.current) return;
+                scannedRef.current = true;
                 setScanned(true);
                 onScanned(data);
               }

@@ -33,6 +33,8 @@ jest.mock('react-native', () => ({
 
 jest.mock('expo-device', () => ({ isDevice: true }));
 
+jest.mock('expo-constants', () => ({ __esModule: true, default: { expoConfig: { version: '0.0.0' } } }));
+
 // Langue du téléphone pour i18n : français (langue de référence des tests)
 jest.mock('expo-localization', () => ({ getLocales: () => [{ languageCode: 'fr' }] }));
 

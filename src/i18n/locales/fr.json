@@ -1585,6 +1585,7 @@
     "aiUnreadable": "Réponse Gemini illisible : {{text}}",
     "voiceNoFood": "Je n'ai reconnu aucun aliment. Réessaie en précisant les quantités.",
     "network": "Réseau : HTTP {{status}}",
+    "offBusy": "La base Open Food Facts est momentanément saturée. Réessaie dans une minute.",
     "productNotFound": "Produit introuvable. Vérifie que le code-barres est lisible.",
     "noNutrition": "Données nutritionnelles indisponibles pour ce produit.",
     "unknownFood": "Aliment inconnu",

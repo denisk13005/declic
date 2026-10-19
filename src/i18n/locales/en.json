@@ -1585,6 +1585,7 @@
     "aiUnreadable": "Unreadable Gemini response: {{text}}",
     "voiceNoFood": "I didn't recognize any food. Try again and mention the quantities.",
     "network": "Network: HTTP {{status}}",
+    "offBusy": "The Open Food Facts database is busy right now. Please try again in a minute.",
     "productNotFound": "Product not found. Make sure the barcode is readable.",
     "noNutrition": "No nutrition data available for this product.",
     "unknownFood": "Unknown food",

@@ -1,5 +1,13 @@
 # Déclic — Dev Log
 
+## 2026-10-19 — Scanner code-barres iPhone : « Produit introuvable / HTTP 429 »
+
+- Retour testeur iPhone (build 1.0.4) : la caméra s'ouvre (fix du 18/10 OK) mais le scan affiche « Produit introuvable — Réseau : HTTP 429 » = **limite de débit Open Food Facts**.
+- Causes probables : (1) la caméra iOS rappelle `onBarcodeScanned` à chaque image avant que `setScanned(true)` re-rende → plusieurs requêtes OFF en rafale ; (2) requêtes sans User-Agent identifié (OFF limite plus sévèrement), IP 5G opérateur partagée.
+- Fix : verrou `scannedRef` (synchrone) dans `BarcodeScanner` ; en-tête `User-Agent: Burnstreak/<version> (contact@burnstreak.com)` sur toutes les requêtes OFF ; sur 429, un nouvel essai après 1,5 s puis message clair `errors.offBusy` (fr/en) au lieu de « HTTP 429 ».
+- Version **1.0.5** (`app.config.js` + `versionName` dans `android/app/build.gradle`).
+- `jest.setup.js` : mock `expo-constants`. 113/113 tests ; aucune nouvelle erreur TS. À valider sur iPhone (nouveau build) + non-régression Android.
+
 ## 2026-10-18 — Fix scanner code-barres sur iPhone
 
 - Cause : `BarcodeScanner` était une `<Modal>` sœur de la modale d'ajout déjà ouverte → iOS refuse de présenter une 2ᵉ modale (la caméra ne s'affichait jamais) ; Android l'acceptait.
