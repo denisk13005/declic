@@ -6,6 +6,7 @@
 - Fix (`AddEntryModal.tsx`) : le scanner est une surcouche plein écran **dans** la modale d'ajout (plus de 2ᵉ `<Modal>`) ; le bouton retour Android ferme d'abord le scanner.
 - Caméra refusée définitivement (`canAskAgain = false`, cas iOS) → bouton « Ouvrir les réglages » (`addEntry.scanner.openSettings`) au lieu d'un « Autoriser » sans effet.
 - 113/113 tests ; aucune nouvelle erreur TS. À valider sur iPhone (build EAS) + non-régression Android.
+- ⚠️ Android : le dossier `android/` étant natif, EAS lit la version dans `android/app/build.gradle` (`versionName`), **pas** dans `app.config.js` → le build 46 est sorti en « 1.0.3 ». `versionName` passé à 1.0.4 à la main (le `versionCode` reste géré par EAS, `autoIncrement`). À chaque changement de version : modifier les DEUX fichiers.
 - Version **1.0.4** ; `LEGAL.privacyUrl` / `termsUrl` → `https://burnstreak.com/confidentialite/` et `/conditions/` (au lieu de GitHub Pages).
 
 ## 2026-10-18 — Adresse de contact : contact@burnstreak.com
