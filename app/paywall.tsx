@@ -32,9 +32,10 @@ const FEATURES = [
 ] as const;
 
 // Sur Google Play, les forfaits d'un même abonnement partagent le même titre produit
-// → on libelle chaque package d'après son type (MONTHLY / ANNUAL / LIFETIME).
-const PACKAGE_ORDER: Record<string, number> = { ANNUAL: 0, MONTHLY: 1, LIFETIME: 2 };
-const PACKAGE_KEY: Record<string, string> = { ANNUAL: 'annual', MONTHLY: 'monthly', LIFETIME: 'lifetime' };
+// → on libelle chaque package d'après son type. Seuls l'annuel et le mensuel sont vendus :
+// tout autre package de l'offre RevenueCat (ex. « à vie ») est ignoré.
+const PACKAGE_ORDER: Record<string, number> = { ANNUAL: 0, MONTHLY: 1 };
+const PACKAGE_KEY: Record<string, string> = { ANNUAL: 'annual', MONTHLY: 'monthly' };
 
 function packageInfo(pkg: PurchasesPackage) {
   const key = PACKAGE_KEY[pkg.packageType];
@@ -63,8 +64,6 @@ function packageSubtitle(pkg: PurchasesPackage): string {
         : i18n.t('paywall.packages.annual.subtitle');
     case 'MONTHLY':
       return i18n.t('paywall.packages.monthly.subtitle');
-    case 'LIFETIME':
-      return i18n.t('paywall.packages.lifetime.subtitle');
     default:
       return pkg.product.description;
   }
@@ -82,7 +81,9 @@ export default function PaywallScreen() {
   useEffect(() => {
     getOfferings().then((pkgs) => {
       // Annuel en tête et présélectionné (meilleure offre)
-      const sorted = [...pkgs].sort((a, b) => packageInfo(a).order - packageInfo(b).order);
+      const sorted = pkgs
+        .filter((p) => p.packageType in PACKAGE_KEY)
+        .sort((a, b) => packageInfo(a).order - packageInfo(b).order);
       setPackages(sorted);
       if (sorted.length > 0) setSelected(sorted[0]);
       setLoading(false);
@@ -207,6 +208,11 @@ export default function PaywallScreen() {
             </View>
           )}
 
+          <Text style={styles.legal}>{t(Platform.OS === 'ios' ? 'paywall.legalIos' : 'paywall.legalAndroid')}</Text>
+        </ScrollView>
+
+        {/* Bouton d'achat toujours visible, quelle que soit la hauteur de l'écran */}
+        <View style={styles.footer}>
           {/* CTA */}
           <TouchableOpacity
             onPress={handlePurchase}
@@ -234,8 +240,6 @@ export default function PaywallScreen() {
             <Text style={styles.restoreText}>{t('paywall.restore')}</Text>
           </TouchableOpacity>
 
-          <Text style={styles.legal}>{t(Platform.OS === 'ios' ? 'paywall.legalIos' : 'paywall.legalAndroid')}</Text>
-
           {/* Liens obligatoires pour un abonnement à renouvellement automatique (App Store 3.1.2) */}
           <View style={styles.legalLinks}>
             <TouchableOpacity onPress={() => Linking.openURL(LEGAL.termsUrl)} hitSlop={8}>
@@ -246,7 +250,7 @@ export default function PaywallScreen() {
               <Text style={styles.legalLink}>{t('paywall.privacyLink')}</Text>
             </TouchableOpacity>
           </View>
-        </ScrollView>
+        </View>
       </SafeAreaView>
     </View>
   );
@@ -258,10 +262,18 @@ const styles = StyleSheet.create({
   safe: { flex: 1 },
   closeBtn: {
     alignSelf: 'flex-end',
-    padding: SPACING.md,
-    paddingRight: SPACING.lg,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm,
   },
-  content: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.xxl },
+  content: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.md },
+  footer: {
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.sm,
+    paddingBottom: SPACING.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: COLORS.border,
+    backgroundColor: COLORS.bg,
+  },
 
   badge: {
     fontSize: FONT_SIZE.xs,
@@ -272,18 +284,18 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   headline: {
-    fontSize: FONT_SIZE.display,
+    fontSize: FONT_SIZE.xxl,
     fontWeight: FONT_WEIGHT.extrabold,
     color: COLORS.textPrimary,
     textAlign: 'center',
-    lineHeight: 42,
+    lineHeight: 34,
     marginBottom: SPACING.sm,
   },
   subheadline: {
     fontSize: FONT_SIZE.md,
     color: COLORS.textSecondary,
     textAlign: 'center',
-    marginBottom: SPACING.xl,
+    marginBottom: SPACING.lg,
   },
 
   featureList: {
@@ -292,14 +304,14 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
     borderWidth: 1,
     borderColor: COLORS.border,
-    gap: SPACING.md,
-    marginBottom: SPACING.xl,
+    gap: SPACING.sm,
+    marginBottom: SPACING.lg,
   },
   featureRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md },
   featureIcon: { fontSize: 20, width: 28, textAlign: 'center' },
   featureLabel: { fontSize: FONT_SIZE.md, color: COLORS.textPrimary },
 
-  packages: { gap: SPACING.sm, marginBottom: SPACING.xl },
+  packages: { gap: SPACING.sm, marginBottom: SPACING.md },
   packageCard: {
     borderRadius: RADIUS.lg,
     borderWidth: 1.5,
@@ -327,11 +339,11 @@ const styles = StyleSheet.create({
   textWhite: { color: '#fff' },
   textWhiteAlpha: { color: 'rgba(255,255,255,0.75)' },
 
-  ctaWrapper: { borderRadius: RADIUS.lg, overflow: 'hidden', marginBottom: SPACING.md },
+  ctaWrapper: { borderRadius: RADIUS.lg, overflow: 'hidden', marginBottom: SPACING.xs },
   cta: { paddingVertical: SPACING.md + 4, alignItems: 'center', justifyContent: 'center' },
   ctaText: { fontSize: FONT_SIZE.lg, fontWeight: FONT_WEIGHT.bold, color: '#fff' },
 
-  restoreBtn: { alignItems: 'center', paddingVertical: SPACING.sm, marginBottom: SPACING.md },
+  restoreBtn: { alignItems: 'center', paddingVertical: SPACING.sm },
   restoreText: { fontSize: FONT_SIZE.sm, color: COLORS.textSecondary },
 
   legal: {
@@ -345,7 +357,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     gap: SPACING.sm,
-    marginTop: SPACING.sm,
   },
   legalLink: {
     fontSize: FONT_SIZE.xs,

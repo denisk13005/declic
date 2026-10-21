@@ -701,11 +701,6 @@
         "label": "Monthly",
         "period": "/mo",
         "subtitle": "Billed monthly, cancel anytime"
-      },
-      "lifetime": {
-        "label": "Lifetime",
-        "period": "",
-        "subtitle": "One-time payment, lifetime access"
       }
     },
     "continue": "Continue",

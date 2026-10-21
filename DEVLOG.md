@@ -1,5 +1,10 @@
 # Déclic — Dev Log
 
+## 2026-10-21 — Paywall : bouton « Continuer » toujours visible
+
+- Sur S10+ le bouton d'achat était sous la ligne de flottaison (il fallait défiler). `app/paywall.tsx` : bouton d'achat + « Restaurer » + liens CGU/confidentialité dans un pied fixe, hors du défilement ; titre 28 au lieu de 36, marges resserrées → tout tient sur un écran de S10+, et sur les petits écrans seul le haut défile.
+- Option « à vie » retirée : le paywall n'affiche plus que l'annuel et le mensuel (tout autre package de l'offre RevenueCat est ignoré) ; clés `paywall.packages.lifetime` supprimées. Le Premium offert à la famille (« Grant entitlement » dans RevenueCat) n'est pas concerné.
+
 ## 2026-10-21 — Site : captures d'écran FR / EN selon la langue
 
 - `docs/app/img/en/` (captures anglaises existantes, déplacées) + `docs/app/img/fr/` (4 captures FR du S10+, recadrées en 540×1174 : barre d'état et barre de navigation Android retirées, fond `#0B0A0F`).

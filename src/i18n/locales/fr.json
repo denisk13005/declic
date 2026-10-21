@@ -701,11 +701,6 @@
         "label": "Mensuel",
         "period": "/mois",
         "subtitle": "Facturé chaque mois, sans engagement"
-      },
-      "lifetime": {
-        "label": "À vie",
-        "period": "",
-        "subtitle": "Paiement unique, accès à vie"
       }
     },
     "continue": "Continuer",
