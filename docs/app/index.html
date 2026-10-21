@@ -167,7 +167,7 @@
           <span data-lang-en>Free · Premium with no commitment · In English and French</span>
         </p>
       </div>
-      <div class="phone"><img src="img/habits.jpg" alt="Écran des habitudes de Burnstreak" width="540" height="1174" /></div>
+      <div class="phone"><img src="img/fr/habits.jpg" data-shot="habits" alt="Écran des habitudes de Burnstreak" data-alt-en="Burnstreak habits screen" width="540" height="1174" /></div>
     </section>
 
     <section class="proof" aria-label="Chiffres clés">
@@ -188,7 +188,7 @@
           <li><span data-lang-fr>Objectifs calculés selon ton profil : perte de gras, maintien ou prise de muscle.</span><span data-lang-en>Goals based on your profile: fat loss, maintenance or muscle gain.</span></li>
         </ul>
       </div>
-      <div class="shot"><img src="img/goals.jpg" alt="Objectifs caloriques dans Burnstreak" width="540" height="1174" loading="lazy" /></div>
+      <div class="shot"><img src="img/fr/goals.jpg" data-shot="goals" alt="Objectifs caloriques dans Burnstreak" data-alt-en="Calorie goals in Burnstreak" width="540" height="1174" loading="lazy" /></div>
     </section>
 
     <section class="feature">
@@ -201,7 +201,7 @@
           <li><span data-lang-fr>Séries de jours 🔥 et taux de réussite pour rester motivé.</span><span data-lang-en>Day streaks 🔥 and completion rates to stay motivated.</span></li>
         </ul>
       </div>
-      <div class="shot"><img src="img/statistics.jpg" alt="Statistiques des habitudes" width="540" height="1174" loading="lazy" /></div>
+      <div class="shot"><img src="img/fr/statistics.jpg" data-shot="statistics" alt="Statistiques des habitudes" data-alt-en="Habit statistics" width="540" height="1174" loading="lazy" /></div>
     </section>
 
     <section class="feature">
@@ -214,7 +214,7 @@
           <li><span data-lang-fr>Course, vélo, natation… les calories brûlées s'ajoutent à ton bilan.</span><span data-lang-en>Running, cycling, swimming… burned calories add to your daily balance.</span></li>
         </ul>
       </div>
-      <div class="shot"><img src="img/workout.jpg" alt="Écran sport de Burnstreak" width="540" height="1174" loading="lazy" /></div>
+      <div class="shot"><img src="img/fr/workout.jpg" data-shot="workout" alt="Écran sport de Burnstreak" data-alt-en="Burnstreak workout screen" width="540" height="1174" loading="lazy" /></div>
     </section>
 
     <section class="pricing" id="tarifs">
@@ -295,6 +295,14 @@
         document.getElementById('lang-fr').setAttribute('aria-pressed', l === 'fr');
         document.getElementById('lang-en').setAttribute('aria-pressed', l === 'en');
         try { localStorage.setItem('burnstreak-lang', l); } catch (e) {}
+        // Captures d'écran dans la langue choisie (img/fr/… ou img/en/…)
+        var shots = document.querySelectorAll('img[data-shot]');
+        for (var i = 0; i < shots.length; i++) {
+          var img = shots[i];
+          if (!img.dataset.altFr) img.dataset.altFr = img.alt;
+          img.src = 'img/' + l + '/' + img.dataset.shot + '.jpg';
+          img.alt = l === 'en' ? img.dataset.altEn : img.dataset.altFr;
+        }
       }
       var saved = null;
       try { saved = localStorage.getItem('burnstreak-lang'); } catch (e) {}

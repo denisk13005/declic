@@ -1,5 +1,10 @@
 # Déclic — Dev Log
 
+## 2026-10-21 — Site : captures d'écran FR / EN selon la langue
+
+- `docs/app/img/en/` (captures anglaises existantes, déplacées) + `docs/app/img/fr/` (4 captures FR du S10+, recadrées en 540×1174 : barre d'état et barre de navigation Android retirées, fond `#0B0A0F`).
+- `docs/app/index.html` : les `<img data-shot="…">` pointent par défaut sur `img/fr/` ; le bouton FR/EN (et la langue du navigateur) change aussi l'image et son texte alternatif (`data-alt-en`).
+
 ## 2026-10-19 — Scanner code-barres iPhone : « Produit introuvable / HTTP 429 »
 
 - Retour testeur iPhone (build 1.0.4) : la caméra s'ouvre (fix du 18/10 OK) mais le scan affiche « Produit introuvable — Réseau : HTTP 429 » = **limite de débit Open Food Facts**.
