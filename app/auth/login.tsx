@@ -9,6 +9,7 @@ import {
   Platform,
   ActivityIndicator,
   Alert,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -59,7 +60,12 @@ export default function LoginScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.flex}
       >
-        <View style={styles.container}>
+        {/* Défilement : sur petit écran (iPhone SE, iPad en mode compatibilité) + clavier, rien n'est masqué */}
+        <ScrollView
+          contentContainerStyle={styles.container}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
           {/* Header */}
           <View style={styles.header}>
             <LinearGradient colors={COLORS.gradientPrimary} style={styles.logoCircle}>
@@ -137,7 +143,7 @@ export default function LoginScreen() {
               <Text style={styles.footerLink}>{t('auth.login.createAccount')}</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -147,8 +153,9 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.bg },
   flex: { flex: 1 },
   container: {
-    flex: 1,
+    flexGrow: 1,
     paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.lg,
     justifyContent: 'center',
     gap: SPACING.xl,
   },

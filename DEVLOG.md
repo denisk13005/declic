@@ -1,5 +1,11 @@
 # Déclic — Dev Log
 
+## 2026-10-27 — Refus Apple 1.0.5 (25) : règle 4 « Design » sur iPad
+
+- Apple a testé sur iPad Air 11" (app iPhone seule → mode compatibilité, petite fenêtre) : « interface encombrée ». Pas de capture jointe.
+- Les deux seuls écrans sans défilement étaient les premiers vus par l'examinateur : `app/auth/login.tsx` (boutons masqués par le clavier) et `app/onboarding/welcome.tsx` (bouton « Commencer » pouvant sortir de l'écran) → enveloppés dans un `ScrollView` (`flexGrow: 1`), rien ne peut plus être coupé.
+- Version **1.0.6** (`app.config.js` + `versionName` dans `android/app/build.gradle`).
+
 ## 2026-10-21 — Paywall : bouton « Continuer » toujours visible
 
 - Sur S10+ le bouton d'achat était sous la ligne de flottaison (il fallait défiler). `app/paywall.tsx` : bouton d'achat + « Restaurer » + liens CGU/confidentialité dans un pied fixe, hors du défilement ; titre 28 au lieu de 36, marges resserrées → tout tient sur un écran de S10+, et sur les petits écrans seul le haut défile.

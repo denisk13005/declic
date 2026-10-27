@@ -1,12 +1,12 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
 
-const { width, height } = Dimensions.get('window');
+const { height } = Dimensions.get('window');
 
 const PILLS = ['nutrition', 'streaks', 'stats', 'reminders'] as const;
 
@@ -23,6 +23,8 @@ export default function WelcomeScreen() {
       </View>
 
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+        {/* Défilement : sur petit écran (iPhone SE, iPad en mode compatibilité) le bouton reste accessible */}
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Hero */}
         <View style={styles.hero}>
           <Text style={styles.logoEmoji}>⚡️</Text>
@@ -52,6 +54,7 @@ export default function WelcomeScreen() {
           </TouchableOpacity>
           <Text style={styles.sub}>{t('onboarding.welcome.sub')}</Text>
         </View>
+        </ScrollView>
       </SafeAreaView>
     </View>
   );
@@ -78,9 +81,10 @@ const styles = StyleSheet.create({
     left: -40,
     opacity: 0.3,
   },
-  safe: { flex: 1, justifyContent: 'space-between' },
+  safe: { flex: 1 },
+  content: { flexGrow: 1, justifyContent: 'space-between' },
 
-  hero: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  hero: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: SPACING.xl },
   logoEmoji: { fontSize: 72, marginBottom: SPACING.md },
   appName: {
     fontSize: 56,
