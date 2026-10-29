@@ -1,5 +1,12 @@
 # Déclic — Dev Log
 
+## 2026-10-29 — Ancien nom « Vitacairn » encore visible
+
+- Android : `android/app/src/main/res/values/strings.xml` (`app_name`) disait encore « Vitacairn » → nom sous l'icône. Passé à « Burnstreak » (le dossier `android/` est natif, `name` d'`app.config.js` n'y est pas recopié).
+- iOS : textes des fenêtres d'autorisation (`src/i18n/ios/fr.json` / `en.json`) → « Burnstreak ».
+- Fenêtre de consentement pub (UMP) : nom réglé dans la console AdMob (à renommer si l'ancien nom apparaît encore).
+- Builds Android 1.0.6 + iOS 1.0.6 (27).
+
 ## 2026-10-27 — Refus Apple 1.0.5 (25) : règle 4 « Design » sur iPad
 
 - Apple a testé sur iPad Air 11" (app iPhone seule → mode compatibilité, petite fenêtre) : « interface encombrée ». Pas de capture jointe.

@@ -65,7 +65,7 @@ export default ({ config }) => ({
       'react-native-google-mobile-ads',
       {
         androidAppId: 'ca-app-pub-6176341588651241~3333714691',
-        iosAppId: 'ca-app-pub-6176341588651241~8983063328', // app AdMob « Vitacairn » (iOS)
+        iosAppId: 'ca-app-pub-6176341588651241~8983063328', // app AdMob « Vitacairn » (iOS) — ancien nom, à renommer dans la console AdMob
         // Noms d'options en camelCase (le plugin ignorait l'ancienne écriture snake_case)
         delayAppMeasurementInit: false,
         // NSUserTrackingUsageDescription : texte de la fenêtre ATT (« Autoriser le suivi ? », iOS).
