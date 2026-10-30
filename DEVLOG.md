@@ -1,5 +1,14 @@
 # Déclic — Dev Log
 
+## 2026-10-30 — Programmes de sport automatiques : cohérence des exercices
+
+- Retour : programme avancé 6 séances sans aucun exercice de pectoraux. Audit de toutes les combinaisons (séances 1-6 × niveau × genre × matériel).
+- Causes : (1) le générateur prenait toujours le 1er exercice de la liste → pompes avant le développé couché, même en avancé ; (2) `biasGroups` (femme) retirait le développé une 2e fois → semaines sans aucun développé (3 séances avancée : 0 pectoraux) et 0 triceps ; (3) le plafond de 7 exercices coupait la fin de liste → muscles entiers absents (dos, triceps) ; (4) homme avancé 6 séances = « un muscle par jour » → pectoraux 1×/semaine.
+- `src/data/exercises.ts` : `PROGRAM_PRIORITY` + `sortByProgramPriority()` (exercices de base d'abord : développé couché, tractions, rowing, squat, hip thrust…) ; rowing haltère et RDL haltères accessibles aux débutants (sinon 0 dos / 0 ischios à la maison avec haltères) ; RDL fessiers dans la même famille que le RDL ischios.
+- `src/utils/programGenerator.ts` : tri par priorité + variante B décalée (autres exercices que la A) ; plafond de 7 réparti (chaque muscle prévu garde au moins 1 exercice) ; biais femme ne retire plus pectoraux/triceps, Upper femme avec un développé ; homme avancé 6 séances → PPL × 2 ; Legs B homme corrigée (libellé = contenu) ; splits avancés seulement si le matériel permet de vraies séances dos/biceps.
+- Tests `__tests__/utils/programCoherence.test.ts`. Limite connue : poids du corps seul / élastiques seuls → séances encore courtes (catalogue d'exercices trop maigre pour ce matériel).
+- Les programmes déjà créés ne changent pas : il faut en régénérer un.
+
 ## 2026-10-29 — Ancien nom « Vitacairn » encore visible
 
 - Android : `android/app/src/main/res/values/strings.xml` (`app_name`) disait encore « Vitacairn » → nom sous l'icône. Passé à « Burnstreak » (le dossier `android/` est natif, `name` d'`app.config.js` n'y est pas recopié).

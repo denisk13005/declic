@@ -7,6 +7,7 @@ import {
   getAvailableCompounds,
   getAvailableIsolations,
   getAvailableExercises,
+  sortByProgramPriority,
 } from '@/data/exercises';
 import i18n, { translatedRecord } from '@/i18n';
 
@@ -138,6 +139,20 @@ export function estimateSessionMinutes(day: ProgramDay): number {
     totalSeconds += pe.sets * (execPerSet + restSec);
   }
   return Math.round(totalSeconds / 60);
+}
+
+/**
+ * Candidats triés du plus classique au plus niche. `offset` décale le point de départ
+ * (variante B d'une séance → d'autres exercices que la variante A), sans jamais
+ * descendre sous les `count` meilleurs choix si la liste est trop courte.
+ */
+function rankedCandidates(exercises: Exercise[], offset: number, count: number): Exercise[] {
+  const sorted = sortByProgramPriority(exercises);
+  // Pas de rotation sur une liste courte : elle ferait remonter une variante de niche
+  // (ex. sissy squat à la place du leg extension)
+  if (sorted.length < 3) return sorted;
+  const shift = Math.min(offset, Math.max(0, sorted.length - count));
+  return shift > 0 ? [...sorted.slice(shift), ...sorted.slice(0, shift)] : sorted;
 }
 
 /**
@@ -308,7 +323,9 @@ export const GENDER_INFO: Record<Gender, { readonly label: string; emoji: string
 
 /**
  * Ajuste les volumes par groupe musculaire selon le genre.
- * Femme : +volume fessiers/ischio/abdos, -volume poitrine/triceps.
+ * Femme : +volume fessiers/ischio/abdos. Le haut du corps (pectoraux, triceps) n'est PAS
+ * retiré : les modèles féminins sont déjà plus légers en haut, le retirer une 2e fois
+ * faisait disparaître les pectoraux (aucun développé de la semaine).
  * Homme : configuration par défaut (haut du corps prioritaire).
  */
 function biasGroups(groups: GroupSpec[], gender: Gender): GroupSpec[] {
@@ -323,10 +340,6 @@ function biasGroups(groups: GroupSpec[], gender: Gender): GroupSpec[] {
           return { ...g, isolations: g.isolations + 1 };
         case 'abs':
           return { ...g, isolations: Math.min(g.isolations + 1, 2) };
-        case 'chest':
-          return { ...g, compounds: Math.max(0, g.compounds - 1) };
-        case 'triceps':
-          return { ...g, compounds: Math.max(0, g.compounds - 1), isolations: Math.max(0, g.isolations - 1) };
         default:
           return g;
       }
@@ -342,21 +355,36 @@ function buildDay(
   goal: FitnessGoal,
   level: PractitionerLevel,
   gender: Gender,
-  equipmentSet?: Set<EquipmentType>
+  equipmentSet?: Set<EquipmentType>,
+  variantOffset = 0
 ): ProgramDay {
   const p = GOAL_PARAMS[goal][level];
-  const exercises: ProgramExercise[] = [];
   const usedFamilies = new Set<string>();
+  const perGroup: ProgramExercise[][] = [];
 
   for (const { group, compounds, isolations } of biasGroups(groups, gender)) {
-    const compoundList = pickUnique(getAvailableCompounds(group, level, equipmentSet), compounds, usedFamilies);
-    const isolationList = pickUnique(getAvailableIsolations(group, level, equipmentSet), isolations, usedFamilies);
-
-    for (const ex of compoundList) exercises.push(makeExercise(ex, p, true));
-    for (const ex of isolationList) exercises.push(makeExercise(ex, p, false));
+    const compoundList = pickUnique(rankedCandidates(getAvailableCompounds(group, level, equipmentSet), variantOffset, compounds), compounds, usedFamilies);
+    const isolationList = pickUnique(rankedCandidates(getAvailableIsolations(group, level, equipmentSet), variantOffset, isolations), isolations, usedFamilies);
+    perGroup.push([
+      ...compoundList.map((ex) => makeExercise(ex, p, true)),
+      ...isolationList.map((ex) => makeExercise(ex, p, false)),
+    ]);
   }
 
-  const capped = exercises.slice(0, 7);
+  // Plafond de 7 exercices : chaque groupe prévu garde d'abord son 1er exercice, les
+  // exercices supplémentaires viennent ensuite (avant, couper la fin de liste faisait
+  // disparaître des muscles entiers — dos, triceps — annoncés dans la séance).
+  const MAX_EXERCISES = 7;
+  const kept = perGroup.map(() => 0);
+  let total = 0;
+  for (let round = 0; total < MAX_EXERCISES; round++) {
+    let added = false;
+    for (let g = 0; g < perGroup.length && total < MAX_EXERCISES; g++) {
+      if (perGroup[g].length > round) { kept[g]++; total++; added = true; }
+    }
+    if (!added) break;
+  }
+  const capped = perGroup.flatMap((list, g) => list.slice(0, kept[g]));
 
   return {
     dayNumber,
@@ -421,7 +449,7 @@ function makeFullBody(n: number, v: 'A' | 'B' | 'C', goal: FitnessGoal, level: P
     ]},
   };
   const cfg = configs[v];
-  return buildDay(n, cfg.label, cfg.focus, cfg.groups, goal, level, gender, equipmentSet);
+  return buildDay(n, cfg.label, cfg.focus, cfg.groups, goal, level, gender, equipmentSet, { A: 0, B: 1, C: 2 }[v]);
 }
 
 function makePush(n: number, v: 'A' | 'B', goal: FitnessGoal, level: PractitionerLevel, gender: Gender, equipmentSet?: Set<EquipmentType>): ProgramDay {
@@ -455,7 +483,7 @@ function makePush(n: number, v: 'A' | 'B', goal: FitnessGoal, level: Practitione
   const focus = gender === 'female'
     ? focusOf('shoulders', 'chest', 'triceps', 'abs')
     : focusOf('chest', 'shoulders', 'triceps');
-  return buildDay(n, `Push ${v}`, focus, groups, goal, level, gender, equipmentSet);
+  return buildDay(n, `Push ${v}`, focus, groups, goal, level, gender, equipmentSet, v === 'B' ? 1 : 0);
 }
 
 function makePull(n: number, v: 'A' | 'B', goal: FitnessGoal, level: PractitionerLevel, gender: Gender, equipmentSet?: Set<EquipmentType>): ProgramDay {
@@ -473,7 +501,7 @@ function makePull(n: number, v: 'A' | 'B', goal: FitnessGoal, level: Practitione
   const focus = gender === 'female'
     ? focusOf('back', 'biceps', 'hamstrings', 'abs')
     : focusOf('back', 'biceps', 'absOptional');
-  return buildDay(n, `Pull ${v}`, focus, groups, goal, level, gender, equipmentSet);
+  return buildDay(n, `Pull ${v}`, focus, groups, goal, level, gender, equipmentSet, v === 'B' ? 1 : 0);
 }
 
 function makeLegs(n: number, v: 'A' | 'B' | 'C', goal: FitnessGoal, level: PractitionerLevel, gender: Gender, equipmentSet?: Set<EquipmentType>): ProgramDay {
@@ -518,37 +546,39 @@ function makeLegs(n: number, v: 'A' | 'B' | 'C', goal: FitnessGoal, level: Pract
       ];
       focus = focusOf('quads', 'hamstrings', 'glutes', 'calves');
     } else {
+      // 7 exercices pile : au-delà, le plafond de 7 coupait mollets/abdos annoncés dans le libellé
       groups = [
-        { group: 'glutes' as MuscleGroup,     compounds: 2, isolations: 1 },
         { group: 'hamstrings' as MuscleGroup, compounds: 1, isolations: 1 },
+        { group: 'glutes' as MuscleGroup,     compounds: 1, isolations: 0 },
         { group: 'quads' as MuscleGroup,      compounds: 1, isolations: 1 },
         { group: 'calves' as MuscleGroup,     compounds: 0, isolations: 1 },
         { group: 'abs' as MuscleGroup,        compounds: 0, isolations: 1 },
       ];
-      focus = focusOf('glutes', 'hamstrings', 'calves', 'abs');
+      focus = focusOf('hamstrings', 'glutes', 'quads', 'calves', 'abs');
     }
   }
 
-  return buildDay(n, `Legs ${v}`, focus, groups, goal, level, gender, equipmentSet);
+  return buildDay(n, `Legs ${v}`, focus, groups, goal, level, gender, equipmentSet, { A: 0, B: 1, C: 2 }[v]);
 }
 
 function makeUpper(n: number, v: 'A' | 'B', goal: FitnessGoal, level: PractitionerLevel, gender: Gender, equipmentSet?: Set<EquipmentType>): ProgramDay {
-  // Femme : pas de chest/triceps lourds → dos + épaules + biceps + abdos.
+  // Femme : dos + épaules prioritaires, pectoraux / triceps présents mais en volume réduit.
   // Homme : split haut classique pectoraux-centré.
   const groups: GroupSpec[] = gender === 'female'
     ? v === 'A'
       ? [
           { group: 'back',      compounds: 2, isolations: 0 },
+          { group: 'chest',     compounds: 1, isolations: 0 },
           { group: 'shoulders', compounds: 1, isolations: 1 },
           { group: 'biceps',    compounds: 0, isolations: 1 },
-          { group: 'abs',       compounds: 0, isolations: 2 },
+          { group: 'abs',       compounds: 0, isolations: 1 },
         ]
       : [
           { group: 'back',      compounds: 1, isolations: 1 },
+          { group: 'chest',     compounds: 1, isolations: 0 },
           { group: 'shoulders', compounds: 0, isolations: 2 },
-          { group: 'biceps',    compounds: 0, isolations: 1 },
-          { group: 'chest',     compounds: 0, isolations: 1 },
-          { group: 'abs',       compounds: 0, isolations: 2 },
+          { group: 'triceps',   compounds: 0, isolations: 1 },
+          { group: 'abs',       compounds: 0, isolations: 1 },
         ]
     : v === 'A'
       ? [
@@ -566,9 +596,9 @@ function makeUpper(n: number, v: 'A' | 'B', goal: FitnessGoal, level: Practition
           { group: 'triceps',   compounds: 1, isolations: 1 },
         ];
   const focus = gender === 'female'
-    ? v === 'A' ? focusOf('back', 'shoulders', 'biceps', 'abs') : focusOf('back', 'shoulders', 'biceps', 'chest', 'abs')
+    ? v === 'A' ? focusOf('back', 'chest', 'shoulders', 'biceps', 'abs') : focusOf('back', 'chest', 'shoulders', 'triceps', 'abs')
     : focusOf('chest', 'back', 'shoulders', 'arms');
-  return buildDay(n, `Upper ${v}`, focus, groups, goal, level, gender, equipmentSet);
+  return buildDay(n, `Upper ${v}`, focus, groups, goal, level, gender, equipmentSet, v === 'B' ? 1 : 0);
 }
 
 function makeLower(n: number, v: 'A' | 'B', goal: FitnessGoal, level: PractitionerLevel, gender: Gender, equipmentSet?: Set<EquipmentType>): ProgramDay {
@@ -615,20 +645,20 @@ function makeLower(n: number, v: 'A' | 'B', goal: FitnessGoal, level: Practition
     }
   }
 
-  return buildDay(n, `Lower ${v}`, focus, groups, goal, level, gender, equipmentSet);
+  return buildDay(n, `Lower ${v}`, focus, groups, goal, level, gender, equipmentSet, v === 'B' ? 1 : 0);
 }
 
 // ─── Jours avancés : splits groupes musculaires ──────────────────────────────
 
 /** Pectoraux + Triceps — utilisé dans les splits avancés 4-6j. */
 function makeChestTri(n: number, v: 'A' | 'B', goal: FitnessGoal, level: PractitionerLevel, gender: Gender, equipmentSet?: Set<EquipmentType>): ProgramDay {
-  // biasGroups female : chest -1 compound, triceps -1c/-1i → chest/tri réduits, abs gonflé +1
+  // Femme : un développé + un écarté, épaules, triceps, abdos (biasGroups plafonne les abdos à 2)
   const groups: GroupSpec[] = gender === 'female'
     ? [
-        { group: 'chest' as MuscleGroup,     compounds: 1, isolations: 1 },  // → 0c+1i après bias
-        { group: 'shoulders' as MuscleGroup, compounds: 0, isolations: 1 },  // = 1
-        { group: 'triceps' as MuscleGroup,   compounds: 0, isolations: 2 },  // → 0c+1i après bias
-        { group: 'abs' as MuscleGroup,       compounds: 0, isolations: 2 },  // → 0c+2i après bias
+        { group: 'chest' as MuscleGroup,     compounds: 1, isolations: 1 },
+        { group: 'shoulders' as MuscleGroup, compounds: 0, isolations: 1 },
+        { group: 'triceps' as MuscleGroup,   compounds: 0, isolations: 2 },
+        { group: 'abs' as MuscleGroup,       compounds: 0, isolations: 2 },
       ]
     : v === 'A'
       ? [
@@ -716,9 +746,15 @@ export const LEVEL_INFO: Record<PractitionerLevel, { readonly label: string; emo
   advanced:     levelInfo('advanced', '🔥', '#F97316'),
 };
 
-/** Vérifie si l'équipement permet des exercices de dos (tirage vertical ou horizontal). */
+/**
+ * Vérifie si l'équipement permet de vraies séances « tirage » / dos-biceps : un tirage
+ * (barre de traction, poulie, barre, haltères) ET une charge pour les curls et le travail
+ * d'isolation. Barre de traction seule → séances de 1-2 exercices, on reste en Full Body / Upper-Lower.
+ */
 function hasPullCapability(eq: Set<EquipmentType>): boolean {
-  return eq.has('pull_up_bar') || eq.has('cables') || eq.has('barbell') || eq.has('dumbbells');
+  const canRow = eq.has('pull_up_bar') || eq.has('cables') || eq.has('barbell') || eq.has('dumbbells');
+  const hasLoad = eq.has('dumbbells') || eq.has('cables') || eq.has('barbell') || eq.has('machines');
+  return canRow && hasLoad;
 }
 
 export function generateProgram(
@@ -760,7 +796,7 @@ export function generateProgram(
       break;
 
     case 4:
-      if (level === 'advanced') {
+      if (level === 'advanced' && canPull) {
         if (gender === 'female') {
           // 2 jours bas du corps : Dos+Bi / Bas A / Poitrine+Tri / Bas B
           days = [
@@ -788,7 +824,7 @@ export function generateProgram(
 
     case 5:
       if (level === 'advanced') {
-        if (gender === 'female') {
+        if (gender === 'female' && canPull) {
           // 2 jours bas du corps : Dos+Bi / Bas A / Épaules+Abdos / Bas B / Poitrine+Tri
           days = [
             makeBackBi(1, 'A', goal, level, g, eq),
@@ -823,7 +859,7 @@ export function generateProgram(
 
     case 6:
       if (level === 'advanced') {
-        if (gender === 'female') {
+        if (gender === 'female' && canPull) {
           // 3 jours bas du corps : Dos+Bi / Legs A / Épaules+Abdos / Legs B / Poitrine+Tri / Legs C
           days = [
             makeBackBi(1, 'A', goal, level, g, eq),
@@ -835,16 +871,10 @@ export function generateProgram(
           ];
           splitName = i18n.t('program.splits.female6');
         } else if (canPull) {
-          // Body part 6 jours : 2× Legs
-          days = [
-            makeChestTri(1, 'A', goal, level, g, eq),
-            makeBackBi(2, 'A', goal, level, g, eq),
-            makeLegs(3, 'A', goal, level, g, eq),
-            makeShoulderAbs(4, goal, level, g, eq),
-            makeArmsCore(5, goal, level, g, eq),
-            makeLegs(6, 'B', goal, level, g, eq),
-          ];
-          splitName = i18n.t('program.splits.bodyPart6');
+          // PPL × 2 : chaque muscle 2× par semaine, la référence à 6 séances (le split
+          // « un muscle par jour » ne travaillait les pectoraux qu'une fois par semaine)
+          days = [makePush(1, 'A', goal, level, g, eq), makePull(2, 'A', goal, level, g, eq), makeLegs(3, 'A', goal, level, g, eq), makePush(4, 'B', goal, level, g, eq), makePull(5, 'B', goal, level, g, eq), makeLegs(6, 'B', goal, level, g, eq)];
+          splitName = SPLIT_INFO[6].name;
         } else {
           days = [makeUpper(1, 'A', goal, level, g, eq), makeLower(2, 'A', goal, level, g, eq), makeUpper(3, 'B', goal, level, g, eq), makeLower(4, 'B', goal, level, g, eq), makeUpper(5, 'A', goal, level, g, eq), makeLower(6, 'A', goal, level, g, eq)];
           splitName = 'Upper / Lower × 3';

@@ -111,7 +111,7 @@ const RAW_EXERCISES: RawExercise[] = [
   { id: 'face_pull',        muscleGroup: 'back',       isCompound: false, minLevel: 'beginner',     family: 'face_pull' },
   { id: 'pull_up',          muscleGroup: 'back',       isCompound: true,  minLevel: 'intermediate', family: 'vertical_pull' },
   { id: 'barbell_row',      muscleGroup: 'back',       isCompound: true,  minLevel: 'intermediate', family: 'horizontal_row' },
-  { id: 'one_arm_row',      muscleGroup: 'back',       isCompound: false, minLevel: 'intermediate', family: 'horizontal_row' },
+  { id: 'one_arm_row',      muscleGroup: 'back',       isCompound: false, minLevel: 'beginner',     family: 'horizontal_row' },
   { id: 'deadlift',         muscleGroup: 'back',       isCompound: true,  minLevel: 'intermediate', family: 'hip_hinge' },
   { id: 'chest_supported',  muscleGroup: 'back',       isCompound: false, minLevel: 'intermediate', family: 'horizontal_row' },
   { id: 'chin_up',          muscleGroup: 'back',       isCompound: true,  minLevel: 'intermediate', family: 'vertical_pull' },
@@ -181,7 +181,7 @@ const RAW_EXERCISES: RawExercise[] = [
   { id: 'sumo_squat',       muscleGroup: 'glutes',     isCompound: true,  minLevel: 'beginner',     family: 'sumo_squat' },
   { id: 'cable_kickback',   muscleGroup: 'glutes',     isCompound: false, minLevel: 'beginner',     family: 'glute_isolation' },
   { id: 'hip_thrust',       muscleGroup: 'glutes',     isCompound: true,  minLevel: 'intermediate', family: 'hip_thrust' },
-  { id: 'rdl_glutes',       muscleGroup: 'glutes',     isCompound: true,  minLevel: 'intermediate', family: 'hip_hinge_glutes' },
+  { id: 'rdl_glutes',       muscleGroup: 'glutes',     isCompound: true,  minLevel: 'beginner',     family: 'hip_hinge_hamstring' }, // même mouvement que le RDL ischios : jamais les deux dans une séance
   { id: 'banded_abduction', muscleGroup: 'glutes',     isCompound: false, minLevel: 'intermediate', family: 'glute_isolation' },
   { id: 'single_hip_thrust',muscleGroup: 'glutes',     isCompound: true,  minLevel: 'advanced',     family: 'hip_thrust' },
 
@@ -350,6 +350,59 @@ const EXERCISE_EQUIPMENT: Record<string, EquipmentType> = {
   flutter_kicks: 'bodyweight', mountain_climber: 'bodyweight', l_sit: 'bodyweight',
   dead_bug: 'bodyweight', v_up: 'bodyweight',
 };
+
+/**
+ * Ordre de préférence pour les programmes automatiques : les exercices de base, ceux
+ * qu'on fait vraiment en salle, d'abord (développé couché, tractions, squat…), les
+ * variantes et exercices de niche ensuite. Filtré ensuite par niveau et matériel :
+ * un débutant sans barre tombera naturellement sur les haltères / la machine / le poids de corps.
+ * Les exercices absents de la liste passent après, dans l'ordre de RAW_EXERCISES.
+ */
+const PROGRAM_PRIORITY: string[] = [
+  // Pectoraux
+  'bench_press', 'bench_press_db', 'incline_press_bb', 'incline_press', 'machine_chest_press', 'dips_chest',
+  'push_up', 'push_up_feet_elevated', 'landmine_press', 'decline_press', 'diamond_push_up', 'guillotine_press', 'push_up_ring',
+  'cable_fly', 'pec_deck', 'fly_dumbbell', 'low_cable_fly', 'cable_fly_mid',
+  // Dos
+  'pull_up', 'lat_pulldown', 'barbell_row', 'tbar_row', 'machine_row', 'chin_up', 'weighted_pull_up', 'pendlay_row',
+  'deadlift', 'rack_pull', 'seal_row', 'assisted_pull_up', 'narrow_lat_pulldown',
+  'chest_supported', 'one_arm_row', 'seated_row', 'cable_row_single', 'meadows_row', 'straight_arm_pulldown', 'face_pull', 'pullover_db',
+  // Épaules
+  'ohp', 'dumbbell_press', 'machine_shoulder', 'arnold_press', 'z_press', 'behind_neck_press', 'handstand_push_up',
+  'lateral_raise', 'cable_lateral', 'machine_lateral_raise', 'rear_delt_fly', 'cable_rear_delt', 'upright_row', 'front_raise', 'lu_raise',
+  // Biceps
+  'barbell_curl', 'dumbbell_curl', 'incline_curl', 'hammer_curl', 'preacher_curl', 'cable_curl', 'bayesian_curl',
+  'concentration_curl', 'spider_curl', 'zottman_curl', 'drag_curl', 'cross_body_cable_curl', 'reverse_curl', 'waiter_curl',
+  // Triceps
+  'close_grip_bench', 'dips_parallel', 'dips_triceps', 'bench_dip_weighted',
+  'tricep_pushdown', 'overhead_ext', 'skull_crusher', 'cable_overhead_t', 'pushdown_bar', 'single_arm_cable_ext',
+  'tricep_kickback', 'cable_kickback_tri', 'band_pushdown', 'jm_press', 'tate_press',
+  // Quadriceps
+  'squat', 'leg_press', 'hack_squat', 'front_squat', 'bulgarian_squat', 'goblet_squat', 'walking_lunge', 'lunge',
+  'reverse_lunge', 'split_squat', 'step_up', 'belt_squat', 'single_leg_press', 'high_foot_leg_press', 'leg_press_close',
+  'leg_extension', 'sissy_squat',
+  // Ischio-jambiers
+  'rdl', 'good_morning', 'single_leg_rdl', 'hyperextension', 'banded_good_morning',
+  'seated_leg_curl', 'leg_curl', 'lying_leg_curl', 'nordic_curl', 'standing_leg_curl', 'glute_ham_raise',
+  // Fessiers
+  'hip_thrust', 'sumo_squat_bb', 'cable_pull_through', 'sumo_squat', 'single_hip_thrust', 'reverse_hyper', 'rdl_glutes',
+  'cable_kickback', 'banded_abduction', 'glute_bridge', 'clamshell', 'fire_hydrant', 'donkey_kick',
+  // Mollets
+  'standing_calf', 'seated_calf', 'barbell_calf_raise', 'single_calf_raise', 'step_calf_raise', 'donkey_calf', 'tibia_raise',
+  // Abdominaux
+  'hanging_leg_raise', 'cable_crunch', 'ab_wheel', 'plank', 'leg_raise', 'crunch', 'pallof_press', 'dead_bug',
+  'bicycle_crunch', 'side_plank', 'hollow_body', 'russian_twist', 'wood_chop', 'decline_crunch',
+  'v_up', 'toes_to_bar', 'mountain_climber', 'flutter_kicks', 'dragon_flag', 'l_sit',
+];
+
+const PRIORITY_RANK = new Map(PROGRAM_PRIORITY.map((id, i) => [id, i]));
+
+/** Trie des exercices du plus « classique » au plus « niche » (tri stable). */
+export function sortByProgramPriority(exercises: Exercise[]): Exercise[] {
+  return [...exercises].sort(
+    (a, b) => (PRIORITY_RANK.get(a.id) ?? Infinity) - (PRIORITY_RANK.get(b.id) ?? Infinity),
+  );
+}
 
 // Nom et description traduits à la lecture (fichiers src/i18n/locales/*.json, section exercises)
 export const EXERCISES: Exercise[] = RAW_EXERCISES.map((e) =>
