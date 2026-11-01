@@ -10,6 +10,7 @@
  *   /confidentialite/ ← docs/index.html (politique de confidentialité + mentions légales)
  *   /conditions/      ← docs/terms.html (CGU)
  *   /robots.txt, /sitemap.xml
+ *   /app-ads.txt      ← vendeur de pubs autorisé (AdMob)
  */
 import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -117,5 +118,11 @@ write(
 </urlset>
 `,
 );
+
+// ── Publicité ─────────────────────────────────────────────────────────────────
+// app-ads.txt : déclare AdMob (compte éditeur d'Éléonore) comme seul vendeur autorisé des pubs
+// de l'app. Les annonceurs le lisent à la racine du « site web du développeur » des fiches stores.
+// Ligne fournie par AdMob (Applications → Configurez un fichier app-ads.txt).
+write(join(OUT, 'app-ads.txt'), 'google.com, pub-6176341588651241, DIRECT, f08c47fec0942fa0\n');
 
 console.log(`Site construit dans ${OUT}`);

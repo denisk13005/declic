@@ -1,5 +1,9 @@
 # Déclic — Dev Log
 
+## 2026-11-01 — Site : fichier app-ads.txt (AdMob)
+
+- `scripts/website/build.mjs` génère `/app-ads.txt` (`google.com, pub-6176341588651241, DIRECT, f08c47fec0942fa0`, ligne fournie par AdMob) : déclare AdMob comme vendeur autorisé des pubs de l'app. Lu par les annonceurs à la racine du site développeur des fiches stores (burnstreak.com).
+
 ## 2026-10-30 — Programmes de sport automatiques : cohérence des exercices
 
 - Retour : programme avancé 6 séances sans aucun exercice de pectoraux. Audit de toutes les combinaisons (séances 1-6 × niveau × genre × matériel).
