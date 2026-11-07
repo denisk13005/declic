@@ -1,5 +1,12 @@
 # Déclic — Dev Log
 
+## 2026-11-07 — iOS : plus de suivi publicitaire (refus Apple 2.1 ATT)
+
+- Refus Apple de 1.0.6 (27) le 06/11 : fenêtre « Autoriser le suivi ? » introuvable par la vérification sur iPad, vidéo sur appareil réel exigée (pas d'iPhone dispo). Choix : l'app ne fait plus de suivi sur iOS.
+- Supprimé : `expo-tracking-transparency`, `requestIosTracking()` (ads.ts), `userTrackingUsageDescription` (plugin AdMob) et `NSUserTrackingUsageDescription` (src/i18n/ios).
+- `AD_REQUEST_OPTIONS` (ads.ts) : `requestNonPersonalizedAdsOnly` sur iOS, passé à toutes les pubs (bannières, interstitiel, app open, récompensée). Android inchangé (UMP).
+- À faire dans App Store Connect : confidentialité de l'app → plus aucune donnée « utilisée pour vous suivre ». Autres remarques Apple (2.3.2 / 2.3.10) = images des abonnements, côté console.
+
 ## 2026-11-01 — Site : fichier app-ads.txt (AdMob)
 
 - `scripts/website/build.mjs` génère `/app-ads.txt` (`google.com, pub-6176341588651241, DIRECT, f08c47fec0942fa0`, ligne fournie par AdMob) : déclare AdMob comme vendeur autorisé des pubs de l'app. Lu par les annonceurs à la racine du site développeur des fiches stores (burnstreak.com).

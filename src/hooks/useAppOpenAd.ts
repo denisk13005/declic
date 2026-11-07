@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AppOpenAd, AdEventType, AD_UNITS } from '@/services/ads';
+import { AppOpenAd, AdEventType, AD_UNITS, AD_REQUEST_OPTIONS } from '@/services/ads';
 import { CONFIG } from '@/constants/config';
 
 const COOLDOWN_MS = 4 * 60 * 60 * 1000; // 4h
@@ -18,7 +18,7 @@ export function useAppOpenAd() {
         const last = raw ? parseInt(raw, 10) : 0;
         if (Date.now() - last < COOLDOWN_MS) return;
 
-        const ad = AppOpenAd.createForAdRequest(AD_UNITS.appOpen);
+        const ad = AppOpenAd.createForAdRequest(AD_UNITS.appOpen, AD_REQUEST_OPTIONS);
         adRef.current = ad;
 
         ad.addAdEventListener(AdEventType.LOADED, () => {

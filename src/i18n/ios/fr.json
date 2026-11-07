@@ -4,7 +4,6 @@
     "NSPhotoLibraryUsageDescription": "Burnstreak accède à tes photos pour analyser un plat depuis ta photothèque.",
     "NSMicrophoneUsageDescription": "Burnstreak utilise le micro pour que tu puisses dicter le contenu de ton repas.",
     "NSHealthShareUsageDescription": "Burnstreak lit tes calories brûlées (Apple Watch / app Santé) pour calculer ton objectif calorique net.",
-    "NSHealthUpdateUsageDescription": "Burnstreak n’enregistre aucune donnée dans l’app Santé.",
-    "NSUserTrackingUsageDescription": "Ton identifiant publicitaire permet d’afficher des publicités plus pertinentes et de financer la version gratuite de Burnstreak."
+    "NSHealthUpdateUsageDescription": "Burnstreak n’enregistre aucune donnée dans l’app Santé."
   }
 }

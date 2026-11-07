@@ -34,7 +34,7 @@ import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/the
 import { useAppColors } from '@/hooks/useAppColors';
 import { useHealthConnect } from '@/hooks/useHealthConnect';
 import { usePremium } from '@/hooks/usePremium';
-import { BannerAd, BannerAdSize, AD_UNITS } from '@/services/ads';
+import { BannerAd, BannerAdSize, AD_UNITS, AD_REQUEST_OPTIONS } from '@/services/ads';
 
 // Libellés santé adaptés à la plateforme (iOS : Apple Santé / Watch — Android : Samsung Health / Health Connect)
 const IS_IOS = Platform.OS === 'ios';
@@ -765,7 +765,7 @@ export default function CaloriesScreen() {
       </ScrollView>
 
       {!isPremium && (
-        <BannerAd unitId={AD_UNITS.banner} size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER} />
+        <BannerAd unitId={AD_UNITS.banner} size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER} requestOptions={AD_REQUEST_OPTIONS} />
       )}
 
       {/* Barre d'action fixe */}

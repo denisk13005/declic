@@ -26,7 +26,7 @@ import { usePremium } from '@/hooks/usePremium';
 import { useHabitNotifications } from '@/hooks/useHabitNotifications';
 import { useReviewPromptStore } from '@/stores/reviewPromptStore';
 import { maybeAskForReview } from '@/services/storeReview';
-import { BannerAd, BannerAdSize, AD_UNITS, RewardedAd, RewardedAdEventType, AdEventType } from '@/services/ads';
+import { BannerAd, BannerAdSize, AD_UNITS, AD_REQUEST_OPTIONS, RewardedAd, RewardedAdEventType, AdEventType } from '@/services/ads';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
 import { useAppColors } from '@/hooks/useAppColors';
 import { Habit, ReminderUnit } from '@/types';
@@ -964,7 +964,7 @@ export default function HomeScreen() {
   );
 
   const showRewardedAd = useCallback(() => {
-    const ad = RewardedAd.createForAdRequest(AD_UNITS.rewarded);
+    const ad = RewardedAd.createForAdRequest(AD_UNITS.rewarded, AD_REQUEST_OPTIONS);
     rewardedAdRef.current = ad;
     ad.addAdEventListener(RewardedAdEventType.LOADED, () => ad.show());
     ad.addAdEventListener(RewardedAdEventType.EARNED_REWARD, () => {
@@ -1094,7 +1094,7 @@ export default function HomeScreen() {
       </ScrollView>
 
       {!isPremium && (
-        <BannerAd unitId={AD_UNITS.banner} size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER} />
+        <BannerAd unitId={AD_UNITS.banner} size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER} requestOptions={AD_REQUEST_OPTIONS} />
       )}
 
       <AddHabitModal

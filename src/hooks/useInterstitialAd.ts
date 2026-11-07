@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { InterstitialAd, AdEventType, AD_UNITS } from '@/services/ads';
+import { InterstitialAd, AdEventType, AD_UNITS, AD_REQUEST_OPTIONS } from '@/services/ads';
 import { CONFIG } from '@/constants/config';
 
 const COOLDOWN_MS = 30 * 60 * 1000; // 30min
@@ -12,7 +12,7 @@ export function useInterstitialAd() {
   const reload = useCallback(() => {
     adRef.current?.removeAllListeners();
     loadedRef.current = false;
-    const ad = InterstitialAd.createForAdRequest(AD_UNITS.interstitial);
+    const ad = InterstitialAd.createForAdRequest(AD_UNITS.interstitial, AD_REQUEST_OPTIONS);
     adRef.current = ad;
 
     ad.addAdEventListener(AdEventType.LOADED, () => {
