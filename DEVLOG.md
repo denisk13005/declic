@@ -1,5 +1,16 @@
 # Déclic — Dev Log
 
+## 2026-11-08 — Premium : plus aucune pub (sport + ouverture de l'app)
+
+- Bug : un abonné Premium voyait encore l'interstitiel après l'ajout d'une séance (onglet Sport) et la pub à l'ouverture de l'app — `useInterstitialAd` et `useAppOpenAd` ne regardaient pas `isPremium` (seules les bannières et la pub récompensée le faisaient).
+- `useInterstitialAd` : aucun préchargement si Premium (pub libérée si l'utilisateur s'abonne en cours de route) + vérification au moment de `show()`.
+- `useAppOpenAd` : attend la relecture du profil persisté (`persist.onFinishHydration`, sinon `isPremium` vaut `false` au démarrage), puis vérifie Premium avant le chargement et juste avant l'affichage (la synchro RevenueCat peut arriver entre les deux).
+
+## 2026-11-07 — Flyer A5 : fichier imprimeur
+
+- `marketing/flyer/flyer.html` : format 154 × 216 mm (A5 + 3 mm de fond perdu), marges intérieures 12 mm (contenu ≥ 9 mm du trait de coupe) ; « 62 000 » → « 69 000 aliments » (cohérent avec l'app et les stores).
+- PDF généré par Chrome sans en-tête : `marketing/flyer/flyer-burnstreak-A5-imprimeur.pdf` (2 pages recto/verso). L'ancien `flyer-burnstreak-A5.pdf` (148 × 210, sans fond perdu) est gardé.
+
 ## 2026-11-07 — iOS : plus de suivi publicitaire (refus Apple 2.1 ATT)
 
 - Refus Apple de 1.0.6 (27) le 06/11 : fenêtre « Autoriser le suivi ? » introuvable par la vérification sur iPad, vidéo sur appareil réel exigée (pas d'iPhone dispo). Choix : l'app ne fait plus de suivi sur iOS.
