@@ -36,6 +36,8 @@ interface FoodSuggestion {
   macros: Macros | null;
   brand?: string;
   source?: 'library' | 'ciqual' | 'off';
+  /** Produit OFF vendu en pièces : poids d'une pièce d'après l'emballage */
+  piece?: { grams: number; word: string | null };
 }
 import { FoodItem, Macros, Serving, ServingUnit, MealType } from '@/types';
 import { COLORS, SPACING, RADIUS, FONT_SIZE, FONT_WEIGHT } from '@/constants/theme';
@@ -90,24 +92,43 @@ function BarcodeScanner({
   onClose: () => void;
 }) {
   const { t } = useTranslation();
-  const [permission, requestPermission] = useCameraPermissions();
+  const [permission, requestPermission, getPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
+  // true tant que l'état de l'autorisation n'a pas été relu à l'ouverture du scanner
+  const [checkingPermission, setCheckingPermission] = useState(false);
   // Verrou synchrone : la caméra iOS rappelle onBarcodeScanned à chaque image, avant que
   // setScanned(true) ait re-rendu → sans ref, une rafale de requêtes OFF (→ HTTP 429).
   const scannedRef = useRef(false);
 
   useEffect(() => {
-    if (visible) {
-      scannedRef.current = false;
-      setScanned(false);
-    }
+    if (!visible) return;
+    scannedRef.current = false;
+    setScanned(false);
+
+    // L'état renvoyé par le hook est lu une seule fois au montage de la modale : il peut être
+    // périmé (caméra autorisée depuis la photo IA ou les Réglages). On le relit à chaque ouverture,
+    // et si l'accès n'est pas encore accordé on affiche directement la fenêtre système,
+    // sans écran intermédiaire « Autoriser ».
+    let cancelled = false;
+    setCheckingPermission(true);
+    (async () => {
+      const current = await getPermission();
+      if (!cancelled && !current.granted && current.canAskAgain) await requestPermission();
+    })()
+      .catch((e) => console.warn('[Scanner] lecture de l’autorisation caméra impossible', e))
+      .finally(() => {
+        if (!cancelled) setCheckingPermission(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [visible]);
 
   if (!visible) return null;
 
   // Rendu en surcouche plein écran DANS la modale d'ajout, pas dans une 2ᵉ <Modal> :
   // iOS refuse de présenter une modale sœur tant qu'une autre est ouverte (caméra jamais affichée).
-  if (!permission) {
+  if (!permission || checkingPermission) {
     return (
       <View style={[StyleSheet.absoluteFill, scanStyles.loading]}>
         <ActivityIndicator color={COLORS.primary} />
@@ -196,8 +217,8 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
   // Limite IA gratuite : on ferme la modale avant d'ouvrir l'écran Premium
   const aiQuota = useAiQuota(onClose);
   const C = useAppColors();
-  const { t } = useTranslation();
-  const { addEntry, addFoodItem, foodLibrary } = useCalorieStore();
+  const { t, i18n } = useTranslation();
+  const { addEntry, addFoodItem, updateFoodItem, foodLibrary } = useCalorieStore();
 
   const [tab, setTab] = useState<Tab>('manuel');
   const [meal, setMeal] = useState<MealType>(defaultMeal);
@@ -218,6 +239,10 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
   const [basePer100, setBasePer100] = useState<{ calories: number; macros: Macros | null } | null>(null);
   // Poids en grammes d'une pièce/portion (requis pour recalculer quand unit = piece/portion)
   const [gramsPerPiece, setGramsPerPiece] = useState('');
+  // Pièce lue sur l'emballage du produit scanné (ex. 1 tranche = 28 g) : prime sur le poids générique
+  const [productPiece, setProductPiece] = useState<{ grams: number; word: string | null } | null>(null);
+  // Code-barres du produit scanné : la bibliothèque mémorise le poids corrigé pour le prochain scan
+  const [scannedBarcode, setScannedBarcode] = useState<string | null>(null);
   // Base pour les repas composés : calories/macros pour 1 portion
   const [basePerPortion, setBasePerPortion] = useState<{ calories: number; macros: Macros | null } | null>(null);
 
@@ -270,6 +295,14 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
     lastQueryRef.current = '';
     dbCountRef.current = 0;
     setGramsPerPiece('');
+    setProductPiece(null);
+    setScannedBarcode(null);
+  }
+
+  function packPieceLabel(piece: { grams: number; word: string | null }, u: ServingUnit = 'piece') {
+    // Le mot de l'emballage (« tranche », « biscuit »…) est en français : en anglais on garde l'unité choisie
+    const word = piece.word && i18n.language?.startsWith('fr') ? piece.word : t(`common.units.${u}`, { count: 1 });
+    return t('addEntry.packPiece', { piece: word, grams: piece.grams });
   }
 
   function handleClose() {
@@ -394,7 +427,12 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
   function handleUnitChange(newUnit: ServingUnit) {
     setUnit(newUnit);
     if (newUnit === 'piece' || newUnit === 'portion') {
-      if (basePer100 && name) {
+      if (basePer100 && productPiece) {
+        // Produit scanné : poids réel de la pièce d'après l'emballage, pas une moyenne générique
+        setGramsPerPiece(String(productPiece.grams));
+        setPerLabel(packPieceLabel(productPiece, newUnit));
+        applyBase(basePer100, parseFloat(quantity) || 1, newUnit, productPiece.grams);
+      } else if (basePer100 && name) {
         const portionRef = lookupPortionWeight(name);
         if (portionRef) {
           setGramsPerPiece(String(portionRef.grams));
@@ -433,6 +471,8 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
       setGramsPerPiece('');
     }
     setBasePer100(null);
+    setProductPiece(null);
+    setScannedBarcode(null);
     offAbortRef.current?.abort();
     offAbortRef.current = null;
     setOffLoading(false);
@@ -472,6 +512,7 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
             macros: p.macrosPer100,
             brand: p.brand,
             source: 'off' as const,
+            piece: p.gramsPerPiece ? { grams: p.gramsPerPiece, word: p.pieceWord } : undefined,
           }));
           // Injecte les résultats OFF sans écraser les résultats locaux déjà affichés
           setSuggestions(prev => {
@@ -548,11 +589,18 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
     // Les résultats OFF (avec marque) ne sont pas dans Ciqual : on propose de les sauvegarder
     if (item.brand) setSaveToLib(true);
 
+    setProductPiece(item.piece ?? null);
+    setScannedBarcode(null);
     // Cherche un poids de référence par pièce pour cet aliment
     const portionRef = lookupPortionWeight(item.name);
 
     if (unit === 'piece' || unit === 'portion') {
-      if (portionRef) {
+      if (item.piece) {
+        // Poids de la pièce d'après l'emballage (produit OFF) : prime sur la moyenne générique
+        setGramsPerPiece(String(item.piece.grams));
+        setPerLabel(packPieceLabel(item.piece));
+        applyBase(base, parseFloat(quantity) || 1, unit, item.piece.grams);
+      } else if (portionRef) {
         // Poids connu : pré-rempli, calcul immédiat
         setGramsPerPiece(String(portionRef.grams));
         setPerLabel(t('addEntry.portionHint', { hint: portionRef.hint, grams: portionRef.grams }));
@@ -575,6 +623,8 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
     // (sinon le détail affiche une quantité fausse et la bibliothèque stocke des kcal/100 g erronées)
     setBasePer100(null);
     setBasePerPortion(null);
+    setProductPiece(null);
+    setScannedBarcode(null);
     setUnit('portion');
     setQuantity('1');
     if (macros) {
@@ -634,6 +684,33 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
 
   async function handleBarcodeScanned(code: string) {
     setScannerVisible(false);
+    setScannedBarcode(code);
+
+    // Déjà scanné et enregistré : on reprend la fiche de la bibliothèque (poids de pièce corrigé
+    // par l'utilisateur), plus fiable qu'Open Food Facts dont les portions sont parfois fausses.
+    const saved = foodLibrary.find((f) => f.barcode === code);
+    if (saved) {
+      const base = { calories: saved.caloriesPer100, macros: saved.macrosPer100 ?? null };
+      const { quantity: qty, unit: u } = saved.defaultServing;
+      setBasePer100(base);
+      setName(saved.name);
+      setSaveToLib(true);
+      setTab('manuel');
+      setProductPiece(null);
+      setQuantity(String(qty));
+      setUnit(u);
+      if ((u === 'piece' || u === 'portion') && saved.gramsPerUnit) {
+        setGramsPerPiece(String(saved.gramsPerUnit));
+        setPerLabel(t('addEntry.perPiece', { unit: t(`common.units.${u}`, { count: 1 }), grams: saved.gramsPerUnit }));
+        applyBase(base, qty, u, saved.gramsPerUnit);
+      } else {
+        setGramsPerPiece('');
+        setPerLabel(t('common.per100g'));
+        applyBase(base, qty, u);
+      }
+      return;
+    }
+
     setAnalyzing(true);
     try {
       const product = await lookupBarcode(code);
@@ -642,8 +719,21 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
       setName(product.brand ? `${product.name} (${product.brand})` : product.name);
       setSaveToLib(true);
       setTab('manuel');
+      setProductPiece(null);
 
-      if (product.portionG && product.portionG > 0) {
+      if (product.gramsPerPiece && product.gramsPerPiece > 0) {
+        // Emballage en pièces (ex. « 2 tranches (56 g) ») → 1 pièce au vrai poids, modifiable
+        const piece = { grams: product.gramsPerPiece, word: product.pieceWord };
+        setProductPiece(piece);
+        setUnit('piece');
+        setQuantity('1');
+        setGramsPerPiece(String(piece.grams));
+        setPerLabel(packPieceLabel(piece));
+        applyBase(base, 1, 'piece', piece.grams);
+      } else if (product.portionG && product.portionG > 0) {
+        // Portion de l'emballage en grammes seuls : c'est elle (et non une moyenne générique)
+        // qui sert si l'utilisateur passe en « pièce » / « portion »
+        setProductPiece({ grams: product.portionG, word: null });
         setUnit('g');
         setQuantity(String(product.portionG));
         setPerLabel(product.perLabel);
@@ -709,14 +799,20 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
             }
           : parsedMacros;
 
-      addFoodItem({
+      const libFields = {
         name: name.trim(),
         caloriesPer100: savedCal100,
         macrosPer100: savedMacros100,
         defaultServing: serving,
         gramsPerUnit: hasGpp ? gpp : undefined,
-        isCustom: true,
-      });
+      };
+      // Même code-barres déjà en bibliothèque : on met à jour (pas de doublon à chaque scan)
+      const existing = scannedBarcode ? foodLibrary.find((f) => f.barcode === scannedBarcode) : undefined;
+      if (existing) {
+        updateFoodItem(existing.id, libFields);
+      } else {
+        addFoodItem({ ...libFields, barcode: scannedBarcode ?? undefined, isCustom: true });
+      }
     }
 
     addEntry({

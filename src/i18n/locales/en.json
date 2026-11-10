@@ -60,6 +60,7 @@
       "openSettings": "Open settings"
     },
     "perPiece": "1 {{unit}} · {{grams}}g",
+    "packPiece": "1 {{piece}} = {{grams}} g according to the package",
     "perQuantityEnterWeight": "for {{quantity}} {{unit}} — enter the weight to recalculate",
     "perPortions_one": "for {{count}} serving",
     "perPortions_other": "for {{count}} servings",

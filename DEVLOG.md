@@ -1,5 +1,14 @@
 # Déclic — Dev Log
 
+## 2026-11-09 — Scan code-barres : vrai poids des pièces + autorisation caméra
+
+- Bug (pain de mie scanné) : en passant en « pièce », l'app prenait le poids générique de `portionWeights.ts` (pain de mie = 25 g pour toutes les marques) au lieu de celui de l'emballage. De plus `serving_size` était mal lu : « 27,5 g » → 5 g (virgule), « 2 tranches (56 g) » → 56 g présentés comme une seule portion, et kcal/100 g = kcal de la portion quand la valeur /100 g manquait.
+- `openFoodFacts.ts` : `parseServing()` (priorité à `serving_quantity`, virgule française, mg/kg exclus, nombre de pièces + mot « tranche / biscuit / barre… ») ; `ProductInfo.gramsPerPiece` / `pieceWord` ; kcal/100 g déduites de la portion si absentes.
+- `AddEntryModal` : un produit scanné vendu en pièces s'ouvre en « 1 tranche = 28 g d'après l'emballage » ; ce poids prime sur la moyenne générique (changement d'unité, résultats OFF de la recherche par nom). Nouvelle clé `addEntry.packPiece` (fr + en).
+- Caméra : l'état de l'autorisation (hook `useCameraPermissions`) était lu une seule fois et pouvait être périmé → relu à chaque ouverture du scanner, et la fenêtre système est demandée directement (plus d'écran intermédiaire « Autoriser » si l'accès est déjà donné).
+- Tests : +9 (`parseServing`, pièces, kcal déduites) → 155/155.
+- Test device (10/11) : pain de mie U 3256222646916 toujours à 25 g / tranche (réel pesé : 41 g). Cause : la fiche OFF dit « portion 39 g » (grammes seuls, pas « 1 tranche ») et n'a pas de kcal « par portion » → la portion était ignorée et le passage en « pièce » reprenait la moyenne générique 25 g. Correctifs : `parsePackPieces()` lit « 21 tranches - 825g » dans le nom / la quantité (→ 39,3 g la tranche) ; une portion en grammes est gardée même sans kcal « par portion » ; une portion en grammes seuls remplace la moyenne générique en mode pièce/portion. +5 tests → 160/160. Ajout : le code-barres est mémorisé dans la bibliothèque (`FoodItem.barcode`) ; au scan suivant, la fiche de la bibliothèque (poids de pièce corrigé par l'utilisateur) prime sur Open Food Facts, et un nouveau scan met à jour la fiche au lieu de créer un doublon.
+
 ## 2026-11-08 — Premium : plus aucune pub (sport + ouverture de l'app)
 
 - Bug : un abonné Premium voyait encore l'interstitiel après l'ajout d'une séance (onglet Sport) et la pub à l'ouverture de l'app — `useInterstitialAd` et `useAppOpenAd` ne regardaient pas `isPremium` (seules les bannières et la pub récompensée le faisaient).
