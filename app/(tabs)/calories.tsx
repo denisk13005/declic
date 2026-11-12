@@ -300,7 +300,8 @@ function BurnedCaloriesModal({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        // 'padding' partout : 'height' fait trembler l'écran sur Android (voir DEVLOG 2026-11-12)
+        behavior="padding"
         style={burnedStyles.overlay}
       >
         <TouchableOpacity style={burnedStyles.backdrop} activeOpacity={1} onPress={onClose} />

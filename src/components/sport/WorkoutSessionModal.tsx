@@ -452,7 +452,7 @@ export default function WorkoutSessionModal({ visible, day, date, onClose }: Pro
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior="padding"
       >
         <View style={styles.overlay}>
           <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
@@ -649,10 +649,13 @@ const setStyles = StyleSheet.create({
   },
   setNum: { fontSize: 11, fontWeight: FONT_WEIGHT.bold, color: COLORS.textTertiary },
   input: {
-    height: 36, borderRadius: RADIUS.sm,
+    // minHeight (et non height: 36) : avec la taille de police agrandie d'Android (×1,3 et plus),
+    // le texte ne tenait plus dans la case → chiffres rognés en deux (constaté sur S10+).
+    minHeight: 40, borderRadius: RADIUS.sm,
     backgroundColor: COLORS.bgCard, borderWidth: 1, borderColor: COLORS.border,
     color: COLORS.textPrimary, fontSize: FONT_SIZE.sm, fontWeight: FONT_WEIGHT.semibold,
-    textAlign: 'center', paddingHorizontal: SPACING.xs,
+    textAlign: 'center', textAlignVertical: 'center',
+    paddingHorizontal: SPACING.xs, paddingVertical: 6, includeFontPadding: false,
   },
   addSetBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 4,

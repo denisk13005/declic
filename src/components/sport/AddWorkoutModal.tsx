@@ -70,7 +70,8 @@ export default function AddWorkoutModal({ visible, date, onClose }: Props) {
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        // 'padding' partout (comme AddEntryModal) : 'height' fait trembler l'écran sur Android.
+        behavior="padding"
         style={styles.overlay}
       >
         <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={handleClose} />

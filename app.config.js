@@ -3,7 +3,7 @@ export default ({ config }) => ({
   name: 'Burnstreak',
   slug: 'declic',
   owner: 'dk13',
-  version: '1.0.9',
+  version: '1.0.10',
   orientation: 'portrait',
   icon: './assets/icon.png',
   userInterfaceStyle: 'dark',

@@ -5,7 +5,8 @@ site prêt pour le VPS (`dist-website/`), et `deploy/website/deploy.sh` l'envoie
 
 | Adresse | Contenu |
 |---|---|
-| `https://burnstreak.com/` | page de présentation (`docs/app/index.html`) |
+| `https://burnstreak.com/` | page de présentation en français (`docs/app/index.html`) |
+| `https://burnstreak.com/en/` | même page en anglais (générée au build depuis la même source, `hreflang` FR/EN) |
 | `https://burnstreak.com/confidentialite/` | politique de confidentialité + mentions légales (`docs/index.html`) |
 | `https://burnstreak.com/conditions/` | CGU (`docs/terms.html`) |
 
@@ -92,7 +93,12 @@ VPS=regulpark bash deploy/website/deploy.sh   # alias SSH existant (= ubuntu@141
 1. https://search.google.com/search-console → **Ajouter une propriété** → type **Domaine** →
    `burnstreak.com` → ajouter l'enregistrement **TXT** proposé dans le DNS du registrar.
 2. **Sitemaps** → envoyer `https://burnstreak.com/sitemap.xml`.
-3. **Inspection de l'URL** → `https://burnstreak.com/` → **Demander l'indexation**.
+3. **Inspection de l'URL** → `https://burnstreak.com/` puis `https://burnstreak.com/en/` → **Demander l'indexation**.
+4. Bing (importe aussi DuckDuckGo/Ecosia) : https://www.bing.com/webmasters → **Importer depuis Google Search Console**.
+
+Après une modification de `deploy/website/nginx-burnstreak.conf`, la recopier sur le VPS puis
+`sudo nginx -t && sudo systemctl reload nginx`. Vérifier avec les outils Google : Test des résultats
+enrichis (https://search.google.com/test/rich-results) et PageSpeed Insights sur `/` et `/en/`.
 
 ## 7. Basculer les liens vers le nouveau domaine (une fois le site en ligne)
 

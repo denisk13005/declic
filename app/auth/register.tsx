@@ -65,7 +65,8 @@ export default function RegisterScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        // 'padding' partout : 'height' fait trembler l'écran sur Android (voir DEVLOG 2026-11-12)
+        behavior="padding"
         style={styles.flex}
       >
         <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">

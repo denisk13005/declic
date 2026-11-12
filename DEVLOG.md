@@ -1,5 +1,20 @@
 # Déclic — Dev Log
 
+## 2026-11-12 — Sport : l'écran « tremble » quand on valide une série ou une durée (Android)
+
+- Symptôme (S10+) : dans la séance (déplier un exercice, saisir 60 kg × 12, appuyer sur OK du clavier) et dans « + » activité (vélo 30 min, touche « Suivant »), l'écran tremble / s'affiche plusieurs fois au même endroit.
+- **Mesuré sur le S10+ avec l'app du Play Store 1.0.8 (53)** (`adb shell dumpsys gfxinfo` : images dessinées en 3 s, écran au repos après la touche OK du clavier) : séance **185** (≈ 62/s : boucle de mise en page, l'écran alterne entre 2 dispositions), fenêtre Objectifs **184** (`behavior='height'`), mais ajout d'aliment **0** (`behavior="padding"`). Fenêtre fermée : 0. → c'est bien `behavior="height"` qui boucle ; `padding` est stable.
+- Cause : `KeyboardAvoidingView behavior="height"` sur Android dans les modales (Séance, + activité, Objectifs, Poids, calories brûlées) et les écrans login / register. Même bug que « clignotement de la modale » déjà corrigé dans `AddEntryModal` (voir plus bas) mais jamais reporté ailleurs. Cause exacte non isolée (RN règle déjà le `Modal` en `ADJUST_RESIZE` + KAV `height` recalcule à chaque changement de taille avec `LayoutAnimation`).
+- Constat annexe (même téléphone : police ×1,3, densité 560) : les cases poids / reps de la séance ont `height: 36` → chiffres rognés en deux. Corrigé : `minHeight: 40`, `paddingVertical: 6`, `includeFontPadding: false`.
+- Fix : `behavior="padding"` (toutes plateformes). **Validé sur le S10+ (build debug 1.0.9, même mesure `gfxinfo`)** : séance après OK **185 → 0** image/3 s ; Objectifs **184 → 0** ; Poids 0 ; « + » activité (vélo 30 puis Suivant puis OK) 0 ; chiffres des séries plus rognés. Non testés (pas atteignables sans se déconnecter / sans Health Connect) : login, register, fenêtre « calories brûlées ».
+- Reste (cosmétique, déjà présent en prod dans l'ajout d'aliment) : après la touche OK, la feuille reste ~55 dp au-dessus du bas de l'écran (on voit la barre d'onglets dessous) = `KeyboardAvoidingView padding` n'est pas remis à 0 sur Android après `keyboardDidHide`. Piste : remplacer par un hook `useKeyboardHeight` (listeners `keyboardDidShow/Hide`) + `paddingBottom`.
+- Autre cosmétique : boutons « Sauvegarder / Ajouter / Enregistrer » partiellement sous la barre de navigation Android dans plusieurs modales (edge-to-edge) → marge basse = `useSafeAreaInsets().bottom`.
+- Pour mémoire : le débogage JS via Metro ne marche que sur un APK debug ; l'app Play embarque son bundle (chargement en 0,2 s), tout changement JS demande un nouveau build. Un APK debug ne s'installe pas par-dessus la version Play (signature) : il faut désinstaller (données locales perdues).
+- Même motif `'height'` corrigé partout ailleurs (demande utilisateur) : `GoalsModal.tsx`, `WeightModal.tsx`, fenêtre « calories brûlées » de `app/(tabs)/calories.tsx`, `app/auth/login.tsx`, `app/auth/register.tsx`. Plus aucun `behavior` à `'height'` dans `app/` et `src/`.
+- Laissé tel quel : `PhysicalProfileModal.tsx` (`undefined` sur Android = ne fait rien, s'appuie sur `adjustResize`, ce n'est pas ce bug).
+- Règle pour la suite : jamais `behavior="height"` dans une `KeyboardAvoidingView`.
+- Version **1.0.10** (`app.config.js` + `android/app/build.gradle` `versionName`).
+
 ## 2026-11-09 — Scan code-barres : vrai poids des pièces + autorisation caméra
 
 - Bug (pain de mie scanné) : en passant en « pièce », l'app prenait le poids générique de `portionWeights.ts` (pain de mie = 25 g pour toutes les marques) au lieu de celui de l'emballage. De plus `serving_size` était mal lu : « 27,5 g » → 5 g (virgule), « 2 tranches (56 g) » → 56 g présentés comme une seule portion, et kcal/100 g = kcal de la portion quand la valeur /100 g manquait.

@@ -59,7 +59,8 @@ export default function GoalsModal({ visible, onClose }: Props) {
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        // 'padding' partout : 'height' fait trembler l'écran sur Android (voir DEVLOG 2026-11-12)
+        behavior="padding"
         style={styles.overlay}
       >
         <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
