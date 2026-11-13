@@ -664,6 +664,8 @@
     "version": "Version",
     "privacyPolicy": "Privacy policy",
     "terms": "Terms of use",
+    "rateApp": "Rate Burnstreak",
+    "rateAppSub": "A review helps us a lot",
     "adConsent": "Ad consent",
     "adConsentSub": "Manage my GDPR preferences",
     "adConsentUnavailableTitle": "Unavailable",
@@ -1454,6 +1456,38 @@
     "v_up": {
       "name": "V-up",
       "description": "Raise your straight legs and torso at the same time to form a V. Touch your toes with your fingers. Squeeze your abs hard at the top."
+    },
+    "bodyweight_squat": {
+      "name": "Bodyweight squat",
+      "description": "Feet shoulder-width apart, toes slightly out. Sit your hips back and lower until your thighs are parallel to the floor, keeping your back straight, then drive up through your heels."
+    },
+    "inverted_row": {
+      "name": "Inverted row (under a table)",
+      "description": "Lie under a sturdy table or a low bar and grip the edge, body straight from head to heels. Pull your chest up to the edge squeezing your shoulder blades together, then lower with control."
+    },
+    "superman": {
+      "name": "Superman",
+      "description": "Lie face down with your arms stretched out in front. Lift your arms and legs off the floor together, squeezing your lower back and glutes, hold for 2 seconds, then lower slowly."
+    },
+    "pike_push_up": {
+      "name": "Pike push-up (shoulders)",
+      "description": "Hips high in an inverted V, hands on the floor (feet on a chair to make it harder). Bend your elbows to bring the top of your head toward the floor, then press back up."
+    },
+    "reverse_snow_angel": {
+      "name": "Reverse snow angel (rear delts)",
+      "description": "Lie face down, arms by your sides, forehead on the floor. Lift your arms off the floor and sweep them in an arc overhead squeezing your shoulder blades, then return slowly."
+    },
+    "towel_curl": {
+      "name": "Towel curl (biceps)",
+      "description": "Sitting, loop a towel under one foot and hold both ends. Curl the towel toward you while resisting with your leg, elbow tight to your side. Squeeze your biceps hard at the top."
+    },
+    "towel_leg_curl": {
+      "name": "Towel hamstring curl",
+      "description": "Lie on your back with your heels on a towel on a smooth floor, hips raised. Slide your heels toward your glutes, then extend your legs slowly."
+    },
+    "bodyweight_good_morning": {
+      "name": "Bodyweight good morning",
+      "description": "Hands behind your head, knees slightly bent. Hinge forward by pushing your hips back with a flat back until you feel your hamstrings stretch, then stand back up."
     }
   },
   "muscleGroups": {
@@ -1494,7 +1528,8 @@
       "arms": "Arms",
       "compoundLowerChest": "Lower-body compound + Chest",
       "heavyCompounds": "Heavy compounds",
-      "fullStrength": "Full-body strength"
+      "fullStrength": "Full-body strength",
+      "allMuscles": "Whole body"
     },
     "days": {
       "chestTri": "Chest + Triceps {{v}}",

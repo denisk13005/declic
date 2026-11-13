@@ -664,6 +664,8 @@
     "version": "Version",
     "privacyPolicy": "Politique de confidentialité",
     "terms": "Conditions d'utilisation",
+    "rateApp": "Noter Burnstreak",
+    "rateAppSub": "Un avis nous aide énormément",
     "adConsent": "Consentement publicitaire",
     "adConsentSub": "Gérer mes préférences RGPD",
     "adConsentUnavailableTitle": "Indisponible",
@@ -1454,6 +1456,38 @@
     "v_up": {
       "name": "V-up",
       "description": "Simultanément, lève les jambes tendues et le buste pour former un V. Touche les orteils avec les doigts. Contracte fort les abdos en haut."
+    },
+    "bodyweight_squat": {
+      "name": "Squat au poids du corps",
+      "description": "Pieds écartés à la largeur des épaules, pointes légèrement ouvertes. Descends en poussant les fesses en arrière jusqu'à ce que les cuisses soient parallèles au sol, dos droit, puis remonte en poussant dans les talons."
+    },
+    "inverted_row": {
+      "name": "Rowing inversé (sous une table)",
+      "description": "Allongé sous une table solide ou une barre basse, attrape le bord, corps gainé de la tête aux talons. Tire la poitrine vers le bord en serrant les omoplates, puis redescends en contrôlant."
+    },
+    "superman": {
+      "name": "Superman",
+      "description": "Allongé sur le ventre, bras tendus devant toi. Lève en même temps les bras et les jambes du sol en contractant le bas du dos et les fessiers, tiens 2 secondes, puis redescends doucement."
+    },
+    "pike_push_up": {
+      "name": "Pompes en V (épaules)",
+      "description": "Hanches hautes en forme de V inversé, mains au sol (pieds sur une chaise pour plus de difficulté). Fléchis les coudes pour amener le haut de la tête vers le sol, puis repousse."
+    },
+    "reverse_snow_angel": {
+      "name": "Ange inversé (arrière d'épaules)",
+      "description": "Allongé sur le ventre, bras le long du corps, front au sol. Lève les bras du sol et ouvre-les en arc de cercle au-dessus de la tête en serrant les omoplates, puis reviens lentement."
+    },
+    "towel_curl": {
+      "name": "Curl à la serviette (biceps)",
+      "description": "Assis, passe une serviette sous un pied et tiens-en les deux extrémités. Tire la serviette vers toi en résistant avec la jambe, coude contre le buste. Contracte fort le biceps en haut."
+    },
+    "towel_leg_curl": {
+      "name": "Curl ischio à la serviette",
+      "description": "Allongé sur le dos, talons sur une serviette posée sur un sol lisse, hanches relevées. Fais glisser les talons vers les fessiers, puis rallonge lentement les jambes."
+    },
+    "bodyweight_good_morning": {
+      "name": "Good morning au poids du corps",
+      "description": "Mains derrière la tête, genoux à peine fléchis. Bascule le buste vers l'avant en poussant les fesses en arrière, dos plat, jusqu'à sentir l'étirement des ischios, puis redresse-toi."
     }
   },
   "muscleGroups": {
@@ -1494,7 +1528,8 @@
       "arms": "Bras",
       "compoundLowerChest": "Compound Bas + Pec",
       "heavyCompounds": "Compound lourds",
-      "fullStrength": "Force complète"
+      "fullStrength": "Force complète",
+      "allMuscles": "Tout le corps"
     },
     "days": {
       "chestTri": "Pec + Triceps {{v}}",

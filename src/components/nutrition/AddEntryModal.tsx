@@ -21,6 +21,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { useCalorieStore } from '@/stores/calorieStore';
+import { maybeAskAfterMeal } from '@/services/storeReview';
 import { useAppColors } from '@/hooks/useAppColors';
 import { analyzeFoodPhoto, prepareFoodPhoto } from '@/services/gemini';
 import { useAiQuota } from '@/hooks/useAiQuota';
@@ -826,6 +827,8 @@ export default function AddEntryModal({ visible, onClose, date, initialMeal, pre
 
     reset();
     onClose();
+    // Repas saisis sur plusieurs jours = habitude prise : on peut demander une note (après la fermeture).
+    setTimeout(() => { void maybeAskAfterMeal(); }, 1000);
   }
 
   // ── Render ────────────────────────────────────────────────────────────────

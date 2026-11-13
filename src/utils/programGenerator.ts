@@ -94,7 +94,7 @@ export const TECHNIQUE_NOTES = translatedRecord<IntensificationTechnique>(
 type FocusKey =
   | 'glutes' | 'hamstrings' | 'quads' | 'chest' | 'back' | 'shoulders' | 'biceps' | 'triceps'
   | 'abs' | 'absLong' | 'absOptional' | 'calves' | 'arms'
-  | 'compoundLowerChest' | 'heavyCompounds' | 'fullStrength';
+  | 'compoundLowerChest' | 'heavyCompounds' | 'fullStrength' | 'allMuscles';
 
 /** Libellé « focus » d'une séance (ex. « Dos · Biceps »), traduit. */
 function focusOf(...keys: FocusKey[]): string {
@@ -182,7 +182,7 @@ function makeExercise(
     exercise: ex,
     sets: isCompound ? p.compoundSets : p.isolationSets,
     reps: isCompound ? p.compoundReps : p.isolationReps,
-    rest: isCompound ? p.compoundRest : p.isolationRest,
+    rest: SESSION_REST,
     technique,
     supersetWith,
     techniqueNote: technique !== 'none' ? TECHNIQUE_NOTES[technique] : undefined,
@@ -192,109 +192,52 @@ function makeExercise(
 // ─── Application des techniques d'intensification ─────────────────────────────
 
 /**
- * Transforme une liste d'exercices bruts en ajoutant des techniques
- * selon le niveau et l'objectif.
+ * Ajoute des techniques d'intensification selon le niveau.
+ * Pas de superset ni de biset : le repos de 1 min entre chaque série est imposé à tous les
+ * programmes générés, et enchaîner deux exercices le supprimerait.
  *
- * - Débutant     : séries droites
- * - Intermédiaire: supersets antagonistes sur les isolations bras
- * - Avancé       : supersets + bisets + drop sets + rest-pause
+ * - Débutant / intermédiaire : séries droites
+ * - Avancé : drop set + rest-pause (techniques DANS une série : le repos entre séries reste de 1 min)
  */
 function applyTechniques(
   exercises: ProgramExercise[],
   level: PractitionerLevel,
   goal: FitnessGoal
 ): ProgramExercise[] {
-  if (level === 'beginner') return exercises;
+  if (level !== 'advanced') return exercises;
 
   const result = [...exercises];
 
-  if (level === 'intermediate') {
-    // Superset biceps + triceps si présents en isolation
-    const biIdx = result.findIndex(
-      (e) => e.exercise.muscleGroup === 'biceps' && !e.exercise.isCompound
-    );
-    const triIdx = result.findIndex(
-      (e) => e.exercise.muscleGroup === 'triceps' && !e.exercise.isCompound
-    );
-    if (biIdx !== -1 && triIdx !== -1) {
-      result[biIdx] = { ...result[biIdx], technique: 'superset', supersetWith: result[triIdx].exercise, techniqueNote: TECHNIQUE_NOTES.superset };
-      result.splice(triIdx, 1); // fusionne les deux en un seul bloc
-    }
-
-    // Superset chest isolation + shoulder isolation si présents
-    const chestIsoIdx = result.findIndex(
-      (e) => e.exercise.muscleGroup === 'chest' && !e.exercise.isCompound
-    );
-    const shoulderIsoIdx = result.findIndex(
-      (e) => e.exercise.muscleGroup === 'shoulders' && !e.exercise.isCompound
-    );
-    if (chestIsoIdx !== -1 && shoulderIsoIdx !== -1 && chestIsoIdx !== shoulderIsoIdx) {
-      result[chestIsoIdx] = { ...result[chestIsoIdx], technique: 'superset', supersetWith: result[shoulderIsoIdx].exercise, techniqueNote: TECHNIQUE_NOTES.superset };
-      result.splice(shoulderIsoIdx, 1);
+  // Drop set sur le dernier exercice d'isolation de chaque grand groupe (avec une charge à réduire :
+  // pas sur un exercice au poids du corps)
+  const dropTargetGroups: MuscleGroup[] = ['chest', 'back', 'quads', 'glutes'];
+  for (const group of dropTargetGroups) {
+    const lastIsoIdx = result.map((e, i) => ({ e, i }))
+      .filter(({ e }) => e.exercise.muscleGroup === group && !e.exercise.isCompound && e.exercise.equipment !== 'bodyweight')
+      .pop();
+    if (lastIsoIdx && lastIsoIdx.e.technique === 'none') {
+      result[lastIsoIdx.i] = {
+        ...result[lastIsoIdx.i],
+        technique: 'dropset',
+        techniqueNote: TECHNIQUE_NOTES.dropset,
+      };
+      break;
     }
   }
 
-  if (level === 'advanced') {
-    // Biset sur isolations du même groupe musculaire
-    const groups = ['biceps', 'triceps', 'shoulders', 'chest', 'back', 'quads', 'hamstrings', 'glutes', 'abs'] as MuscleGroup[];
-
-    for (const group of groups) {
-      const isoIndices = result
-        .map((e, i) => ({ e, i }))
-        .filter(({ e }) => e.exercise.muscleGroup === group && !e.exercise.isCompound);
-
-      if (isoIndices.length >= 2) {
-        const first = isoIndices[0];
-        const second = isoIndices[1];
-        result[first.i] = {
-          ...result[first.i],
-          technique: 'biset',
-          supersetWith: result[second.i].exercise,
-          techniqueNote: TECHNIQUE_NOTES.biset,
-        };
-        result.splice(second.i, 1);
-        break; // un seul biset par séance
-      }
-    }
-
-    // Superset antagonistes biceps/triceps
-    const biIdx = result.findIndex((e) => e.exercise.muscleGroup === 'biceps');
-    const triIdx = result.findIndex((e) => e.exercise.muscleGroup === 'triceps');
-    if (biIdx !== -1 && triIdx !== -1 && result[biIdx].technique === 'none') {
-      result[biIdx] = { ...result[biIdx], technique: 'superset', supersetWith: result[triIdx].exercise, techniqueNote: TECHNIQUE_NOTES.superset };
-      result.splice(triIdx, 1);
-    }
-
-    // Drop set sur le dernier exercice d'isolation de chaque grand groupe
-    const dropTargetGroups: MuscleGroup[] = ['chest', 'back', 'quads', 'glutes'];
-    for (const group of dropTargetGroups) {
-      const lastIsoIdx = result.map((e, i) => ({ e, i }))
-        .filter(({ e }) => e.exercise.muscleGroup === group && !e.exercise.isCompound)
-        .pop();
-      if (lastIsoIdx && lastIsoIdx.e.technique === 'none') {
-        result[lastIsoIdx.i] = {
-          ...result[lastIsoIdx.i],
-          technique: 'dropset',
-          techniqueNote: TECHNIQUE_NOTES.dropset,
-        };
-        break;
-      }
-    }
-
-    // Rest-pause sur une isolation bras (si pas déjà un superset)
-    const armIsoIdx = result.findIndex(
-      (e) =>
-        (e.exercise.muscleGroup === 'biceps' || e.exercise.muscleGroup === 'triceps') &&
-        !e.exercise.isCompound &&
-        e.technique === 'none'
-    );
-    if (armIsoIdx !== -1) {
-      result[armIsoIdx] = {
-        ...result[armIsoIdx],
-        technique: 'rest_pause',
-        techniqueNote: TECHNIQUE_NOTES.rest_pause,
-      };
-    }
+  // Rest-pause sur une isolation bras
+  const armIsoIdx = result.findIndex(
+    (e) =>
+      (e.exercise.muscleGroup === 'biceps' || e.exercise.muscleGroup === 'triceps') &&
+      !e.exercise.isCompound &&
+      e.technique === 'none'
+  );
+  if (armIsoIdx !== -1) {
+    result[armIsoIdx] = {
+      ...result[armIsoIdx],
+      technique: 'rest_pause',
+      techniqueNote: TECHNIQUE_NOTES.rest_pause,
+    };
   }
 
   return result;
@@ -347,6 +290,99 @@ function biasGroups(groups: GroupSpec[], gender: Gender): GroupSpec[] {
     .filter((g) => g.compounds + g.isolations > 0);
 }
 
+// ─── Règles communes à toutes les séances générées ───────────────────────────
+
+/** Durée minimale (en minutes) de toute séance générée, repos compris. */
+export const MIN_SESSION_MINUTES = 45;
+/** Repos entre deux séries : identique pour tous les exercices de tous les programmes générés. */
+export const SESSION_REST = '1 min';
+
+const MAX_SESSION_EXERCISES = 12;
+const MAX_SETS_PER_EXERCISE = 5;
+/** Muscles ajoutés en tout dernier recours si ceux de la séance ne suffisent pas à atteindre 45 min. */
+const FALLBACK_GROUPS: MuscleGroup[] = [
+  'abs', 'calves', 'glutes', 'shoulders', 'triceps', 'biceps', 'hamstrings', 'quads', 'chest', 'back',
+];
+
+interface DaySlot {
+  groupIdx: number;
+  pe: ProgramExercise;
+}
+
+function slotsMinutes(slots: DaySlot[]): number {
+  return estimateSessionMinutes({ dayNumber: 0, label: '', focus: '', exercises: slots.map((s) => s.pe) });
+}
+
+/**
+ * Complète une séance jusqu'à MIN_SESSION_MINUTES (repos compris), dans cet ordre :
+ *   1. des exercices en plus sur les muscles de la séance (à tour de rôle) ;
+ *   2. des séries en plus (5 maximum par exercice) ;
+ *   3. en dernier recours seulement, des exercices d'autres muscles.
+ * Le poids du corps ne demande aucun matériel : il sert de repli quand le matériel choisi ne suffit pas.
+ *
+ * @param groups  `groups[groupIdx]` : les muscles de la séance d'abord, puis ceux de dernier recours
+ * @param ownCount nombre de muscles propres à la séance (les premiers de `groups`)
+ */
+function fitToMinimumDuration(
+  slots: DaySlot[],
+  groups: MuscleGroup[],
+  ownCount: number,
+  extraOrder: number[],
+  level: PractitionerLevel,
+  equipment: Set<EquipmentType>,
+  usedFamilies: Set<string>,
+  toProgramExercise: (ex: Exercise) => ProgramExercise,
+  maxExercises: number,
+): void {
+  const withBodyweight = new Set<EquipmentType>([...equipment, 'bodyweight']);
+
+  const nextExercise = (groupIdx: number): Exercise | undefined => {
+    for (const pool of [equipment, withBodyweight]) {
+      const [ex] = pickUnique(sortByProgramPriority(getAvailableExercises(groups[groupIdx], level, pool)), 1, usedFamilies);
+      if (ex) return ex;
+    }
+    return undefined;
+  };
+
+  const addExercises = (order: number[]): void => {
+    let cursor = 0;
+    let misses = 0;
+    while (order.length > 0 && slotsMinutes(slots) < MIN_SESSION_MINUTES && slots.length < maxExercises && misses < order.length) {
+      const groupIdx = order[cursor % order.length];
+      cursor++;
+      const ex = nextExercise(groupIdx);
+      if (ex) {
+        slots.push({ groupIdx, pe: toProgramExercise(ex) });
+        misses = 0;
+      } else {
+        misses++;
+      }
+    }
+  };
+
+  const addSets = (): void => {
+    for (let i = 0; slotsMinutes(slots) < MIN_SESSION_MINUTES && i < slots.length * MAX_SETS_PER_EXERCISE; i++) {
+      const pe = slots[i % slots.length].pe;
+      if (pe.sets < MAX_SETS_PER_EXERCISE) pe.sets++;
+    }
+  };
+
+  addExercises(extraOrder);
+  addSets();
+  if (slotsMinutes(slots) < MIN_SESSION_MINUTES) {
+    addExercises(groups.map((_, i) => i).filter((i) => i >= ownCount));
+    addSets();
+  }
+}
+
+/** Muscles regroupés dans l'ordre du plan (tri stable : le 1er exercice d'un muscle reste en tête). */
+function orderedExercises(slots: DaySlot[]): ProgramExercise[] {
+  return slots
+    .map((s, i) => ({ ...s, i }))
+    .sort((a, b) => a.groupIdx - b.groupIdx || a.i - b.i)
+    .map((s) => s.pe);
+}
+
 function buildDay(
   dayNumber: number,
   label: string,
@@ -360,9 +396,10 @@ function buildDay(
 ): ProgramDay {
   const p = GOAL_PARAMS[goal][level];
   const usedFamilies = new Set<string>();
+  const specs = biasGroups(groups, gender);
   const perGroup: ProgramExercise[][] = [];
 
-  for (const { group, compounds, isolations } of biasGroups(groups, gender)) {
+  for (const { group, compounds, isolations } of specs) {
     const compoundList = pickUnique(rankedCandidates(getAvailableCompounds(group, level, equipmentSet), variantOffset, compounds), compounds, usedFamilies);
     const isolationList = pickUnique(rankedCandidates(getAvailableIsolations(group, level, equipmentSet), variantOffset, isolations), isolations, usedFamilies);
     perGroup.push([
@@ -371,26 +408,41 @@ function buildDay(
     ]);
   }
 
-  // Plafond de 7 exercices : chaque groupe prévu garde d'abord son 1er exercice, les
-  // exercices supplémentaires viennent ensuite (avant, couper la fin de liste faisait
-  // disparaître des muscles entiers — dos, triceps — annoncés dans la séance).
-  const MAX_EXERCISES = 7;
+  // Plafond de 7 exercices pour le plan de base : chaque groupe prévu garde d'abord son 1er
+  // exercice, les exercices supplémentaires viennent ensuite (avant, couper la fin de liste
+  // faisait disparaître des muscles entiers — dos, triceps — annoncés dans la séance).
+  const MAX_PLANNED_EXERCISES = 7;
   const kept = perGroup.map(() => 0);
   let total = 0;
-  for (let round = 0; total < MAX_EXERCISES; round++) {
+  for (let round = 0; total < MAX_PLANNED_EXERCISES; round++) {
     let added = false;
-    for (let g = 0; g < perGroup.length && total < MAX_EXERCISES; g++) {
+    for (let g = 0; g < perGroup.length && total < MAX_PLANNED_EXERCISES; g++) {
       if (perGroup[g].length > round) { kept[g]++; total++; added = true; }
     }
     if (!added) break;
   }
-  const capped = perGroup.flatMap((list, g) => list.slice(0, kept[g]));
+  const slots: DaySlot[] = perGroup.flatMap((list, g) => list.slice(0, kept[g]).map((pe) => ({ groupIdx: g, pe })));
+
+  // Durée minimale de 45 min (repos de 1 min compris) : on complète la séance si besoin
+  const dayGroups = specs.map((s) => s.group);
+  fitToMinimumDuration(
+    slots,
+    [...dayGroups, ...FALLBACK_GROUPS.filter((g) => !dayGroups.includes(g))],
+    dayGroups.length,
+    // Exercices en plus : seulement pour les muscles réellement travaillés ce jour-là (pas ceux prévus à 0)
+    specs.flatMap((s, i) => (s.compounds + s.isolations > 0 ? [i] : [])),
+    level,
+    equipmentSet ?? new Set<EquipmentType>(ALL_EQUIPMENT),
+    usedFamilies,
+    (ex) => makeExercise(ex, p, ex.isCompound),
+    MAX_SESSION_EXERCISES,
+  );
 
   return {
     dayNumber,
     label,
     focus,
-    exercises: applyTechniques(capped, level, goal),
+    exercises: applyTechniques(orderedExercises(slots), level, goal),
   };
 }
 
@@ -422,34 +474,94 @@ export function generateCustomDay(
 
 // ─── Jours types ─────────────────────────────────────────────────────────────
 
-function makeFullBody(n: number, v: 'A' | 'B' | 'C', goal: FitnessGoal, level: PractitionerLevel, gender: Gender, equipmentSet?: Set<EquipmentType>): ProgramDay {
-  const configs = {
-    A: { label: `Full Body A`, focus: gender === 'female' ? focusOf('glutes', 'back', 'shoulders', 'abs') : focusOf('compoundLowerChest', 'back', 'shoulders', 'abs'), groups: [
-      { group: 'glutes' as MuscleGroup,    compounds: gender === 'female' ? 1 : 0, isolations: gender === 'female' ? 1 : 0 },
-      { group: 'quads' as MuscleGroup,     compounds: 1, isolations: level === 'beginner' ? 0 : 1 },
-      { group: 'chest' as MuscleGroup,     compounds: 1, isolations: 1 },
-      { group: 'back' as MuscleGroup,      compounds: 1, isolations: 1 },
-      { group: 'shoulders' as MuscleGroup, compounds: 0, isolations: 1 },
-      { group: 'abs' as MuscleGroup,       compounds: 0, isolations: 1 },
-    ]},
-    B: { label: `Full Body B`, focus: gender === 'female' ? focusOf('glutes', 'hamstrings', 'back', 'abs', 'arms') : focusOf('glutes', 'hamstrings', 'chest', 'back', 'arms'), groups: [
-      { group: 'glutes' as MuscleGroup,     compounds: 1, isolations: 1 },
-      { group: 'hamstrings' as MuscleGroup, compounds: 1, isolations: 0 },
-      { group: 'chest' as MuscleGroup,      compounds: gender === 'female' ? 0 : 1, isolations: 1 },
-      { group: 'back' as MuscleGroup,       compounds: 1, isolations: 0 },
-      { group: 'biceps' as MuscleGroup,     compounds: 0, isolations: 1 },
-      { group: 'abs' as MuscleGroup,        compounds: 0, isolations: gender === 'female' ? 1 : 0 },
-    ]},
-    C: { label: `Full Body C`, focus: focusOf('heavyCompounds', 'fullStrength'), groups: [
-      { group: 'quads' as MuscleGroup,      compounds: 1, isolations: 1 },
-      { group: 'back' as MuscleGroup,       compounds: 2, isolations: 0 },
-      { group: 'chest' as MuscleGroup,      compounds: 1, isolations: 0 },
-      { group: 'shoulders' as MuscleGroup,  compounds: 1, isolations: 1 },
-      { group: 'abs' as MuscleGroup,        compounds: 0, isolations: 1 },
-    ]},
+// ─── Séances Full Body ────────────────────────────────────────────────────────
+
+const FULL_BODY_MAX_EXERCISES = 14;
+/** Séries maximales par exercice dans un Full Body (évite 5 séries × 10 exercices chez un avancé). */
+const FULL_BODY_MAX_SETS = { compound: 4, isolation: 3 };
+
+/**
+ * Tous les muscles du corps, dans l'ordre de la séance : gros muscles d'abord, petits ensuite.
+ * `prefer` : type d'exercice choisi en premier pour ce muscle (l'autre type sert de repli).
+ */
+const FULL_BODY_GROUPS: { group: MuscleGroup; prefer: 'compound' | 'isolation' }[] = [
+  { group: 'quads',      prefer: 'compound' },
+  { group: 'hamstrings', prefer: 'compound' },
+  { group: 'glutes',     prefer: 'compound' },
+  { group: 'chest',      prefer: 'compound' },
+  { group: 'back',       prefer: 'compound' },
+  { group: 'shoulders',  prefer: 'compound' },
+  { group: 'triceps',    prefer: 'isolation' },
+  { group: 'biceps',     prefer: 'isolation' },
+  { group: 'calves',     prefer: 'isolation' },
+  { group: 'abs',        prefer: 'isolation' },
+];
+
+/** Muscles qui reçoivent un 2ᵉ exercice (à tour de rôle) quand la séance n'atteint pas la durée minimale. */
+const FULL_BODY_EXTRAS: Record<Gender, MuscleGroup[]> = {
+  male:   ['back', 'chest', 'quads', 'shoulders', 'glutes', 'hamstrings', 'abs', 'triceps', 'biceps', 'calves'],
+  female: ['glutes', 'quads', 'back', 'hamstrings', 'shoulders', 'chest', 'abs', 'triceps', 'biceps', 'calves'],
+};
+
+/**
+ * Séance Full Body : au moins un exercice pour CHACUN des 10 muscles, puis les règles communes
+ * (repos de 1 min, 45 min minimum, séries droites).
+ */
+function buildFullBodyDay(
+  dayNumber: number,
+  label: string,
+  goal: FitnessGoal,
+  level: PractitionerLevel,
+  gender: Gender,
+  equipmentSet?: Set<EquipmentType>,
+  variantOffset = 0,
+): ProgramDay {
+  const p = GOAL_PARAMS[goal][level];
+  const equipment = equipmentSet ?? new Set<EquipmentType>(ALL_EQUIPMENT);
+  // Le poids du corps ne demande aucun matériel : toujours disponible, ce qui garantit
+  // au moins un exercice par muscle même avec un équipement très réduit.
+  const pool = new Set<EquipmentType>([...equipment, 'bodyweight']);
+  const usedFamilies = new Set<string>();
+
+  const toProgramExercise = (ex: Exercise): ProgramExercise => {
+    const pe = makeExercise(ex, p, ex.isCompound);
+    const cap = ex.isCompound ? FULL_BODY_MAX_SETS.compound : FULL_BODY_MAX_SETS.isolation;
+    return { ...pe, sets: Math.min(pe.sets, cap) };
   };
-  const cfg = configs[v];
-  return buildDay(n, cfg.label, cfg.focus, cfg.groups, goal, level, gender, equipmentSet, { A: 0, B: 1, C: 2 }[v]);
+
+  // 1. Un exercice pour chaque muscle
+  const slots: DaySlot[] = [];
+  FULL_BODY_GROUPS.forEach(({ group, prefer }, groupIdx) => {
+    const compounds = getAvailableCompounds(group, level, pool);
+    const isolations = getAvailableIsolations(group, level, pool);
+    const lists = prefer === 'compound' ? [compounds, isolations] : [isolations, compounds];
+    for (const list of lists) {
+      const [ex] = pickUnique(rankedCandidates(list, variantOffset, 1), 1, usedFamilies);
+      if (ex) {
+        slots.push({ groupIdx, pe: toProgramExercise(ex) });
+        break;
+      }
+    }
+  });
+
+  // 2. Durée minimale : exercices en plus à tour de rôle, puis séries
+  fitToMinimumDuration(
+    slots,
+    FULL_BODY_GROUPS.map((x) => x.group),
+    FULL_BODY_GROUPS.length,
+    FULL_BODY_EXTRAS[gender].map((g) => FULL_BODY_GROUPS.findIndex((x) => x.group === g)),
+    level,
+    pool,
+    usedFamilies,
+    toProgramExercise,
+    FULL_BODY_MAX_EXERCISES,
+  );
+
+  return { dayNumber, label, focus: focusOf('allMuscles'), exercises: orderedExercises(slots) };
+}
+
+function makeFullBody(n: number, v: 'A' | 'B' | 'C', goal: FitnessGoal, level: PractitionerLevel, gender: Gender, equipmentSet?: Set<EquipmentType>): ProgramDay {
+  return buildFullBodyDay(n, `Full Body ${v}`, goal, level, gender, equipmentSet, { A: 0, B: 1, C: 2 }[v]);
 }
 
 function makePush(n: number, v: 'A' | 'B', goal: FitnessGoal, level: PractitionerLevel, gender: Gender, equipmentSet?: Set<EquipmentType>): ProgramDay {

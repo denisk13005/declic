@@ -1,5 +1,25 @@
 # Déclic — Dev Log
 
+## 2026-11-13 — Programmes auto : toutes les séances ≥ 45 min, repos 1 min, Full Body complet (poids du corps = 2 exercices / 13 min avant)
+
+- Symptôme : au poids du corps, un Full Body ne donnait que 2 exercices et ~13 min. Cause : la base n'avait **aucun** exercice poids du corps pour le dos, les biceps, les ischio-jambiers, les épaules (débutant) ni même un squat sans matériel ; `buildDay` ne trouvait presque rien, et plafonnait à 7 exercices.
+- 8 exercices ajoutés (`src/data/exercises.ts`, textes fr + en) : `bodyweight_squat`, `inverted_row` (rowing sous une table), `superman`, `pike_push_up`, `reverse_snow_angel`, `towel_curl`, `towel_leg_curl`, `bodyweight_good_morning`.
+- **Règles pour TOUS les programmes générés** (Full Body, Push / Pull / Legs, Upper / Lower, Pec+Tri, Dos+Bi, jours personnalisés…, tout équipement) dans `programGenerator.ts` :
+  - **repos 1 min** entre séries pour tous les exercices (`SESSION_REST`) ;
+  - **≥ 45 min, repos compris** (`MIN_SESSION_MINUTES`, via `estimateSessionMinutes`) : `fitToMinimumDuration` ajoute (1) des exercices sur les muscles de la séance à tour de rôle (12 max, 14 en Full Body), (2) des séries (5 max), (3) en dernier recours seulement des exercices d'autres muscles. Le poids du corps sert de repli quand le matériel choisi ne suffit pas ;
+  - **plus de superset ni de biset** : ils retirent le repos entre deux exercices. Drop set et rest-pause (dans une série) gardés, drop set jamais sur un exercice au poids du corps (aucune charge à réduire) ; les anciens programmes enregistrés avec supersets restent lisibles (`WorkoutSessionModal` les gère encore).
+- **Full Body** (`buildFullBodyDay`) : au moins **1 exercice pour chacun des 10 muscles** (quadriceps, ischios, fessiers, pectoraux, dos, épaules, triceps, biceps, mollets, abdos), séries plafonnées à 4 / 3 pour ne pas dépasser ~60 min chez un avancé.
+- Mesuré sur 7 équipements × 378 séances : durées de 45 à 62 min, aucune sous 45, aucun superset, repos toujours 1 min. Poids du corps débutant Full Body = 11 exercices / 47 min. Tests : 183 / 183.
+- Les programmes déjà enregistrés ne changent pas : il faut les regénérer.
+
+## 2026-11-13 — Avis : plus de moments pour demander une note + accès permanent
+
+- Constat (relecture du plan marketing) : la demande d'avis de la 1.0.4 ne se déclenchait que sur un palier de série d'**habitude** (3 / 7 / 14 / 30 / 60 / 100 jours). La version gratuite étant limitée à 1 habitude et l'usage principal étant calories + sport, la plupart des utilisateurs n'étaient jamais sollicités.
+- Nouveaux déclencheurs, avec les mêmes garde-fous (≥ 3 jours après la 1ʳᵉ ouverture, 120 jours entre deux demandes, 3 au maximum) : **séance de musculation terminée à 100 %** (`WorkoutSessionModal`) et **repas saisis sur ≥ 3 jours différents** (`AddEntryModal`). La fenêtre s'affiche 1 s après la fermeture de la modale.
+- Profil → À propos → **« Noter Burnstreak »** : ouvre directement la page d'avis du store (iOS `…/id6802006611?action=write-review`, Android page Play), sans limite d'affichages (la fenêtre officielle est plafonnée par Apple / Google).
+- Code : `reviewPromptStore.ts` (`shouldAskAfterPositiveMoment`, `countDistinctDays`, règle `minMealDays`), `storeReview.ts` (`maybeAskAfterWorkout`, `maybeAskAfterMeal`, `openStoreReviewPage`), clés `profile.rateApp` / `rateAppSub` (fr + en). Aucun module natif ajouté. Tests : 166 / 166.
+- Pas encore fait, à valider avant : Firebase Analytics (module natif + mise à jour confidentialité / déclarations des stores), parrainage.
+
 ## 2026-11-12 — Sport : l'écran « tremble » quand on valide une série ou une durée (Android)
 
 - Symptôme (S10+) : dans la séance (déplier un exercice, saisir 60 kg × 12, appuyer sur OK du clavier) et dans « + » activité (vélo 30 min, touche « Suivant »), l'écran tremble / s'affiche plusieurs fois au même endroit.

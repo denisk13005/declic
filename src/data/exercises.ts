@@ -282,6 +282,18 @@ const RAW_EXERCISES: RawExercise[] = [
   { id: 'l_sit',                 muscleGroup: 'abs',        isCompound: false, minLevel: 'advanced',     family: 'plank' },
   { id: 'dead_bug',              muscleGroup: 'abs',        isCompound: false, minLevel: 'beginner',     family: 'plank' },
   { id: 'v_up',                  muscleGroup: 'abs',        isCompound: false, minLevel: 'intermediate', family: 'crunch' },
+
+  // ─── Poids du corps (ajouts) ─────────────────────────────────────────────────
+  // Sans eux, une séance au poids du corps n'avait aucun exercice de dos, biceps, ischio-jambiers
+  // ni d'épaules (débutant), ni même un squat sans matériel.
+  { id: 'bodyweight_squat',        muscleGroup: 'quads',      isCompound: true,  minLevel: 'beginner',     family: 'bodyweight_squat' },
+  { id: 'inverted_row',            muscleGroup: 'back',       isCompound: true,  minLevel: 'beginner',     family: 'horizontal_row' },
+  { id: 'superman',                muscleGroup: 'back',       isCompound: false, minLevel: 'beginner',     family: 'back_extension' },
+  { id: 'pike_push_up',            muscleGroup: 'shoulders',  isCompound: true,  minLevel: 'beginner',     family: 'overhead_press' },
+  { id: 'reverse_snow_angel',      muscleGroup: 'shoulders',  isCompound: false, minLevel: 'beginner',     family: 'rear_delt' },
+  { id: 'towel_curl',              muscleGroup: 'biceps',     isCompound: false, minLevel: 'beginner',     family: 'towel_curl' },
+  { id: 'towel_leg_curl',          muscleGroup: 'hamstrings', isCompound: false, minLevel: 'beginner',     family: 'leg_curl' },
+  { id: 'bodyweight_good_morning', muscleGroup: 'hamstrings', isCompound: true,  minLevel: 'beginner',     family: 'hip_hinge_hamstring' },
 ];
 
 // Matériel requis par exercice (défaut : 'machines' si absent)
@@ -349,6 +361,10 @@ const EXERCISE_EQUIPMENT: Record<string, EquipmentType> = {
   pallof_press: 'cables', wood_chop: 'cables', decline_crunch: 'machines',
   flutter_kicks: 'bodyweight', mountain_climber: 'bodyweight', l_sit: 'bodyweight',
   dead_bug: 'bodyweight', v_up: 'bodyweight',
+  // ── Poids du corps (ajouts) ──
+  bodyweight_squat: 'bodyweight', inverted_row: 'bodyweight', superman: 'bodyweight',
+  pike_push_up: 'bodyweight', reverse_snow_angel: 'bodyweight', towel_curl: 'bodyweight',
+  towel_leg_curl: 'bodyweight', bodyweight_good_morning: 'bodyweight',
 };
 
 /**
@@ -367,23 +383,24 @@ const PROGRAM_PRIORITY: string[] = [
   'pull_up', 'lat_pulldown', 'barbell_row', 'tbar_row', 'machine_row', 'chin_up', 'weighted_pull_up', 'pendlay_row',
   'deadlift', 'rack_pull', 'seal_row', 'assisted_pull_up', 'narrow_lat_pulldown',
   'chest_supported', 'one_arm_row', 'seated_row', 'cable_row_single', 'meadows_row', 'straight_arm_pulldown', 'face_pull', 'pullover_db',
+  'inverted_row', 'superman',
   // Épaules
-  'ohp', 'dumbbell_press', 'machine_shoulder', 'arnold_press', 'z_press', 'behind_neck_press', 'handstand_push_up',
-  'lateral_raise', 'cable_lateral', 'machine_lateral_raise', 'rear_delt_fly', 'cable_rear_delt', 'upright_row', 'front_raise', 'lu_raise',
+  'ohp', 'dumbbell_press', 'machine_shoulder', 'arnold_press', 'z_press', 'behind_neck_press', 'handstand_push_up', 'pike_push_up',
+  'lateral_raise', 'cable_lateral', 'machine_lateral_raise', 'rear_delt_fly', 'cable_rear_delt', 'reverse_snow_angel', 'upright_row', 'front_raise', 'lu_raise',
   // Biceps
   'barbell_curl', 'dumbbell_curl', 'incline_curl', 'hammer_curl', 'preacher_curl', 'cable_curl', 'bayesian_curl',
-  'concentration_curl', 'spider_curl', 'zottman_curl', 'drag_curl', 'cross_body_cable_curl', 'reverse_curl', 'waiter_curl',
+  'concentration_curl', 'spider_curl', 'zottman_curl', 'drag_curl', 'cross_body_cable_curl', 'reverse_curl', 'waiter_curl', 'towel_curl',
   // Triceps
   'close_grip_bench', 'dips_parallel', 'dips_triceps', 'bench_dip_weighted',
   'tricep_pushdown', 'overhead_ext', 'skull_crusher', 'cable_overhead_t', 'pushdown_bar', 'single_arm_cable_ext',
   'tricep_kickback', 'cable_kickback_tri', 'band_pushdown', 'jm_press', 'tate_press',
   // Quadriceps
-  'squat', 'leg_press', 'hack_squat', 'front_squat', 'bulgarian_squat', 'goblet_squat', 'walking_lunge', 'lunge',
+  'squat', 'leg_press', 'hack_squat', 'front_squat', 'bulgarian_squat', 'goblet_squat', 'bodyweight_squat', 'walking_lunge', 'lunge',
   'reverse_lunge', 'split_squat', 'step_up', 'belt_squat', 'single_leg_press', 'high_foot_leg_press', 'leg_press_close',
   'leg_extension', 'sissy_squat',
   // Ischio-jambiers
-  'rdl', 'good_morning', 'single_leg_rdl', 'hyperextension', 'banded_good_morning',
-  'seated_leg_curl', 'leg_curl', 'lying_leg_curl', 'nordic_curl', 'standing_leg_curl', 'glute_ham_raise',
+  'rdl', 'good_morning', 'single_leg_rdl', 'hyperextension', 'banded_good_morning', 'bodyweight_good_morning',
+  'seated_leg_curl', 'leg_curl', 'lying_leg_curl', 'nordic_curl', 'standing_leg_curl', 'towel_leg_curl', 'glute_ham_raise',
   // Fessiers
   'hip_thrust', 'sumo_squat_bb', 'cable_pull_through', 'sumo_squat', 'single_hip_thrust', 'reverse_hyper', 'rdl_glutes',
   'cable_kickback', 'banded_abduction', 'glute_bridge', 'clamshell', 'fire_hydrant', 'donkey_kick',

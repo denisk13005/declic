@@ -27,15 +27,12 @@ export const REVIEW_RULES = {
   maxAsks: 3,
   /** Séries (en jours) qui déclenchent la demande */
   streakMilestones: [3, 7, 14, 30, 60, 100] as readonly number[],
+  /** Nombre de jours différents où l'utilisateur a saisi un repas avant la demande */
+  minMealDays: 3,
 } as const;
 
-/** Faut-il proposer de noter l'app maintenant ? (logique pure, testée) */
-export function shouldAskForReview(
-  state: ReviewPromptState,
-  streak: number,
-  now: number = Date.now(),
-): boolean {
-  if (!REVIEW_RULES.streakMilestones.includes(streak)) return false;
+/** Les conditions communes à tous les déclencheurs : assez d'usage, pas trop de demandes. */
+function canAsk(state: ReviewPromptState, now: number): boolean {
   if (state.firstSeenAt === null) return false;
   if (now - state.firstSeenAt < REVIEW_RULES.minDaysSinceFirstSeen * DAY_MS) return false;
   if (state.askCount >= REVIEW_RULES.maxAsks) return false;
@@ -43,6 +40,32 @@ export function shouldAskForReview(
     return false;
   }
   return true;
+}
+
+/** Faut-il proposer de noter l'app maintenant, sur un palier de série d'habitude ? (logique pure, testée) */
+export function shouldAskForReview(
+  state: ReviewPromptState,
+  streak: number,
+  now: number = Date.now(),
+): boolean {
+  if (!REVIEW_RULES.streakMilestones.includes(streak)) return false;
+  return canAsk(state, now);
+}
+
+/**
+ * Faut-il proposer de noter l'app juste après un moment positif sans palier de série
+ * (séance de sport terminée, repas saisis sur plusieurs jours) ? (logique pure, testée)
+ */
+export function shouldAskAfterPositiveMoment(
+  state: ReviewPromptState,
+  now: number = Date.now(),
+): boolean {
+  return canAsk(state, now);
+}
+
+/** Nombre de jours différents dans une liste de dates « yyyy-MM-dd » (logique pure, testée). */
+export function countDistinctDays(dates: readonly string[]): number {
+  return new Set(dates).size;
 }
 
 interface ReviewPromptStore extends ReviewPromptState {

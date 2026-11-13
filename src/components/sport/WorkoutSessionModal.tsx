@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ProgramDay, estimateSessionMinutes } from '@/utils/programGenerator';
+import { maybeAskAfterWorkout } from '@/services/storeReview';
 import { useSessionStore } from '@/stores/sessionStore';
 import { useWorkoutStore } from '@/stores/workoutStore';
 import { useProfileStore } from '@/stores/profileStore';
@@ -446,6 +447,8 @@ export default function WorkoutSessionModal({ visible, day, date, onClose }: Pro
       workoutEntryId,
     });
     onClose();
+    // Séance terminée à 100 % = moment positif : on peut demander une note (après la fermeture).
+    if (pct === 1) setTimeout(() => { void maybeAskAfterWorkout(); }, 1000);
   }
 
   return (

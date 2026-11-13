@@ -10,6 +10,7 @@ import { useWeightStore } from '@/stores/weightStore';
 import { useCalorieStore } from '@/stores/calorieStore';
 import { MealType } from '@/types';
 import WeightModal from '@/components/nutrition/WeightModal';
+import { openStoreReviewPage } from '@/services/storeReview';
 import WeightChartCard from '@/components/profile/WeightChartCard';
 import PhysicalProfileModal from '@/components/profile/PhysicalProfileModal';
 import TDEECard from '@/components/profile/TDEECard';
@@ -557,6 +558,12 @@ export default function ProfileScreen() {
             icon="information-circle-outline"
             label={t('profile.version')}
             rightEl={<Text style={styles.versionText}>{CURRENT_VERSION}</Text>}
+          />
+          <SettingsRow
+            icon="star-outline"
+            label={t('profile.rateApp')}
+            sublabel={t('profile.rateAppSub')}
+            onPress={openStoreReviewPage}
           />
           <SettingsRow
             icon="shield-checkmark-outline"
