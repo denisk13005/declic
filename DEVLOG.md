@@ -1,5 +1,15 @@
 # Déclic — Dev Log
 
+## 2026-11-12 — Site burnstreak.com : optimisation SEO
+
+- **Une page par langue** : `/` (FR) et `/en/` (EN) générées par `scripts/website/build.mjs` depuis la même source `docs/app/index.html`. Avant, l'anglais était caché en CSS dans la page française (invisible pour Google). Plus de JavaScript : la bascule FR/EN est faite de vrais liens, avec `hreflang` + `x-default`.
+- `<head>` complet : titre/description par langue, canonical, robots (`max-image-preview:large`), Open Graph + Twitter Cards, theme-color. Nouvelles images de partage 1200×630 : `docs/app/img/og-fr.png` / `og-en.png`.
+- Données structurées JSON-LD : Organization, WebSite, WebPage, MobileApplication (offres, fonctionnalités, captures), FAQPage (extrait automatiquement de la FAQ de la page).
+- Contenu : 3 questions de FAQ ajoutées (gratuit ? comment marche le compteur ? iPhone/Android ?), balise `<main>`, image principale en `fetchpriority="high"`.
+- Pages légales : description, Open Graph, fil d'Ariane JSON-LD, logo cliquable vers l'accueil, liens croisés dans le pied de page.
+- `sitemap.xml` : alternates `hreflang`, `lastmod` réel (dernier commit) au lieu de « aujourd'hui » ; nouvelle `404.html` (noindex).
+- `deploy/website/nginx-burnstreak.conf` : gzip complet, `error_page 404`, redirection `/index.html` → `/`, cache `no-cache` sur les pages et sitemap. **À recopier sur le VPS puis `nginx -t` + reload**, et redéployer le site (`deploy.sh`).
+
 ## 2026-11-13 — Programmes auto : toutes les séances ≥ 45 min, repos 1 min, Full Body complet (poids du corps = 2 exercices / 13 min avant)
 
 - Symptôme : au poids du corps, un Full Body ne donnait que 2 exercices et ~13 min. Cause : la base n'avait **aucun** exercice poids du corps pour le dos, les biceps, les ischio-jambiers, les épaules (débutant) ni même un squat sans matériel ; `buildDay` ne trouvait presque rien, et plafonnait à 7 exercices.
@@ -53,6 +63,7 @@
 ## 2026-11-07 — Flyer A5 : fichier imprimeur
 
 - `marketing/flyer/flyer.html` : format 154 × 216 mm (A5 + 3 mm de fond perdu), marges intérieures 12 mm (contenu ≥ 9 mm du trait de coupe) ; « 62 000 » → « 69 000 aliments » (cohérent avec l'app et les stores).
+- 10/11 (refus de l'imprimeur) : format attendu 150 × 212 mm (1 mm de fond perdu, pas 3) et polices « Type 3 » refusées (Chrome intègre ainsi la police variable Inter de Google Fonts et les émojis couleur). Corrigé : page 150 × 212 mm, marges 10/10/8 mm (même zone de contenu), polices Segoe UI statiques (TrueType), émojis remplacés par des icônes SVG.
 - PDF généré par Chrome sans en-tête : `marketing/flyer/flyer-burnstreak-A5-imprimeur.pdf` (2 pages recto/verso). L'ancien `flyer-burnstreak-A5.pdf` (148 × 210, sans fond perdu) est gardé.
 
 ## 2026-11-07 — iOS : plus de suivi publicitaire (refus Apple 2.1 ATT)
