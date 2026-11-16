@@ -120,7 +120,13 @@ const LANGS = {
       'Programme de musculation personnalisé',
       'Suivi des séances, charges et records',
     ],
-    shots: { goals: 'Objectifs caloriques', statistics: "Statistiques des habitudes", workout: 'Programme de musculation' },
+    shots: {
+      calories: 'Compteur de calories et de macros',
+      photo: "Recherche d'aliments",
+      habits: 'Habitudes et séries de jours',
+      sport: 'Programme de musculation',
+      stats: 'Statistiques',
+    },
     footerPrivacy: 'Confidentialité',
   },
   en: {
@@ -142,7 +148,13 @@ const LANGS = {
       'Personalized strength training program',
       'Workout, weight and record tracking',
     ],
-    shots: { goals: 'Calorie goals', statistics: 'Habit statistics', workout: 'Strength training program' },
+    shots: {
+      calories: 'Calorie and macro counter',
+      photo: 'Food search',
+      habits: 'Habits and day streaks',
+      sport: 'Strength training program',
+      stats: 'Statistics',
+    },
     footerPrivacy: 'Privacy',
   },
 };

@@ -63,12 +63,13 @@
     .store small { display: block; font-size: 11px; color: var(--muted); line-height: 1.1; }
     .store strong { display: block; font-size: 17px; line-height: 1.2; }
     .fine { margin-top: 14px; font-size: 14px; color: var(--muted); }
+    /* Les visuels (720×1280) contiennent déjà leur titre et le cadre du téléphone */
     .phone {
-      justify-self: center; width: min(300px, 78vw); aspect-ratio: 1206 / 2622;
-      border-radius: 38px; padding: 10px; background: linear-gradient(160deg, #2A2140, #0F0D16);
+      justify-self: center; width: min(360px, 82vw); aspect-ratio: 9 / 16;
+      border-radius: 28px; overflow: hidden;
       box-shadow: 0 30px 80px rgba(124, 58, 237, .28), 0 0 0 1px var(--line);
     }
-    .phone img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 30px; }
+    .phone img { display: block; width: 100%; height: 100%; object-fit: cover; }
 
     /* Points forts */
     .proof { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; padding-block: 8px 72px; }
@@ -84,7 +85,7 @@
     .feature ul { list-style: none; padding: 0; margin: 20px 0 0; display: flex; flex-direction: column; gap: 10px; color: var(--muted); }
     .feature li { padding-left: 26px; position: relative; }
     .feature li::before { content: ""; position: absolute; left: 0; top: .55em; width: 12px; height: 12px; border-radius: 4px; background: linear-gradient(135deg, var(--violet), var(--orange)); }
-    .shot { justify-self: center; width: min(280px, 72vw); border-radius: 30px; overflow: hidden; border: 1px solid var(--line); box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+    .shot { justify-self: center; width: min(340px, 82vw); border-radius: 28px; overflow: hidden; border: 1px solid var(--line); box-shadow: 0 20px 60px rgba(0,0,0,.5); }
     .shot img { display: block; width: 100%; height: auto; }
 
     /* Tarifs */
@@ -168,7 +169,7 @@
           <span data-lang-en>Free · Premium with no commitment · In English and French</span>
         </p>
       </div>
-      <div class="phone"><img src="img/fr/habits.jpg" data-shot="habits" alt="Écran des habitudes de Burnstreak" data-alt-en="Burnstreak habits screen" width="540" height="1174" fetchpriority="high" /></div>
+      <div class="phone"><img src="img/fr/calories.jpg" data-shot="calories" alt="Compteur de calories et de macros de Burnstreak" data-alt-en="Burnstreak calorie and macro counter" width="720" height="1280" fetchpriority="high" /></div>
     </section>
 
     <section class="proof" aria-label="Chiffres clés">
@@ -189,7 +190,7 @@
           <li><span data-lang-fr>Objectifs calculés selon ton profil : perte de gras, maintien ou prise de muscle.</span><span data-lang-en>Goals based on your profile: fat loss, maintenance or muscle gain.</span></li>
         </ul>
       </div>
-      <div class="shot"><img src="img/fr/goals.jpg" data-shot="goals" alt="Objectifs caloriques dans Burnstreak" data-alt-en="Calorie goals in Burnstreak" width="540" height="1174" loading="lazy" /></div>
+      <div class="shot"><img src="img/fr/photo.jpg" data-shot="photo" alt="Recherche d'aliments dans Burnstreak" data-alt-en="Food search in Burnstreak" width="720" height="1280" loading="lazy" /></div>
     </section>
 
     <section class="feature">
@@ -202,7 +203,7 @@
           <li><span data-lang-fr>Séries de jours 🔥 et taux de réussite pour rester motivé.</span><span data-lang-en>Day streaks 🔥 and completion rates to stay motivated.</span></li>
         </ul>
       </div>
-      <div class="shot"><img src="img/fr/statistics.jpg" data-shot="statistics" alt="Statistiques des habitudes" data-alt-en="Habit statistics" width="540" height="1174" loading="lazy" /></div>
+      <div class="shot"><img src="img/fr/habits.jpg" data-shot="habits" alt="Liste des habitudes et séries de jours dans Burnstreak" data-alt-en="Habit list and day streaks in Burnstreak" width="720" height="1280" loading="lazy" /></div>
     </section>
 
     <section class="feature">
@@ -215,7 +216,20 @@
           <li><span data-lang-fr>Course, vélo, natation… les calories brûlées s'ajoutent à ton bilan.</span><span data-lang-en>Running, cycling, swimming… burned calories add to your daily balance.</span></li>
         </ul>
       </div>
-      <div class="shot"><img src="img/fr/workout.jpg" data-shot="workout" alt="Écran sport de Burnstreak" data-alt-en="Burnstreak workout screen" width="540" height="1174" loading="lazy" /></div>
+      <div class="shot"><img src="img/fr/sport.jpg" data-shot="sport" alt="Programme de musculation dans Burnstreak" data-alt-en="Strength training program in Burnstreak" width="720" height="1280" loading="lazy" /></div>
+    </section>
+
+    <section class="feature">
+      <div>
+        <span class="eyebrow"><span data-lang-fr>Suivi</span><span data-lang-en>Progress</span></span>
+        <h2><span data-lang-fr>Ta régularité en un coup d'œil</span><span data-lang-en>Your consistency at a glance</span></h2>
+        <ul>
+          <li><span data-lang-fr>Meilleure série, taux de réussite et total d'habitudes cochées.</span><span data-lang-en>Best streak, success rate and total habits checked off.</span></li>
+          <li><span data-lang-fr>Graphiques sur 7 et 30 jours pour voir ta progression.</span><span data-lang-en>7-day and 30-day charts to see your progress.</span></li>
+          <li><span data-lang-fr>Courbe de poids, IMC et objectif recommandé.</span><span data-lang-en>Weight curve, BMI and recommended goal.</span></li>
+        </ul>
+      </div>
+      <div class="shot"><img src="img/fr/stats.jpg" data-shot="stats" alt="Statistiques et séries de jours dans Burnstreak" data-alt-en="Statistics and day streaks in Burnstreak" width="720" height="1280" loading="lazy" /></div>
     </section>
 
     <section class="pricing" id="tarifs">

@@ -1,5 +1,19 @@
 # Déclic — Dev Log
 
+## 2026-11-16 — Site burnstreak.com : captures d'écran alignées sur celles du Play Store
+
+- Les anciennes captures brutes (écrans vides, sans texte) sont remplacées par les visuels du Play (`marketing/play/screens/`, titre + écran rempli), redimensionnés en 720×1280 JPG dans `docs/app/img/{fr,en}/` : `calories` (haut de page), `photo` (nutrition), `habits`, `sport`, `stats` (nouvelle section « Suivi »).
+- Anciennes images supprimées (`goals`, `statistics`, `workout`, `profile`, `premium`). `build.mjs` : données structurées `screenshot` mises à jour. CSS : plus de double cadre téléphone, images un peu plus grandes (340–360 px) pour que le titre reste lisible.
+- Version EN : mêmes écrans (l'interface de l'app y reste en français, il n'existe pas de captures brutes anglaises) avec titres anglais, générés par `marketing/play/make_screenshots.py … en`. Deux titres EN du script corrigés pour coller à l'écran montré.
+- À faire : `VPS=regulpark bash deploy/website/deploy.sh` pour mettre en ligne.
+
+## 2026-11-16 — Site burnstreak.com : boucle de redirections (ERR_TOO_MANY_REDIRECTS)
+
+- **Bug** : `/` et `/en/` renvoyaient un 301 vers eux-mêmes. La règle Nginx `location ~ ^(.*)/index\.html$` (ajoutée le 12/11) interceptait aussi la redirection interne `/` → `/index.html` et renvoyait un 301 vers `/`.
+- **Fix** : `deploy/website/nginx-burnstreak.conf` — la règle devient `if ($request_uri ~ ^([^?]*)/index\.html(\?.*)?$) { return 301 $1/; }` (teste l'URL demandée, pas l'URL interne). Recopié sur le VPS + `nginx -t` + reload.
+- Vérifié : `/` et `/en/` = 200 ; `/index.html` → 301 `/` ; `/en/index.html` → 301 `/en/`.
+- À faire côté Google : relancer l'inspection d'URL (`/` et `/en/`) dans la Search Console.
+
 ## 2026-11-12 — Site burnstreak.com : optimisation SEO
 
 - **Une page par langue** : `/` (FR) et `/en/` (EN) générées par `scripts/website/build.mjs` depuis la même source `docs/app/index.html`. Avant, l'anglais était caché en CSS dans la page française (invisible pour Google). Plus de JavaScript : la bascule FR/EN est faite de vrais liens, avec `hreflang` + `x-default`.
