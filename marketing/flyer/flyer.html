@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Flyer Burnstreak</title>
+<style>
+  /* Polices : fichiers TrueType statiques de Windows. La police Inter de Google Fonts (variable)
+     était intégrée par Chrome en « Type 3 », refusé par les imprimeurs. */
+  @font-face { font-family: 'Flyer'; font-weight: 400; src: url('file:///C:/Windows/Fonts/segoeui.ttf'); }
+  @font-face { font-family: 'Flyer'; font-weight: 500 600; src: url('file:///C:/Windows/Fonts/seguisb.ttf'); }
+  @font-face { font-family: 'Flyer'; font-weight: 700; src: url('file:///C:/Windows/Fonts/segoeuib.ttf'); }
+  @font-face { font-family: 'Flyer'; font-weight: 800 900; src: url('file:///C:/Windows/Fonts/seguibl.ttf'); }
+
+  /* Fichier imprimeur : A5 (148 × 210 mm) + 1 mm de fond perdu de chaque côté = 150 × 212 mm
+     (format demandé par l'imprimeur). Le contenu reste à au moins 9 mm du bord de coupe. */
+  @page { size: 150mm 212mm; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #0A0A0F; }
+  body { font-family: 'Flyer', sans-serif; color: #fff;
+         -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  .page { width: 150mm; height: 212mm; position: relative; overflow: hidden;
+          background: #0A0A0F; page-break-after: always; break-after: page; }
+  .page:last-child { page-break-after: auto; break-after: auto; }
+  .glow { position: absolute; border-radius: 50%; filter: blur(18mm); }
+  .g1 { width: 95mm; height: 95mm; background: #7C3AED; opacity: .55; top: -30mm; right: -30mm; }
+  .g2 { width: 80mm; height: 80mm; background: #F97316; opacity: .35; bottom: 10mm; left: -35mm; }
+  .g3 { width: 70mm; height: 70mm; background: #EC4899; opacity: .30; top: 70mm; right: -30mm; }
+  .inner { position: relative; height: 100%; padding: 10mm 10mm 8mm; display: flex; flex-direction: column; }
+
+  .brand { display: flex; align-items: center; gap: 3mm; }
+  .brand img { width: 11mm; height: 11mm; border-radius: 2.6mm; }
+  .brand span { font-size: 17pt; font-weight: 900; letter-spacing: -.4pt; }
+
+  h1 { margin-top: 6mm; font-size: 27pt; line-height: 1.06; font-weight: 900; letter-spacing: -.8pt; }
+  h1 .hl { background: linear-gradient(90deg, #A78BFA, #F97316); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .lead { margin-top: 3mm; font-size: 10.5pt; line-height: 1.4; color: #C4C4D4; }
+  .lead b { color: #fff; }
+
+  /* Téléphones */
+  .phones { position: relative; flex: 1; margin-top: 4mm; }
+  .phone { position: absolute; border: 1.4mm solid #26262F; border-radius: 6mm; overflow: hidden;
+           background: #000; box-shadow: 0 4mm 9mm rgba(0,0,0,.7); }
+  .phone img { display: block; width: 100%; }
+  .p-left  { width: 44mm; left: -2mm; top: 12mm; transform: rotate(-8deg); }
+  .p-right { width: 44mm; right: -2mm; top: 12mm; transform: rotate(8deg); }
+  .p-mid   { width: 54mm; left: 50%; top: 0; transform: translateX(-50%); z-index: 2; border-color: #3B2A66; }
+  .tag { position: absolute; z-index: 3; font-size: 8pt; font-weight: 700; padding: 1.2mm 2.6mm;
+         border-radius: 10mm; white-space: nowrap; }
+  .t1 { background: #7C3AED; left: 0; bottom: 6mm; }
+  .t2 { background: #F97316; right: 0; bottom: 14mm; }
+
+  /* Bandeau QR */
+  .cta { display: flex; align-items: center; gap: 4mm; background: rgba(255,255,255,.06);
+         border: .3mm solid rgba(255,255,255,.14); border-radius: 4mm; padding: 3mm; }
+  .cta .qr { width: 26mm; height: 26mm; background: #fff; border-radius: 2mm; padding: 1mm; flex: none; }
+  .cta .qr img { width: 100%; height: 100%; display: block; }
+  .cta .big { font-size: 13pt; font-weight: 800; line-height: 1.15; }
+  .cta .free { display: inline-block; margin-bottom: 1.5mm; background: linear-gradient(90deg, #7C3AED, #F97316);
+               font-size: 8pt; font-weight: 800; padding: .8mm 2.4mm; border-radius: 10mm; letter-spacing: .3pt; }
+  .cta .small { margin-top: 1.2mm; font-size: 8.5pt; color: #C4C4D4; }
+  .cta .url { font-weight: 800; color: #fff; }
+
+  /* Verso */
+  h2 { margin-top: 6mm; font-size: 21pt; line-height: 1.1; font-weight: 900; letter-spacing: -.5pt; }
+  .features { margin-top: 4mm; display: flex; flex-direction: column; gap: 2mm; flex: 1; }
+  .f { display: flex; gap: 3mm; align-items: flex-start; background: rgba(255,255,255,.05);
+       border: .3mm solid rgba(255,255,255,.10); border-radius: 3.5mm; padding: 2.2mm 3mm; }
+  .f.hero { background: linear-gradient(90deg, rgba(124,58,237,.35), rgba(249,115,22,.22)); border-color: rgba(167,139,250,.6); }
+  .f .txt b { color: #fff; }
+  .f .ico { font-size: 15pt; line-height: 1; width: 8mm; text-align: center; flex: none; padding-top: .4mm; }
+  .i { width: 1.05em; height: 1.05em; vertical-align: -.17em; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+  .f .ico svg { width: 6mm; height: 6mm; fill: none; stroke: #F97316; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .f.hero .ico svg { stroke: #A78BFA; }
+  .f .ttl { font-size: 10.5pt; font-weight: 800; }
+  .f .txt { margin-top: .6mm; font-size: 8.6pt; line-height: 1.35; color: #C4C4D4; }
+  .legal { margin-top: 3mm; text-align: center; font-size: 6.5pt; color: #6B6B7B; }
+
+  /* Aperçu écran : pages empilées */
+  @media screen { .page { margin: 0 auto; } }
+</style>
+</head>
+<body>
+
+<!-- ============ RECTO ============ -->
+<section class="page">
+  <div class="glow g1"></div><div class="glow g2"></div>
+  <div class="inner">
+    <div class="brand"><img src="img/icon.png" alt=""><span>Burnstreak</span></div>
+
+    <h1>Mange mieux. Bouge plus.<br><span class="hl">Sans prise de tête.</span></h1>
+    <p class="lead"><b>Nutrition, sport et bonnes habitudes dans une seule app.</b> Dis ce que tu as mangé, l'IA compte les calories pour toi.</p>
+
+    <div class="phones">
+      <div class="phone p-left"><img src="img/objectifs.jpg" alt=""></div>
+      <div class="phone p-right"><img src="img/sport.jpg" alt=""></div>
+      <div class="phone p-mid"><img src="img/calories.jpg" alt=""></div>
+      <span class="tag t1"><svg class="i" viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg> Voix IA · <svg class="i" viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg> Photo · Scan</span>
+      <span class="tag t2"><svg class="i" viewBox="0 0 24 24"><line x1="6" y1="12" x2="18" y2="12"/><rect x="3.5" y="7.5" width="3" height="9" rx="1"/><rect x="17.5" y="7.5" width="3" height="9" rx="1"/><line x1="1.5" y1="10" x2="1.5" y2="14"/><line x1="22.5" y1="10" x2="22.5" y2="14"/></svg> Programmes sport</span>
+    </div>
+
+    <div class="cta">
+      <div class="qr"><img src="img/qr.png" alt="QR code burnstreak.com"></div>
+      <div>
+        <span class="free">GRATUIT</span>
+        <div class="big">Scanne et commence aujourd'hui</div>
+        <div class="small">Android &amp; iPhone · <span class="url">burnstreak.com</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ VERSO ============ -->
+<section class="page">
+  <div class="glow g1"></div><div class="glow g3"></div><div class="glow g2"></div>
+  <div class="inner">
+    <div class="brand"><img src="img/icon.png" alt=""><span>Burnstreak</span></div>
+
+    <h2>Pourquoi tu vas l'adopter&nbsp;<svg class="i" style="color:#F97316" viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></h2>
+
+    <div class="features">
+      <div class="f hero"><div class="ico"><svg viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg></div><div>
+        <div class="ttl">Dis simplement ce que tu as mangé</div>
+        <div class="txt">«&nbsp;Un steak, des pâtes et un yaourt&nbsp;»&nbsp;: la <b>Voix IA</b> comprend ton repas et calcule calories et macros pour toi. Zéro saisie.</div>
+      </div></div>
+      <div class="f"><div class="ico"><svg viewBox="0 0 24 24"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></div><div>
+        <div class="ttl">Ou scanne, ou prends en photo</div>
+        <div class="txt">Code-barres, photo de ton assiette ou recherche parmi plus de 69&nbsp;000 aliments français.</div>
+      </div></div>
+      <div class="f"><div class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div><div>
+        <div class="ttl">Ton objectif, calculé pour toi</div>
+        <div class="txt">Perdre du poids, te maintenir ou prendre du muscle&nbsp;: calories et macros adaptées à ton profil, et suivi de ton poids.</div>
+      </div></div>
+      <div class="f"><div class="ico"><svg viewBox="0 0 24 24"><line x1="6" y1="12" x2="18" y2="12"/><rect x="3.5" y="7.5" width="3" height="9" rx="1"/><rect x="17.5" y="7.5" width="3" height="9" rx="1"/><line x1="1.5" y1="10" x2="1.5" y2="14"/><line x1="22.5" y1="10" x2="22.5" y2="14"/></svg></div><div>
+        <div class="ttl">Ton coach sport dans la poche</div>
+        <div class="txt">Programmes de muscu guidés et suivi de tes perfs, ou simplement marche et vélo&nbsp;: tes calories dépensées s'ajoutent toutes seules à ton bilan.</div>
+      </div></div>
+      <div class="f"><div class="ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="6"/><polyline points="12 9.5 12 12 13.5 13.5"/><path d="m16.13 7.66-.81-4.05a2 2 0 0 0-2-1.61h-2.68a2 2 0 0 0-2 1.61l-.78 4.05"/><path d="m7.88 16.36.8 4a2 2 0 0 0 2 1.61h2.72a2 2 0 0 0 2-1.61l.81-4.05"/></svg></div><div>
+        <div class="ttl">Connectée à ton téléphone et ta montre</div>
+        <div class="txt">Tes pas et ton activité arrivent automatiquement depuis Samsung Health (Health Connect) ou Apple Santé.</div>
+      </div></div>
+      <div class="f"><div class="ico"><svg viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div><div>
+        <div class="ttl">Des habitudes qui tiennent</div>
+        <div class="txt">Boire de l'eau, marcher, se coucher plus tôt&nbsp;: rappels doux, séries de jours et statistiques pour garder le cap.</div>
+      </div></div>
+    </div>
+
+    <div class="cta" style="margin-top:4mm">
+      <div class="qr"><img src="img/qr.png" alt="QR code burnstreak.com"></div>
+      <div>
+        <span class="free">TÉLÉCHARGEMENT GRATUIT</span>
+        <div class="big">Google Play &amp; App Store</div>
+        <div class="small"><span class="url">burnstreak.com</span> · contact@burnstreak.com</div>
+      </div>
+    </div>
+    <div class="legal">Ne pas jeter sur la voie publique.</div>
+  </div>
+</section>
+
+</body>
+</html>
